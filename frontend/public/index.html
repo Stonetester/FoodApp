@@ -333,8 +333,12 @@
                 <div class="calendar-controls">
                     <div class="view-switcher" id="calendarViewSwitcher">
                         <button class="view-btn" data-view="dayGridMonth">Month</button>
-                        <button class="view-btn" data-view="dayGridWeek">Week</button>
+                        <button class="view-btn" data-view="mealWeek">Week</button>
                         <button class="view-btn" data-view="mealDay">Day</button>
+                    </div>
+                    <div class="calendar-nav">
+                        <button class="btn btn-secondary" id="calendarPrevBtn">Prev</button>
+                        <button class="btn btn-secondary" id="calendarNextBtn">Next</button>
                     </div>
                     <button class="btn btn-secondary" id="calendarTodayBtn">Today</button>
                 </div>
@@ -487,7 +491,7 @@
                         <p>Send a friend request by username.</p>
                         <div class="search-input-group friend-search-group">
                             <input type="text" id="friendUsernameInput" class="search-input friend-search-input" placeholder="Enter username...">
-                            <button class="btn btn-primary" id="sendFriendRequestBtn" onclick="sendFriendRequest()">Send Request</button>
+                            <button class="btn btn-primary" id="sendFriendRequestBtn">Send Request</button>
                         </div>
                         <div id="friendSearchResults" class="friend-search-results"></div>
                         <div id="friendRequestStatus" class="status-message"></div>
