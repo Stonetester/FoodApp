@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let friendSearchTimeout = null;
-let socialPollInterval = null;
 
 function setupSocialListeners() {
     const sendBtn = document.getElementById('sendFriendRequestBtn');
@@ -51,22 +50,6 @@ function setupSocialListeners() {
             }, 250);
         });
     }
-}
-
-function startSocialPolling() {
-    if (socialPollInterval) {
-        return;
-    }
-    const socialPage = document.getElementById('socialPage');
-    if (socialPage && socialPage.classList.contains('active')) {
-        loadSocialData();
-    }
-    socialPollInterval = setInterval(() => {
-        const activePage = document.getElementById('socialPage');
-        if (activePage && activePage.classList.contains('active')) {
-            loadSocialData();
-        }
-    }, 10000);
 }
 
 async function loadSocialData() {
