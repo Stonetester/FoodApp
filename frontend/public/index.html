@@ -149,7 +149,7 @@
         <div id="recipesPage" class="page">
             <div class="container">
                 <div class="page-header">
-                    <h1>Recipes</h1>
+                    <h1 id="recipesTitle">Your Recipes</h1>
                     <div class="header-actions">
                         <button class="btn btn-secondary" id="importUrlBtn">📥 Import from URL</button>
                         <button class="btn btn-secondary" id="importImageBtn">📷 Import from Image</button>
@@ -241,6 +241,18 @@
                     <div class="form-group">
                         <label for="recipeImageUrl">Image URL</label>
                         <input type="url" id="recipeImageUrl">
+                    </div>
+                    <div class="form-group">
+                        <label>Meal Photo</label>
+                        <div class="image-source-buttons">
+                            <button type="button" class="btn btn-secondary" id="captureRecipePhotoBtn">📸 Take Photo</button>
+                            <button type="button" class="btn btn-secondary" id="uploadRecipePhotoBtn">🖼️ Choose Photo</button>
+                        </div>
+                        <input type="file" id="recipePhotoCamera" accept="image/*" capture="environment" hidden>
+                        <input type="file" id="recipePhotoLibrary" accept="image/*" hidden>
+                        <div class="recipe-photo-preview">
+                            <img id="recipePhotoPreview" alt="Recipe preview" hidden>
+                        </div>
                     </div>
                     <div class="modal-actions">
                         <button type="submit" class="btn btn-primary">Save Recipe</button>
@@ -477,8 +489,8 @@
                     <div class="social-card">
                         <h2>Add a friend</h2>
                         <p>Send a friend request by username.</p>
-                        <div class="search-input-group">
-                            <input type="text" id="friendUsernameInput" class="search-input" placeholder="Enter username...">
+                        <div class="search-input-group friend-search-group">
+                            <input type="text" id="friendUsernameInput" class="search-input friend-search-input" placeholder="Enter username...">
                             <button class="btn btn-primary" id="sendFriendRequestBtn">Send Request</button>
                         </div>
                         <div id="friendSearchResults" class="friend-search-results"></div>

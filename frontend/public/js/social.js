@@ -2,6 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     setupSocialListeners();
+    startSocialPolling();
 });
 
 let friendSearchTimeout = null;

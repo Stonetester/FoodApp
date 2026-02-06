@@ -65,6 +65,7 @@ function setupMealPlanListeners() {
             handleNext();
         });
     }
+
 }
 
 async function loadMealPlan() {
@@ -106,16 +107,9 @@ function initializeCalendar() {
 
     // Create events with meal type indicators
     const events = mealPlans.map(plan => {
-        const mealTypeIcon = {
-            'breakfast': '🌅',
-            'lunch': '☀️',
-            'dinner': '🌙',
-            'snack': '🍎'
-        }[plan.meal_type] || '🍽️';
-
         return {
             id: plan.id,
-            title: `${mealTypeIcon} ${plan.recipe ? plan.recipe.title : 'Meal'}`,
+            title: plan.recipe ? plan.recipe.title : 'Meal',
             start: plan.planned_date,
             extendedProps: {
                 mealType: plan.meal_type,
@@ -134,11 +128,11 @@ function initializeCalendar() {
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         headerToolbar: isMobile ? {
-            left: 'prev,next',
+            left: '',
             center: 'title',
             right: ''
         } : {
-            left: 'prev,next today',
+            left: '',
             center: 'title',
             right: 'dayGridMonth'
         },
@@ -146,12 +140,20 @@ function initializeCalendar() {
         eventContent: (info) => {
             const viewType = info.view.type;
             const recipe = info.event.extendedProps.recipe;
-            const showImage = (viewType === 'timeGridWeek' || viewType === 'timeGridDay') && recipe && recipe.image_url;
-            const title = info.event.title;
+            const mealType = info.event.extendedProps.mealType;
+            const mealTypeIcon = {
+                'breakfast': '🌅',
+                'lunch': '☀️',
+                'dinner': '🌙',
+                'snack': '🍎'
+            }[mealType] || '🍽️';
+            const title = recipe ? recipe.title : info.event.title;
+            const showImage = viewType === 'dayGridWeek' && recipe && recipe.image_url;
             return {
                 html: `
                     <div class="calendar-event">
                         ${showImage ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="calendar-event-image" onerror="this.style.display='none'">` : ''}
+                        ${!showImage && viewType === 'dayGridMonth' ? `<span class="calendar-event-icon">${mealTypeIcon}</span>` : ''}
                         <span class="calendar-event-title">${title}</span>
                     </div>
                 `
