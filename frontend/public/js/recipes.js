@@ -500,6 +500,9 @@ async function deleteRecipe(id) {
         if (window.loadDashboard) {
             window.loadDashboard();
         }
+        if (window.loadMealPlan) {
+            window.loadMealPlan();
+        }
     } catch (error) {
         console.error('Error deleting recipe:', error);
         alert('Failed to delete recipe');
