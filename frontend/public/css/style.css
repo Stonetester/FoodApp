@@ -1,19 +1,19 @@
 /* Cosy Cottage Theme - Warm, Rustic, Homey */
 
 :root {
-    --primary: #811638;
-    --secondary: #0B7978;
-    --accent: #FCB632;
-    --highlight: #F27238;
-    --danger: #C32237;
-    --background: #F3E3C9;
-    --surface: #F8EFE0;
-    --text: #2E1B0D;
-    --success: #0B7978;
-    --shadow: rgba(46, 27, 13, 0.18);
+    --primary: #8B5A2B;
+    --secondary: #6F7A4F;
+    --accent: #E07B2C;
+    --highlight: #F2B24A;
+    --danger: #B2482B;
+    --background: #F6F1D3;
+    --surface: #FFF7E2;
+    --text: #2B1B10;
+    --success: #6F7A4F;
+    --shadow: rgba(43, 27, 16, 0.18);
     --white: #FFFFFF;
-    --light-cream: #FBF3E6;
-    --border: #2E1B0D;
+    --light-cream: #FFF1D6;
+    --border: #2B1B10;
 }
 
 * {
@@ -29,9 +29,31 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     background-image:
-        radial-gradient(circle at 12px 12px, rgba(46, 27, 13, 0.08) 2px, transparent 0),
-        radial-gradient(circle at 36px 36px, rgba(46, 27, 13, 0.06) 2px, transparent 0);
-    background-size: 48px 48px;
+        radial-gradient(circle at 14px 14px, rgba(43, 27, 16, 0.08) 2px, transparent 0),
+        radial-gradient(circle at 40px 40px, rgba(43, 27, 16, 0.06) 2px, transparent 0),
+        repeating-linear-gradient(90deg, rgba(224, 123, 44, 0.18) 0 8px, transparent 8px 32px),
+        repeating-linear-gradient(135deg, rgba(111, 122, 79, 0.12) 0 10px, transparent 10px 36px);
+    background-size: 64px 64px, 64px 64px, 100% 100%, 100% 100%;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle at 0% 20%, rgba(224, 123, 44, 0.18) 0 12%, transparent 12% 100%),
+        radial-gradient(circle at 100% 80%, rgba(111, 122, 79, 0.16) 0 14%, transparent 14% 100%);
+    opacity: 0.6;
+    z-index: 0;
+}
+
+#app,
+nav,
+.page,
+.modal {
+    position: relative;
+    z-index: 1;
 }
 
 #app {

@@ -4,8 +4,8 @@
   "description": "Manage recipes, pantry, and meal planning",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F3E3C9",
-  "theme_color": "#811638",
+  "background_color": "#F6F1D3",
+  "theme_color": "#8B5A2B",
   "orientation": "portrait-primary",
   "icons": [
     {
