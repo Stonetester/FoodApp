@@ -192,6 +192,149 @@ This shows you how to:
 4. Add notes (optional)
 5. Ratings appear on recipes!
 
+## 🧪 Developer Setup (Local Dev Testing)
+
+These steps are for developers running the app locally for day-to-day testing.
+
+### 1) Install prerequisites
+
+- **Python 3.8+** (verify with `python --version`)
+- **MySQL** (or use SQLite for a quick local setup)
+- **Git** (optional, but recommended for updates)
+
+### 2) Create a virtual environment
+
+From the repo root:
+
+```bash
+cd backend
+python -m venv venv
+```
+
+Activate it:
+
+**Windows (PowerShell):**
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+**macOS/Linux (bash/zsh):**
+```bash
+source venv/bin/activate
+```
+
+### 3) Install Python dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4) Configure environment variables
+
+The backend reads its config from environment variables. You can set them in your shell or in a `.env` file in `backend/`.
+
+Minimum recommended variables:
+
+```bash
+DATABASE_URL=mysql+pymysql://foodapp_user:YourPasswordHere@localhost/foodapp
+SECRET_KEY=replace-with-a-long-random-string
+```
+
+**Quick local option (SQLite):**
+```bash
+DATABASE_URL=sqlite:///foodapp.db
+```
+
+### 5) Start the backend server
+
+From the `backend/` directory:
+
+```bash
+python run.py
+```
+
+You should see:
+
+```
+📱 Access the app at: http://localhost:5000
+```
+
+Open your browser to `http://localhost:5000` and log in / register.
+
+### 6) (Optional) Seed some test data
+
+Add a few recipes and pantry items from the UI so you have data to test the dashboard, calendar, and social features.
+
+## 🌍 Make the App Public with Cloudflared (Development Sharing)
+
+Use this when you want to share your local dev instance with a teammate or test on your phone while on mobile data.
+
+### 1) Install cloudflared
+
+Download from: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/
+
+### 2) Start your local app
+
+Make sure `python run.py` is running and you can access `http://localhost:5000`.
+
+### 3) Start a temporary tunnel
+
+From any terminal:
+
+```bash
+cloudflared tunnel --url http://localhost:5000
+```
+
+Cloudflared will output a public HTTPS URL like:
+
+```
+https://example-try.cloudflare.com
+```
+
+Open that URL from your phone or share it with others. The app remains public only while the tunnel command is running.
+
+### 4) Keep the tunnel open
+
+Don’t close the terminal. If you stop the command, the public URL stops working.
+
+## 🔐 How to Add/Enforce Authentication (Detailed Steps)
+
+The app already uses **Flask-Login** for authentication. If you need to extend or enforce auth on new endpoints, follow these steps:
+
+1. **Protect your API routes**  
+   Add `@login_required` to any new Flask route that should require a signed-in user.  
+   Example:
+   ```python
+   @api_bp.route('/my/secure/data')
+   @login_required
+   def my_secure_data():
+       ...
+   ```
+
+2. **Expose auth endpoints**  
+   The existing auth routes live in `backend/app/auth.py`:
+   - `POST /api/auth/register`
+   - `POST /api/auth/login`
+   - `POST /api/auth/logout`
+   - `GET /api/auth/me`
+   - `GET /api/auth/check`
+
+3. **Ensure the frontend checks auth**  
+   The frontend calls `/api/auth/me` during startup. If the request fails, it shows the login screen. Keep that call in your app init to enforce auth before showing UI.
+
+4. **Set a strong SECRET_KEY**  
+   In production, make sure you set:
+   ```bash
+   SECRET_KEY=your-long-secret-key
+   ```
+   This secures Flask sessions.
+
+5. **Use HTTPS in production**  
+   Set `SESSION_COOKIE_SECURE=True` and run behind HTTPS (Cloudflared provides HTTPS automatically).
+
+6. **Add auth to new UI features**  
+   If you add new pages or buttons, make sure the API calls go through the `api` service in `frontend/public/js/api.js` so session cookies are sent automatically.
+
 ## 🖥️ System Requirements
 
 **Minimum:**
@@ -502,5 +645,6 @@ Built with:
 **Enjoy your Cosy Cottage Food App! 🏡🍳**
 
 Made with ❤️ for home cooks everywhere
-#   F o o d A p p  
+ 
+ 
  

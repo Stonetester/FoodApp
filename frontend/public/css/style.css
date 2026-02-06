@@ -1,15 +1,19 @@
 /* Cosy Cottage Theme - Warm, Rustic, Homey */
 
 :root {
-    --primary: #8B7355;
-    --secondary: #A68B5B;
-    --accent: #C4A484;
-    --background: #F5E6D3;
-    --text: #3E2723;
-    --success: #7A8471;
-    --shadow: rgba(139, 115, 85, 0.1);
+    --primary: #811638;
+    --secondary: #0B7978;
+    --accent: #FCB632;
+    --highlight: #F27238;
+    --danger: #C32237;
+    --background: #F3E3C9;
+    --surface: #F8EFE0;
+    --text: #2E1B0D;
+    --success: #0B7978;
+    --shadow: rgba(46, 27, 13, 0.18);
     --white: #FFFFFF;
-    --light-cream: #FAF5EF;
+    --light-cream: #FBF3E6;
+    --border: #2E1B0D;
 }
 
 * {
@@ -19,30 +23,40 @@
 }
 
 body {
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: "Trebuchet MS", "Georgia", "Times New Roman", serif;
     background-color: var(--background);
     color: var(--text);
     line-height: 1.6;
     min-height: 100vh;
+    background-image:
+        radial-gradient(circle at 12px 12px, rgba(46, 27, 13, 0.08) 2px, transparent 0),
+        radial-gradient(circle at 36px 36px, rgba(46, 27, 13, 0.06) 2px, transparent 0);
+    background-size: 48px 48px;
+}
+
+#app {
+    display: flex;
 }
 
 /* Navigation */
 .navbar {
     background-color: var(--primary);
-    padding: 1rem 0;
-    box-shadow: 0 2px 8px var(--shadow);
-    position: sticky;
+    padding: 1.5rem 1rem;
+    box-shadow: 8px 0 0 var(--border), 0 12px 24px rgba(46, 27, 13, 0.25);
+    position: fixed;
     top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
     z-index: 1000;
+    border-right: 4px solid var(--border);
 }
 
 .nav-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 2rem;
+    height: 100%;
 }
 
 .nav-logo {
@@ -60,21 +74,46 @@ body {
 
 .nav-menu {
     display: flex;
-    gap: 2rem;
-    align-items: center;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .nav-link {
     color: var(--white);
     text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    transition: background-color 0.3s;
-    font-size: 1rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 12px;
+    transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border: 2px solid transparent;
 }
 
 .nav-link:hover {
-    background-color: var(--secondary);
+    background-color: var(--accent);
+    color: var(--text);
+    transform: translateX(4px);
+    box-shadow: 4px 4px 0 var(--border);
+    border-color: var(--border);
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
 }
 
 .nav-toggle {
@@ -89,8 +128,12 @@ body {
 /* Pages */
 .page {
     display: none;
-    min-height: calc(100vh - 80px);
-    padding: 2rem;
+    min-height: 100vh;
+    padding: 2.5rem 2rem;
+}
+
+body.app-authenticated .page {
+    margin-left: 240px;
 }
 
 .page.active {
@@ -100,6 +143,20 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 24px;
+    border: 3px solid var(--border);
+    box-shadow: 10px 10px 0 var(--border), 0 20px 40px rgba(46, 27, 13, 0.15);
+}
+
+body.is-mobile .container {
+    padding: 1.5rem;
+    border-radius: 18px;
+}
+
+body.is-mobile .page-header h1 {
+    font-size: 2rem;
 }
 
 .page-header {
@@ -130,22 +187,23 @@ body {
     transition: all 0.3s;
     font-family: inherit;
     font-weight: 500;
-    box-shadow: 0 2px 4px var(--shadow);
+    border: 2px solid var(--border);
+    box-shadow: 4px 4px 0 var(--border);
 }
 
 .btn-primary {
-    background-color: var(--primary);
-    color: var(--white);
+    background-color: var(--accent);
+    color: var(--text);
 }
 
 .btn-primary:hover {
-    background-color: var(--secondary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px var(--shadow);
+    background-color: var(--highlight);
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--border);
 }
 
 .btn-secondary {
-    background-color: var(--accent);
+    background-color: var(--surface);
     color: var(--text);
 }
 
@@ -164,10 +222,11 @@ body {
 }
 
 .login-card {
-    background-color: var(--white);
+    background-color: var(--surface);
     padding: 3rem;
     border-radius: 16px;
-    box-shadow: 0 8px 24px var(--shadow);
+    border: 3px solid var(--border);
+    box-shadow: 8px 8px 0 var(--border);
     width: 100%;
     max-width: 450px;
 }
@@ -228,7 +287,7 @@ body {
 .form-group select {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid var(--accent);
+    border: 2px solid var(--border);
     border-radius: 8px;
     font-size: 1rem;
     font-family: inherit;
@@ -240,7 +299,8 @@ body {
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--primary);
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 3px rgba(242, 114, 56, 0.2);
 }
 
 .form-group input::placeholder,
@@ -277,11 +337,13 @@ body {
 }
 
 .stat-card {
-    background-color: var(--white);
+    background-color: var(--surface);
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 12px var(--shadow);
+    border: 2px solid var(--border);
+    box-shadow: 6px 6px 0 var(--border);
     text-align: center;
+    cursor: pointer;
 }
 
 .stat-card h3 {
@@ -293,6 +355,85 @@ body {
 .stat-card p {
     color: var(--text);
     font-size: 1.1rem;
+}
+
+.upcoming-section {
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.upcoming-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.upcoming-card {
+    background-color: var(--surface);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    box-shadow: 6px 6px 0 var(--border);
+}
+
+.upcoming-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.btn-link {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.upcoming-meal-item {
+    background: var(--light-cream);
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.upcoming-meal-info h4 {
+    margin: 0.4rem 0;
+    color: var(--primary);
+}
+
+.meal-type-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background: var(--surface);
+    color: var(--text);
+    text-transform: capitalize;
+}
+
+.upcoming-meal-image {
+    width: 100%;
+    max-height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+.upcoming-notes {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
 }
 
 .recent-section {
@@ -312,17 +453,18 @@ body {
 }
 
 .recipe-card {
-    background-color: var(--white);
+    background-color: var(--surface);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 12px var(--shadow);
+    border: 2px solid var(--border);
+    box-shadow: 8px 8px 0 var(--border);
     transition: transform 0.3s, box-shadow 0.3s;
     cursor: pointer;
 }
 
 .recipe-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px var(--shadow);
+    transform: translate(-2px, -2px);
+    box-shadow: 10px 10px 0 var(--border);
 }
 
 .recipe-card-image {
@@ -339,6 +481,12 @@ body {
 .recipe-card-title {
     font-size: 1.3rem;
     color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.recipe-owner {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
     margin-bottom: 0.5rem;
 }
 
@@ -360,7 +508,7 @@ body {
 }
 
 .recipe-tag {
-    background-color: var(--success);
+    background-color: var(--secondary);
     color: var(--white);
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
@@ -389,20 +537,22 @@ body {
 
 /* Filters */
 .filters {
-    background-color: var(--white);
+    background-color: var(--surface);
     padding: 1.5rem;
     border-radius: 12px;
     margin-bottom: 2rem;
-    box-shadow: 0 2px 8px var(--shadow);
+    border: 2px solid var(--border);
+    box-shadow: 6px 6px 0 var(--border);
 }
 
 .search-input {
     width: 100%;
     padding: 0.75rem;
-    border: 2px solid var(--accent);
+    border: 2px solid var(--border);
     border-radius: 8px;
     font-size: 1rem;
     margin-bottom: 1rem;
+    background-color: var(--light-cream);
 }
 
 .tag-filters {
@@ -419,11 +569,13 @@ body {
     padding: 0.5rem 1rem;
     background-color: var(--light-cream);
     border-radius: 20px;
+    border: 2px solid transparent;
     transition: background-color 0.3s;
 }
 
 .filter-tag:hover {
     background-color: var(--accent);
+    border-color: var(--border);
 }
 
 .filter-tag input[type="checkbox"] {
@@ -452,14 +604,15 @@ body {
 }
 
 .modal-content {
-    background-color: var(--white);
+    background-color: var(--surface);
     border-radius: 16px;
     padding: 2rem;
     max-width: 600px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 3px solid var(--border);
+    box-shadow: 10px 10px 0 var(--border);
     position: relative;
 }
 
@@ -534,10 +687,11 @@ body {
 }
 
 .pantry-card {
-    background-color: var(--white);
+    background-color: var(--surface);
     padding: 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 4px 12px var(--shadow);
+    border: 2px solid var(--border);
+    box-shadow: 6px 6px 0 var(--border);
     transition: transform 0.3s;
 }
 
@@ -566,10 +720,60 @@ body {
 
 /* Calendar */
 #mealPlanCalendar {
-    background-color: var(--white);
+    background-color: var(--surface);
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 12px var(--shadow);
+    border: 2px solid var(--border);
+    box-shadow: 8px 8px 0 var(--border);
+}
+
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.view-switcher {
+    display: inline-flex;
+    background: var(--light-cream);
+    border-radius: 999px;
+    padding: 0.3rem;
+    gap: 0.3rem;
+}
+
+.view-btn {
+    border: none;
+    background: transparent;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.view-btn.active {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.calendar-event {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.calendar-event-image {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.calendar-event-title {
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
 .meal-slot {
@@ -611,10 +815,11 @@ body {
 }
 
 .history-item {
-    background-color: var(--white);
+    background-color: var(--surface);
     padding: 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 2px 8px var(--shadow);
+    border: 2px solid var(--border);
+    box-shadow: 6px 6px 0 var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -648,6 +853,65 @@ body {
     border-radius: 8px;
 }
 
+.image-source-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.discover-section {
+    margin-bottom: 3rem;
+}
+
+.social-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.social-card {
+    background: var(--surface);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    box-shadow: 6px 6px 0 var(--border);
+}
+
+.social-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.social-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--light-cream);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+}
+
+.social-list-item .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.status-message {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.status-error {
+    color: #d32f2f;
+}
+
+.empty-state {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
 /* QR Code */
 #qrCodeContainer {
     text-align: center;
@@ -662,17 +926,36 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    #app {
+        flex-direction: column;
+    }
+
+    .navbar {
+        width: 100%;
+        height: 64px;
+        padding: 0 1rem;
+        position: fixed;
+    }
+
+    .nav-container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
     .nav-menu {
         position: fixed;
         left: -100%;
-        top: 70px;
+        top: 64px;
         flex-direction: column;
         background-color: var(--primary);
-        width: 100%;
+        width: 240px;
+        height: calc(100vh - 64px);
         text-align: center;
         transition: 0.3s;
         box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
-        padding: 2rem 0;
+        padding: 1.5rem 1rem;
     }
 
     .nav-menu.active {
@@ -701,6 +984,41 @@ body {
 
     .dashboard-stats {
         grid-template-columns: 1fr;
+    }
+
+    body.app-authenticated .page {
+        margin-left: 0;
+        padding-top: 5rem;
+    }
+
+    .container {
+        padding: 1.5rem;
+        border-radius: 18px;
+    }
+
+    .calendar-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #mealPlanCalendar {
+        padding: 1rem;
+    }
+
+    .view-switcher {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .upcoming-meal-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 
     .form-row {
@@ -746,15 +1064,15 @@ body {
     flex: 1;
     padding: 1rem;
     font-size: 1.1rem;
-    border: 2px solid var(--accent);
+    border: 2px solid var(--border);
     border-radius: 8px;
-    background-color: var(--white);
+    background-color: var(--light-cream);
 }
 
 .search-input-group .search-input:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.1);
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 3px rgba(242, 114, 56, 0.2);
 }
 
 .search-hint {

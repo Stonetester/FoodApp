@@ -4,23 +4,15 @@
   "description": "Manage recipes, pantry, and meal planning",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F5E6D3",
-  "theme_color": "#8B7355",
+  "background_color": "#F3E3C9",
+  "theme_color": "#811638",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/images/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "/images/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
-
-
