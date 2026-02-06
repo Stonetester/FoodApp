@@ -165,7 +165,6 @@ function initializeCalendar() {
         },
         viewDidMount: (info) => {
             updateViewButtons(info.view.type);
-            renderMealSections(info.view);
         },
         editable: true,
         eventDrop: async (info) => {
@@ -175,7 +174,6 @@ function initializeCalendar() {
 
     calendar.render();
     updateViewButtons(calendar.view.type);
-    renderMealSections(calendar.view);
 }
 
 function updateViewButtons(viewName) {
@@ -186,114 +184,6 @@ function updateViewButtons(viewName) {
             button.classList.remove('active');
         }
     });
-}
-
-function renderMealSections(view) {
-    const container = document.getElementById('mealPlanSections');
-    if (!container) return;
-
-    const isSectionView = view.type === 'timeGridWeek' || view.type === 'timeGridDay';
-    container.classList.toggle('active', isSectionView);
-    document.body.classList.toggle('mealplan-sections-active', isSectionView);
-
-    if (!isSectionView) {
-        container.innerHTML = '';
-        return;
-    }
-
-    const start = new Date(view.activeStart);
-    const end = new Date(view.activeEnd);
-    const days = [];
-
-    for (let day = new Date(start); day < end; day.setDate(day.getDate() + 1)) {
-        days.push(new Date(day));
-    }
-
-    container.innerHTML = '';
-
-    days.forEach(dayDate => {
-        const dateStr = dayDate.toISOString().split('T')[0];
-        const dayMeals = mealPlans.filter(plan => plan.planned_date === dateStr);
-        const breakfast = dayMeals.find(plan => plan.meal_type === 'breakfast');
-        const lunch = dayMeals.find(plan => plan.meal_type === 'lunch');
-        const dinner = dayMeals.find(plan => plan.meal_type === 'dinner');
-        const snacks = dayMeals.filter(plan => plan.meal_type === 'snack');
-
-        const dayCard = document.createElement('div');
-        dayCard.className = 'meal-day-card';
-
-        dayCard.innerHTML = `
-            <div class="meal-day-header">
-                <div class="meal-day-title">${dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
-                <button class="btn btn-secondary" data-action="add-breakfast">+ Breakfast</button>
-            </div>
-            ${renderMealSection('Breakfast', breakfast, 'breakfast')}
-            ${renderSnackAddRow()}
-            ${renderMealSection('Lunch', lunch, 'lunch')}
-            ${renderSnackAddRow()}
-            ${renderMealSection('Dinner', dinner, 'dinner')}
-            ${renderSnackAddRow()}
-            ${renderSnackSection(snacks)}
-        `;
-
-        dayCard.querySelectorAll('[data-action="add-breakfast"]').forEach(button => {
-            button.addEventListener('click', () => openMealPlanModal(null, dateStr, 'breakfast'));
-        });
-
-        dayCard.querySelectorAll('[data-action="add-lunch"]').forEach(button => {
-            button.addEventListener('click', () => openMealPlanModal(null, dateStr, 'lunch'));
-        });
-
-        dayCard.querySelectorAll('[data-action="add-dinner"]').forEach(button => {
-            button.addEventListener('click', () => openMealPlanModal(null, dateStr, 'dinner'));
-        });
-
-        dayCard.querySelectorAll('[data-action="add-snack"]').forEach(button => {
-            button.addEventListener('click', () => openMealPlanModal(null, dateStr, 'snack'));
-        });
-
-        container.appendChild(dayCard);
-    });
-}
-
-function renderMealSection(label, meal, mealType) {
-    const mealContent = meal && meal.recipe
-        ? `<div>${meal.recipe.title}</div>`
-        : '<div class="meal-section-empty">No meal planned</div>';
-
-    return `
-        <div class="meal-section">
-            <div class="meal-section-header">
-                <span class="meal-section-title">${label}</span>
-                <button class="btn btn-secondary" data-action="add-${mealType}">+ Add</button>
-            </div>
-            ${mealContent}
-        </div>
-    `;
-}
-
-function renderSnackAddRow() {
-    return `
-        <div class="snack-add-row">
-            <button class="snack-add-btn" data-action="add-snack">+ Snack</button>
-        </div>
-    `;
-}
-
-function renderSnackSection(snacks) {
-    const snackItems = snacks.length
-        ? snacks.map(snack => `<div>${snack.recipe ? snack.recipe.title : 'Snack'}</div>`).join('')
-        : '<div class="meal-section-empty">No snacks yet</div>';
-
-    return `
-        <div class="meal-section">
-            <div class="meal-section-header">
-                <span class="meal-section-title">Snacks</span>
-                <button class="btn btn-secondary" data-action="add-snack">+ Add</button>
-            </div>
-            ${snackItems}
-        </div>
-    `;
 }
 
 function getMealTypeColor(mealType) {

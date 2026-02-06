@@ -214,15 +214,6 @@ function showApp() {
     handleSharedRecipeLink();
 }
 
-function setupResponsiveClass() {
-    const updateClass = () => {
-        const isMobile = window.matchMedia('(max-width: 768px)').matches;
-        document.body.classList.toggle('is-mobile', isMobile);
-    };
-    updateClass();
-    window.addEventListener('resize', updateClass);
-}
-
 function handleSharedRecipeLink() {
     const params = new URLSearchParams(window.location.search);
     const recipeId = params.get('recipe');
