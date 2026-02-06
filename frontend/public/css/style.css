@@ -405,11 +405,10 @@ body.is-mobile .page-header h1 {
 }
 
 .upcoming-card {
-    background-color: var(--surface);
+    background-color: var(--white);
     padding: 1.5rem;
     border-radius: 12px;
-    border: 2px solid var(--border);
-    box-shadow: 6px 6px 0 var(--border);
+    box-shadow: 0 4px 12px var(--shadow);
 }
 
 .upcoming-card-header {
@@ -806,6 +805,55 @@ body.is-mobile .page-header h1 {
     font-weight: 600;
 }
 
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.view-switcher {
+    display: inline-flex;
+    background: var(--light-cream);
+    border-radius: 999px;
+    padding: 0.3rem;
+    gap: 0.3rem;
+}
+
+.view-btn {
+    border: none;
+    background: transparent;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.view-btn.active {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.calendar-event {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.calendar-event-image {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.calendar-event-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
 .meal-slot {
     margin-bottom: 1.5rem;
 }
@@ -900,11 +948,10 @@ body.is-mobile .page-header h1 {
 }
 
 .social-card {
-    background: var(--surface);
+    background: var(--white);
     padding: 1.5rem;
     border-radius: 12px;
-    border: 2px solid var(--border);
-    box-shadow: 6px 6px 0 var(--border);
+    box-shadow: 0 4px 12px var(--shadow);
 }
 
 .social-list {
@@ -987,11 +1034,6 @@ body.is-mobile .page-header h1 {
 
     .dashboard-stats {
         grid-template-columns: 1fr;
-    }
-
-    .container {
-        padding: 1.5rem;
-        border-radius: 18px;
     }
 
     .calendar-controls {

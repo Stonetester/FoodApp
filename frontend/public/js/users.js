@@ -66,8 +66,16 @@ async function loadDiscoverRecipes() {
     const resultsContainer = document.getElementById('discoverResults');
     if (!resultsContainer) return;
     
-    const isFiltered = discoverFilters.search || (discoverFilters.tags && discoverFilters.tags.length > 0);
-    resultsContainer.innerHTML = `<p style="text-align: center;">${isFiltered ? 'Searching meals...' : 'Loading meals...'}</p>`;
+    if (!discoverFilters.search && (!discoverFilters.tags || discoverFilters.tags.length === 0)) {
+        resultsContainer.innerHTML = `
+            <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
+                Start with a search to see meals from the community.
+            </p>
+        `;
+        return;
+    }
+    
+    resultsContainer.innerHTML = '<p style="text-align: center;">Searching meals...</p>';
     
     try {
         const recipes = await api.discoverRecipes(discoverFilters);

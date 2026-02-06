@@ -1,14 +1,11 @@
 NOTES
 
-[x] When pulling recipe from an image, make an option pop up to take a picture or to select photo from device or storage
-[x] Make the barcode scanner be able to scan from further away and the bar code does not have to be right within the box on screen
-[x] When adding something to pantry by barcode, make sure the add button works on mobile and pc. After scanning the barcode and extracting the info about the item. The add to pantry button does not work 
-[x] Dashboard should show what meals are coming up in today and tomorrow. 
-[x] The dashboard should also allow you to click on recipes and go to the recipes. And do that for everything else on that page. 
-[x] Add a share option for the recipes to be able to share it and create QR code to the recipe in the app 
-[x] Make calendar look better on mobile. Give an option to look at one day vs one week vs one month in the view. On one day and one week add the image of the meal if there is one available next to the meal in the day 
-[x] There should be a social section where you can add friends and send friends required to others by username. 
-[x] There should be a search section to type in or filter through all the meal available in the data base. 
+Make the barcode scanner be able to scan from further away and the bar code does not have to be right within the box on screen. i want the barcode read as soon as the camera sees a barcode, even if it is further away
+Add a share option for the recipes to be able to share it vis link of the app or be able to choose to create QR code to the recipe in the app 
+Make calendar look better in month view, i want to be able to see the meals on that day in month view. fit full name or shorten name if absolutley needed
+make a rating system for the meals, when reviewing a meal, autoamically inlcude name of the user leaving the review, show stars on 1-5
+step by step on how to make this web app safe and secure and host it locally using cloudflare and how to set it up and commands to run. (system requirements too)
+
 
 
 
@@ -16,7 +13,22 @@ NOTES
 
 
 FUTURE
-
+Show a chef or a numebr of chefs hats to tell how hard or how long the meal takes
 feedback comment from people on meals
-Ownership of meals or who added them
 Better parsing of screen shots and URL for thing such as gluten free and servicing and allergies and more 
+Make a pantry tracking system that tells you how much of an ingredient you have left after making a meal that needs it. have math happen to calc how much of the ingredient you have left, on the dashboard, have a eciton for reminders to buy more of the ingredients need for coming up meal for next grocery run
+
+
+
+
+
+DONE/COMPLETED
+
+ When pulling recipe from an image, make an option pop up to take a picture or to select photo from device or storage
+When adding something to pantry by barcode, make sure the add button works on mobile and pc. After scanning the barcode and extracting the info about the item. The add to pantry button does not work 
+Dashboard should show what meals are coming up in today and tomorrow. 
+The dashboard should also allow you to click on recipes and go to the recipes. And do that for everything else on that page. 
+There should be a social section where you can add friends and send friends required to others by username. 
+There should be a search section to type in or filter through all the meal available in the data base. 
+Ownership of meals or who added them
+
