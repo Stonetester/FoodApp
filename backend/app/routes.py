@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, send_from_directory, send_file
 from flask_login import login_required, current_user
-from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User
+from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship
 from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image
 from datetime import datetime, date
 from collections import Counter
@@ -231,7 +231,7 @@ def delete_recipe(recipe_id):
 @login_required
 def get_recipe_qr(recipe_id):
     """Generate QR code for a recipe"""
-    recipe = Recipe.query.filter_by(id=recipe_id, user_id=current_user.id).first()
+    recipe = Recipe.query.get(recipe_id)
     
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
@@ -590,6 +590,57 @@ def search_users():
     
     return jsonify(result), 200
 
+# ==================== PUBLIC RECIPE DISCOVERY ====================
+@api_bp.route('/recipes/discover', methods=['GET'])
+@login_required
+def discover_recipes():
+    """Search recipes across all users"""
+    search = request.args.get('search', '').strip()
+    tags = request.args.getlist('tags')
+    
+    query = Recipe.query.join(User, Recipe.user_id == User.id)
+    
+    if search:
+        query = query.filter(
+            Recipe.title.ilike(f"%{search}%") |
+            Recipe.description.ilike(f"%{search}%")
+        )
+    
+    if tags:
+        query = query.join(RecipeTag).filter(RecipeTag.tag.in_(tags))
+    
+    recipes = query.order_by(Recipe.created_at.desc()).all()
+    
+    results = []
+    for recipe in recipes:
+        recipe_dict = recipe.to_dict()
+        recipe_dict['owner'] = {
+            'id': recipe.user_id,
+            'username': recipe.user.username
+        }
+        recipe_dict['is_owner'] = recipe.user_id == current_user.id
+        results.append(recipe_dict)
+    
+    return jsonify(results), 200
+
+@api_bp.route('/recipes/discover/<int:recipe_id>', methods=['GET'])
+@login_required
+def get_discover_recipe(recipe_id):
+    """Get a single recipe from any user (for discovery view)"""
+    recipe = Recipe.query.get(recipe_id)
+    
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+    
+    recipe_dict = recipe.to_dict()
+    recipe_dict['owner'] = {
+        'id': recipe.user_id,
+        'username': recipe.user.username
+    }
+    recipe_dict['is_owner'] = recipe.user_id == current_user.id
+    
+    return jsonify(recipe_dict), 200
+
 
 @api_bp.route('/users/<int:user_id>/recipes', methods=['GET'])
 @login_required
@@ -642,6 +693,155 @@ def get_user_recipes(user_id):
         result.append(recipe_dict)
     
     return jsonify(result), 200
+
+# ==================== FRIENDS & SOCIAL ====================
+@api_bp.route('/friends', methods=['GET'])
+@login_required
+def get_friends():
+    """Get current user's friends list"""
+    friendships = Friendship.query.filter_by(user_id=current_user.id).all()
+    friend_ids = [friendship.friend_id for friendship in friendships]
+    friends = User.query.filter(User.id.in_(friend_ids)).all() if friend_ids else []
+    
+    return jsonify([
+        {
+            'id': friend.id,
+            'username': friend.username,
+            'email': friend.email,
+            'created_at': friend.created_at.isoformat() if friend.created_at else None
+        }
+        for friend in friends
+    ]), 200
+
+@api_bp.route('/friends/requests', methods=['GET'])
+@login_required
+def get_friend_requests():
+    """Get incoming and outgoing friend requests"""
+    incoming = FriendRequest.query.filter_by(recipient_id=current_user.id, status='pending').all()
+    outgoing = FriendRequest.query.filter_by(requester_id=current_user.id, status='pending').all()
+    
+    return jsonify({
+        'incoming': [
+            {
+                'id': req.id,
+                'user': {
+                    'id': req.requester.id,
+                    'username': req.requester.username
+                },
+                'created_at': req.created_at.isoformat() if req.created_at else None
+            }
+            for req in incoming
+        ],
+        'outgoing': [
+            {
+                'id': req.id,
+                'user': {
+                    'id': req.recipient.id,
+                    'username': req.recipient.username
+                },
+                'created_at': req.created_at.isoformat() if req.created_at else None
+            }
+            for req in outgoing
+        ]
+    }), 200
+
+@api_bp.route('/friends/request', methods=['POST'])
+@login_required
+def send_friend_request():
+    """Send a friend request by username"""
+    data = request.get_json() or {}
+    username = (data.get('username') or '').strip()
+    
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+    
+    if username == current_user.username:
+        return jsonify({'error': 'You cannot add yourself as a friend'}), 400
+    
+    recipient = User.query.filter_by(username=username).first()
+    if not recipient:
+        return jsonify({'error': 'User not found'}), 404
+    
+    existing_friendship = Friendship.query.filter_by(user_id=current_user.id, friend_id=recipient.id).first()
+    if existing_friendship:
+        return jsonify({'error': 'You are already friends'}), 400
+    
+    existing_request = FriendRequest.query.filter_by(
+        requester_id=current_user.id,
+        recipient_id=recipient.id,
+        status='pending'
+    ).first()
+    if existing_request:
+        return jsonify({'error': 'Friend request already sent'}), 400
+    
+    reverse_request = FriendRequest.query.filter_by(
+        requester_id=recipient.id,
+        recipient_id=current_user.id,
+        status='pending'
+    ).first()
+    if reverse_request:
+        return jsonify({'error': 'This user already sent you a request'}), 400
+    
+    friend_request = FriendRequest(
+        requester_id=current_user.id,
+        recipient_id=recipient.id,
+        status='pending'
+    )
+    
+    db.session.add(friend_request)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Friend request sent',
+        'request_id': friend_request.id
+    }), 201
+
+@api_bp.route('/friends/respond', methods=['POST'])
+@login_required
+def respond_to_friend_request():
+    """Accept or decline a friend request"""
+    data = request.get_json() or {}
+    request_id = data.get('request_id')
+    action = (data.get('action') or '').strip().lower()
+    
+    if not request_id or action not in {'accept', 'decline'}:
+        return jsonify({'error': 'Request ID and valid action are required'}), 400
+    
+    friend_request = FriendRequest.query.filter_by(id=request_id, recipient_id=current_user.id).first()
+    if not friend_request or friend_request.status != 'pending':
+        return jsonify({'error': 'Friend request not found'}), 404
+    
+    if action == 'decline':
+        friend_request.status = 'declined'
+        db.session.commit()
+        return jsonify({'message': 'Friend request declined'}), 200
+    
+    friend_request.status = 'accepted'
+    
+    friendships = [
+        Friendship(user_id=friend_request.requester_id, friend_id=friend_request.recipient_id),
+        Friendship(user_id=friend_request.recipient_id, friend_id=friend_request.requester_id)
+    ]
+    
+    for friendship in friendships:
+        existing = Friendship.query.filter_by(user_id=friendship.user_id, friend_id=friendship.friend_id).first()
+        if not existing:
+            db.session.add(friendship)
+    
+    db.session.commit()
+    
+    return jsonify({'message': 'Friend request accepted'}), 200
+
+@api_bp.route('/friends/<int:friend_id>', methods=['DELETE'])
+@login_required
+def remove_friend(friend_id):
+    """Remove a friend connection"""
+    Friendship.query.filter_by(user_id=current_user.id, friend_id=friend_id).delete()
+    Friendship.query.filter_by(user_id=friend_id, friend_id=current_user.id).delete()
+    
+    db.session.commit()
+    
+    return jsonify({'message': 'Friend removed'}), 200
 
 
 @api_bp.route('/users/<int:user_id>', methods=['GET'])
@@ -796,5 +996,3 @@ def get_recipe_ratings(recipe_id):
         },
         'ratings': ratings_list
     }), 200
-
-
