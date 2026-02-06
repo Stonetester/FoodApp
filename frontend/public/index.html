@@ -28,6 +28,7 @@
                     <a href="#" class="nav-link" data-page="dashboard">Dashboard</a>
                     <a href="#" class="nav-link" data-page="recipes">Recipes</a>
                     <a href="#" class="nav-link" data-page="userSearch">🔍 Find Recipes</a>
+                    <a href="#" class="nav-link" data-page="social">🤝 Social</a>
                     <a href="#" class="nav-link" data-page="pantry">Pantry</a>
                     <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link" data-page="history">History</a>
@@ -86,17 +87,43 @@
             <div class="container">
                 <h1>Dashboard</h1>
                 <div class="dashboard-stats">
-                    <div class="stat-card">
+                    <div class="stat-card" data-page="recipes">
                         <h3 id="recipeCount">0</h3>
                         <p>Recipes</p>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" data-page="pantry">
                         <h3 id="pantryCount">0</h3>
                         <p>Pantry Items</p>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" data-page="mealplan">
                         <h3 id="mealPlanCount">0</h3>
                         <p>Planned Meals</p>
+                    </div>
+                </div>
+                <div class="upcoming-section">
+                    <div class="section-header">
+                        <h2>Upcoming Meals</h2>
+                        <button class="btn btn-secondary" id="viewMealPlanBtn">View Meal Plan</button>
+                    </div>
+                    <div class="upcoming-grid">
+                        <div class="upcoming-card">
+                            <div class="upcoming-card-header">
+                                <h3>Today</h3>
+                                <button class="btn-link" data-day="today">Open Day View</button>
+                            </div>
+                            <div id="upcomingMealsToday" class="upcoming-meals-list">
+                                <p class="empty-state">No meals planned for today yet.</p>
+                            </div>
+                        </div>
+                        <div class="upcoming-card">
+                            <div class="upcoming-card-header">
+                                <h3>Tomorrow</h3>
+                                <button class="btn-link" data-day="tomorrow">Open Day View</button>
+                            </div>
+                            <div id="upcomingMealsTomorrow" class="upcoming-meals-list">
+                                <p class="empty-state">No meals planned for tomorrow yet.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="recent-section">
@@ -279,6 +306,14 @@
                     <h1>Meal Planning</h1>
                     <button class="btn btn-primary" id="addMealPlanBtn">+ Add Meal</button>
                 </div>
+                <div class="calendar-controls">
+                    <div class="view-switcher" id="calendarViewSwitcher">
+                        <button class="view-btn" data-view="dayGridMonth">Month</button>
+                        <button class="view-btn" data-view="timeGridWeek">Week</button>
+                        <button class="view-btn" data-view="timeGridDay">Day</button>
+                    </div>
+                    <button class="btn btn-secondary" id="calendarTodayBtn">Today</button>
+                </div>
                 <div id="mealPlanCalendar"></div>
             </div>
         </div>
@@ -350,7 +385,40 @@
             <div class="container">
                 <div class="page-header">
                     <h1>🔍 Discover Recipes</h1>
-                    <p>Find recipes from other users</p>
+                    <p>Search all recipes and find other users to follow.</p>
+                </div>
+
+                <div class="discover-section">
+                    <div class="section-header">
+                        <h2>Search all meals</h2>
+                        <p>Use keywords or filters to browse recipes from everyone.</p>
+                    </div>
+                    <div class="filters">
+                        <input type="text" id="discoverSearchInput" placeholder="Search meals by name or description..." class="search-input">
+                        <div class="tag-filters" id="discoverTagFilters">
+                            <label class="filter-tag">
+                                <input type="checkbox" value="gluten-free"> Gluten Free
+                            </label>
+                            <label class="filter-tag">
+                                <input type="checkbox" value="vegan"> Vegan
+                            </label>
+                            <label class="filter-tag">
+                                <input type="checkbox" value="dairy-free"> Dairy Free
+                            </label>
+                            <label class="filter-tag">
+                                <input type="checkbox" value="nut-free"> Nut Free
+                            </label>
+                            <label class="filter-tag">
+                                <input type="checkbox" value="vegetarian"> Vegetarian
+                            </label>
+                        </div>
+                        <button class="btn btn-primary" id="discoverSearchBtn">Search Meals</button>
+                    </div>
+                    <div id="discoverResults" class="recipe-grid">
+                        <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
+                            Start with a search to see meals from the community.
+                        </p>
+                    </div>
                 </div>
                 
                 <div class="search-section">
@@ -375,6 +443,46 @@
                         <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
                             Start typing to search for users and discover their recipes!
                         </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Page -->
+        <div id="socialPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>🤝 Social</h1>
+                    <p>Connect with friends and share recipes.</p>
+                </div>
+
+                <div class="social-grid">
+                    <div class="social-card">
+                        <h2>Add a friend</h2>
+                        <p>Send a friend request by username.</p>
+                        <div class="search-input-group">
+                            <input type="text" id="friendUsernameInput" class="search-input" placeholder="Enter username...">
+                            <button class="btn btn-primary" id="sendFriendRequestBtn">Send Request</button>
+                        </div>
+                        <div id="friendRequestStatus" class="status-message"></div>
+                    </div>
+                    <div class="social-card">
+                        <h2>Incoming requests</h2>
+                        <div id="incomingRequests" class="social-list">
+                            <p class="empty-state">No pending requests.</p>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <h2>Outgoing requests</h2>
+                        <div id="outgoingRequests" class="social-list">
+                            <p class="empty-state">No outgoing requests.</p>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <h2>Your friends</h2>
+                        <div id="friendsList" class="social-list">
+                            <p class="empty-state">No friends added yet.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -479,9 +587,14 @@
                 <h2>Import Recipe from Image</h2>
                 <form id="importImageForm">
                     <div class="form-group">
-                        <label for="recipeImage">Upload Recipe Image</label>
-                        <input type="file" id="recipeImage" accept="image/*" capture="environment" required>
-                        <small>Upload a screenshot or photo of a recipe. The app will extract text using OCR. On mobile, you can take a photo directly.</small>
+                        <label>Choose image source</label>
+                        <div class="image-source-buttons">
+                            <button type="button" class="btn btn-secondary" id="takePhotoBtn">📷 Take Photo</button>
+                            <button type="button" class="btn btn-secondary" id="choosePhotoBtn">🖼️ Choose from Device</button>
+                        </div>
+                        <input type="file" id="recipeImageCamera" accept="image/*" capture="environment" hidden>
+                        <input type="file" id="recipeImageLibrary" accept="image/*" hidden>
+                        <small>Select a photo or take a new one. The app will extract text using OCR.</small>
                     </div>
                     <div id="imagePreview" style="margin: 1rem 0; text-align: center;"></div>
                     <div class="modal-actions">
@@ -516,6 +629,7 @@
     <script src="/js/scanner.js"></script>
     <script src="/js/mealplan.js"></script>
     <script src="/js/history.js"></script>
+    <script src="/js/social.js"></script>
     
     <!-- Fallback: Ensure login page is visible if JS fails -->
     <script>
@@ -536,5 +650,3 @@
     </script>
 </body>
 </html>
-
-
