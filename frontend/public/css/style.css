@@ -1,19 +1,19 @@
 /* Cosy Cottage Theme - Warm, Rustic, Homey */
 
 :root {
-    --primary: #8B5A2B;
-    --secondary: #6F7A4F;
+    --primary: #7A4D2B;
+    --secondary: #6E7A44;
     --accent: #E07B2C;
-    --highlight: #F2B24A;
-    --danger: #B2482B;
-    --background: #F6F1D3;
-    --surface: #FFF7E2;
-    --text: #2B1B10;
-    --success: #6F7A4F;
-    --shadow: rgba(43, 27, 16, 0.18);
-    --white: #FFFFFF;
-    --light-cream: #FFF1D6;
-    --border: #2B1B10;
+    --highlight: #F1B44A;
+    --danger: #B34E2D;
+    --background: #F7F1D5;
+    --surface: #F1E4C5;
+    --text: #3A2415;
+    --success: #6E7A44;
+    --shadow: rgba(58, 36, 21, 0.18);
+    --white: #F7F1D5;
+    --light-cream: #F8EAC8;
+    --border: #3A2415;
 }
 
 * {
@@ -115,16 +115,16 @@ body::before {
     overflow-y: auto;
     position: fixed;
     top: 72px;
-    left: -280px;
+    right: -280px;
     height: calc(100vh - 72px);
     padding: 1.5rem 1rem;
     background-color: var(--primary);
-    transition: left 0.3s;
-    box-shadow: 6px 6px 0 var(--border);
+    transition: right 0.3s;
+    box-shadow: -6px 6px 0 var(--border);
 }
 
 .nav-menu.active {
-    left: 0;
+    right: 0;
 }
 
 .nav-link {
@@ -143,7 +143,7 @@ body::before {
 .nav-link:hover {
     background-color: var(--accent);
     color: var(--text);
-    transform: translateX(4px);
+    transform: translateX(-4px);
     box-shadow: 4px 4px 0 var(--border);
     border-color: var(--border);
 }
@@ -579,7 +579,7 @@ body.is-mobile .page-header h1 {
 
 .recipe-tag {
     background-color: var(--secondary);
-    color: var(--white);
+    color: var(--background);
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -593,16 +593,20 @@ body.is-mobile .page-header h1 {
 
 .btn-icon {
     padding: 0.5rem;
-    background: none;
-    border: none;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 10px;
     cursor: pointer;
     font-size: 1rem;
     color: var(--primary);
-    transition: color 0.3s;
+    transition: color 0.3s, transform 0.2s, box-shadow 0.2s;
 }
 
 .btn-icon:hover {
-    color: var(--secondary);
+    color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 3px 3px 0 var(--border);
+    background: var(--highlight);
 }
 
 .btn-icon svg {
@@ -813,6 +817,7 @@ body.is-mobile .page-header h1 {
     align-items: center;
     gap: 1rem;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
 }
 
 .view-switcher {
@@ -838,10 +843,144 @@ body.is-mobile .page-header h1 {
     color: var(--white);
 }
 
+.calendar-nav {
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+.meal-plan-sections {
+    display: none;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.meal-day-card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    box-shadow: 6px 6px 0 var(--border);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.meal-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.meal-day-header-actions {
+    display: inline-flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.meal-day-header h3 {
+    margin-bottom: 0.1rem;
+    color: var(--primary);
+}
+
+.meal-day-header p {
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.meal-day-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.meal-section,
+.snack-section {
+    background: var(--light-cream);
+    border-radius: 12px;
+    padding: 0.75rem;
+    border: 2px solid var(--border);
+}
+
+.snack-section {
+    background: var(--background);
+    border-color: var(--accent);
+}
+
+.snacks-collapsed .snack-section {
+    display: none;
+}
+
+.meal-section-header,
+.snack-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.meal-section-item,
+.snack-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-top: 1px dashed var(--border);
+}
+
+.meal-section-icon {
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.meal-section-item:first-child,
+.snack-item:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+.meal-section-item p {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.meal-section-image,
+.snack-image {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+}
+
+.meal-section-details {
+    flex: 1;
+}
+
+.meal-section-actions {
+    display: inline-flex;
+    gap: 0.4rem;
+}
+
+.meal-empty {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
 .calendar-event {
     display: flex;
     align-items: center;
     gap: 0.4rem;
+}
+
+.calendar-event-icon {
+    font-size: 0.9rem;
 }
 
 .calendar-event-image {
@@ -854,6 +993,19 @@ body.is-mobile .page-header h1 {
 .calendar-event-title {
     font-size: 0.85rem;
     font-weight: 600;
+}
+
+.fc-daygrid-event .calendar-event {
+    width: 100%;
+}
+
+.fc-daygrid-event .calendar-event-title {
+    display: inline-block;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
 }
 
 .calendar-controls {
@@ -1005,6 +1157,41 @@ body.is-mobile .page-header h1 {
     box-shadow: 0 4px 12px var(--shadow);
 }
 
+.friend-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.friend-search-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    background: var(--light-cream);
+    border: 2px solid var(--border);
+}
+
+.friend-search-item span {
+    font-weight: 600;
+}
+
+.recipe-photo-preview {
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.recipe-photo-preview img {
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+
 .social-list {
     display: flex;
     flex-direction: column;
@@ -1149,6 +1336,16 @@ body.is-mobile .page-header h1 {
     display: flex;
     gap: 1rem;
     align-items: center;
+}
+
+.friend-search-group {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.friend-search-input {
+    font-size: 1.2rem;
+    padding: 1.1rem;
 }
 
 .search-input-group .search-input {
