@@ -21,17 +21,24 @@
         <nav class="navbar" id="navbar">
             <div class="nav-container">
                 <div class="nav-logo">
-                    <span class="logo-icon">🏠</span>
-                    <span class="logo-text">Modo Gusto</span>
+                    <span class="logo-icon" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" role="img" focusable="false">
+                            <path d="M8 22L24 10l16 12v16H30V28h-12v10H8z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span class="logo-text">
+                        <span class="logo-title">Modo Gusto</span>
+                        <span class="nav-motto">meal prepping with passion</span>
+                    </span>
                 </div>
                 <div class="nav-top-links">
-                    <a href="#" class="nav-link nav-link-inline" data-page="recipes">Recipes</a>
+                    <a href="#" class="nav-link nav-link-inline" data-page="recipes" id="recipesNavBtn">Your Recipes</a>
                     <a href="#" class="nav-link nav-link-inline" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link nav-link-inline" data-page="pantry">Pantry</a>
                 </div>
                 <div class="nav-menu" id="navMenu">
                     <a href="#" class="nav-link" data-page="dashboard">Dashboard</a>
-                    <a href="#" class="nav-link" data-page="recipes">Recipes</a>
+                    <a href="#" class="nav-link" data-page="recipes" id="recipesMenuBtn">Your Recipes</a>
                     <a href="#" class="nav-link" data-page="userSearch">🔍 Find Recipes</a>
                     <a href="#" class="nav-link" data-page="social">🤝 Social</a>
                     <a href="#" class="nav-link" data-page="pantry">Pantry</a>
@@ -142,7 +149,7 @@
         <div id="recipesPage" class="page">
             <div class="container">
                 <div class="page-header">
-                    <h1>Recipes</h1>
+                    <h1 id="recipesTitle">Your Recipes</h1>
                     <div class="header-actions">
                         <button class="btn btn-secondary" id="importUrlBtn">📥 Import from URL</button>
                         <button class="btn btn-secondary" id="importImageBtn">📷 Import from Image</button>
@@ -235,6 +242,18 @@
                         <label for="recipeImageUrl">Image URL</label>
                         <input type="url" id="recipeImageUrl">
                     </div>
+                    <div class="form-group">
+                        <label>Meal Photo</label>
+                        <div class="image-source-buttons">
+                            <button type="button" class="btn btn-secondary" id="captureRecipePhotoBtn">📸 Take Photo</button>
+                            <button type="button" class="btn btn-secondary" id="uploadRecipePhotoBtn">🖼️ Choose Photo</button>
+                        </div>
+                        <input type="file" id="recipePhotoCamera" accept="image/*" capture="environment" hidden>
+                        <input type="file" id="recipePhotoLibrary" accept="image/*" hidden>
+                        <div class="recipe-photo-preview">
+                            <img id="recipePhotoPreview" alt="Recipe preview" hidden>
+                        </div>
+                    </div>
                     <div class="modal-actions">
                         <button type="submit" class="btn btn-primary">Save Recipe</button>
                         <button type="button" class="btn btn-secondary" id="cancelRecipeBtn">Cancel</button>
@@ -314,8 +333,8 @@
                 <div class="calendar-controls">
                     <div class="view-switcher" id="calendarViewSwitcher">
                         <button class="view-btn" data-view="dayGridMonth">Month</button>
-                        <button class="view-btn" data-view="timeGridWeek">Week</button>
-                        <button class="view-btn" data-view="timeGridDay">Day</button>
+                        <button class="view-btn" data-view="dayGridWeek">Week</button>
+                        <button class="view-btn" data-view="mealDay">Day</button>
                     </div>
                     <button class="btn btn-secondary" id="calendarTodayBtn">Today</button>
                 </div>
@@ -422,7 +441,7 @@
                     </div>
                     <div id="discoverResults" class="recipe-grid">
                         <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
-                            Start with a search to see meals from the community.
+                            Loading all meals from the community...
                         </p>
                     </div>
                 </div>
@@ -466,10 +485,11 @@
                     <div class="social-card">
                         <h2>Add a friend</h2>
                         <p>Send a friend request by username.</p>
-                        <div class="search-input-group">
-                            <input type="text" id="friendUsernameInput" class="search-input" placeholder="Enter username...">
-                            <button class="btn btn-primary" id="sendFriendRequestBtn">Send Request</button>
+                        <div class="search-input-group friend-search-group">
+                            <input type="text" id="friendUsernameInput" class="search-input friend-search-input" placeholder="Enter username...">
+                            <button class="btn btn-primary" id="sendFriendRequestBtn" onclick="sendFriendRequest()">Send Request</button>
                         </div>
+                        <div id="friendSearchResults" class="friend-search-results"></div>
                         <div id="friendRequestStatus" class="status-message"></div>
                     </div>
                     <div class="social-card">
