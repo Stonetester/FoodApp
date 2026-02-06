@@ -955,6 +955,19 @@ body.is-mobile .page-header h1 {
     font-weight: 600;
 }
 
+.fc-daygrid-event .calendar-event {
+    width: 100%;
+}
+
+.fc-daygrid-event .calendar-event-title {
+    display: inline-block;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
 .calendar-controls {
     display: flex;
     justify-content: space-between;
@@ -1102,6 +1115,27 @@ body.is-mobile .page-header h1 {
     padding: 1.5rem;
     border-radius: 12px;
     box-shadow: 0 4px 12px var(--shadow);
+}
+
+.friend-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.friend-search-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    background: var(--light-cream);
+    border: 2px solid var(--border);
+}
+
+.friend-search-item span {
+    font-weight: 600;
 }
 
 .social-list {
