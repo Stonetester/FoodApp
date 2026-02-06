@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let friendSearchTimeout = null;
-let socialPollInterval = null;
 
 function setupSocialListeners() {
     const sendBtn = document.getElementById('sendFriendRequestBtn');
@@ -27,7 +26,7 @@ function setupSocialListeners() {
             status.classList.remove('status-error');
             
             try {
-                await sendFriendRequestSafe(username);
+                await sendFriendRequest(username);
                 status.textContent = `Friend request sent to ${username}.`;
                 status.classList.remove('status-error');
                 input.value = '';
@@ -50,49 +49,6 @@ function setupSocialListeners() {
                 loadFriendSearchResults(query);
             }, 250);
         });
-    }
-}
-
-function startSocialPolling() {
-    if (socialPollInterval) {
-        return;
-    }
-    const socialPage = document.getElementById('socialPage');
-    if (socialPage && socialPage.classList.contains('active')) {
-        loadSocialData();
-    }
-    socialPollInterval = setInterval(() => {
-        const activePage = document.getElementById('socialPage');
-        if (activePage && activePage.classList.contains('active')) {
-            loadSocialData();
-        }
-    }, 10000);
-}
-
-async function sendFriendRequestSafe(username) {
-    try {
-        return await api.sendFriendRequest(username);
-    } catch (error) {
-        const fallback = await fetch('/api/friends/request', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ username })
-        });
-
-        const contentType = fallback.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-            const data = await fallback.json();
-            if (!fallback.ok) {
-                throw new Error(data.error || 'Failed to send request.');
-            }
-            return data;
-        }
-
-        const text = await fallback.text();
-        throw new Error(text || error.message || 'Server returned invalid response.');
     }
 }
 
@@ -199,7 +155,6 @@ async function removeFriend(friendId) {
 }
 
 window.loadSocialData = loadSocialData;
-window.sendFriendRequest = sendFriendRequestSafe;
 
 async function loadFriendSearchResults(query) {
     const resultsContainer = document.getElementById('friendSearchResults');
