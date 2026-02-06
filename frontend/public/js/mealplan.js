@@ -28,6 +28,25 @@ function setupMealPlanListeners() {
     document.getElementById('closeDayDetailBtn')?.addEventListener('click', () => {
         document.getElementById('dayDetailModal').classList.remove('active');
     });
+
+    // Calendar view switcher
+    document.querySelectorAll('.view-switcher .view-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            if (!calendar) return;
+            const viewName = button.dataset.view;
+            calendar.changeView(viewName);
+            updateViewButtons(viewName);
+        });
+    });
+
+    const calendarTodayBtn = document.getElementById('calendarTodayBtn');
+    if (calendarTodayBtn) {
+        calendarTodayBtn.addEventListener('click', () => {
+            if (calendar) {
+                calendar.today();
+            }
+        });
+    }
 }
 
 async function loadMealPlan() {
@@ -92,14 +111,34 @@ function initializeCalendar() {
         };
     });
 
+    const isMobile = window.innerWidth < 768;
+
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        headerToolbar: {
+        headerToolbar: isMobile ? {
+            left: 'prev,next',
+            center: 'title',
+            right: ''
+        } : {
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
         events: events,
+        eventContent: (info) => {
+            const viewType = info.view.type;
+            const recipe = info.event.extendedProps.recipe;
+            const showImage = (viewType === 'timeGridWeek' || viewType === 'timeGridDay') && recipe && recipe.image_url;
+            const title = info.event.title;
+            return {
+                html: `
+                    <div class="calendar-event">
+                        ${showImage ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="calendar-event-image" onerror="this.style.display='none'">` : ''}
+                        <span class="calendar-event-title">${title}</span>
+                    </div>
+                `
+            };
+        },
         eventClick: (info) => {
             viewMealPlan(info.event.id);
         },
@@ -124,6 +163,9 @@ function initializeCalendar() {
             }
             return { html: dayNumber };
         },
+        viewDidMount: (info) => {
+            updateViewButtons(info.view.type);
+        },
         editable: true,
         eventDrop: async (info) => {
             await updateMealPlanDate(info.event.id, info.event.startStr);
@@ -131,6 +173,17 @@ function initializeCalendar() {
     });
 
     calendar.render();
+    updateViewButtons(calendar.view.type);
+}
+
+function updateViewButtons(viewName) {
+    document.querySelectorAll('.view-switcher .view-btn').forEach(button => {
+        if (button.dataset.view === viewName) {
+            button.classList.add('active');
+        } else {
+            button.classList.remove('active');
+        }
+    });
 }
 
 function getMealTypeColor(mealType) {
@@ -394,4 +447,3 @@ window.quickAddRecipe = quickAddRecipe;
 window.editMealPlanFromDay = editMealPlanFromDay;
 window.deleteMealPlanFromDay = deleteMealPlanFromDay;
 window.showDayDetail = showDayDetail;
-

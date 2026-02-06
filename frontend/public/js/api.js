@@ -83,6 +83,20 @@ class ApiService {
         return this.request(`/api/recipes${query ? '?' + query : ''}`);
     }
 
+    async discoverRecipes(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.search) params.append('search', filters.search);
+        if (filters.tags) {
+            filters.tags.forEach(tag => params.append('tags', tag));
+        }
+        const query = params.toString();
+        return this.request(`/api/recipes/discover${query ? '?' + query : ''}`);
+    }
+
+    async getDiscoverRecipe(id) {
+        return this.request(`/api/recipes/discover/${id}`);
+    }
+
     async getRecipe(id) {
         return this.request(`/api/recipes/${id}`);
     }
@@ -201,7 +215,35 @@ class ApiService {
             body: JSON.stringify(meal),
         });
     }
+
+    // Friends & Social
+    async getFriends() {
+        return this.request('/api/friends');
+    }
+
+    async getFriendRequests() {
+        return this.request('/api/friends/requests');
+    }
+
+    async sendFriendRequest(username) {
+        return this.request('/api/friends/request', {
+            method: 'POST',
+            body: JSON.stringify({ username })
+        });
+    }
+
+    async respondToFriendRequest(requestId, action) {
+        return this.request('/api/friends/respond', {
+            method: 'POST',
+            body: JSON.stringify({ request_id: requestId, action })
+        });
+    }
+
+    async removeFriend(friendId) {
+        return this.request(`/api/friends/${friendId}`, {
+            method: 'DELETE'
+        });
+    }
 }
 
 const api = new ApiService();
-
