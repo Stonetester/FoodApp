@@ -2,6 +2,7 @@
 
 let html5QrCode = null;
 let scannerActive = false;
+let lastScannedProduct = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     setupScannerListeners();
@@ -64,16 +65,24 @@ function startScanner() {
             
             // Enhanced config for better barcode detection
             const config = {
-                fps: 10,
+                fps: 12,
                 qrbox: function(viewfinderWidth, viewfinderHeight) {
                     let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-                    let qrboxSize = Math.floor(minEdgeSize * 0.7);
+                    let qrboxSize = Math.floor(minEdgeSize * 0.9);
                     return {
                         width: qrboxSize,
-                        height: Math.floor(qrboxSize * 0.6)  // Wider box for barcodes
+                        height: Math.floor(qrboxSize * 0.45)  // Wider box for barcodes
                     };
                 },
                 aspectRatio: 1.777778,
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                },
+                videoConstraints: {
+                    facingMode: "environment",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
                 // Specify barcode formats to improve detection
                 formatsToSupport: [
                     Html5QrcodeSupportedFormats.UPC_A,
@@ -96,7 +105,7 @@ function startScanner() {
                 onScanError
             ).then(() => {
                 scannerActive = true;
-                resultDiv.innerHTML = '<p style="text-align: center; color: var(--primary); font-weight: bold;">📷 Point camera at barcode...<br><small>Hold steady for best results</small></p>';
+                resultDiv.innerHTML = '<p style="text-align: center; color: var(--primary); font-weight: bold;">📷 Point camera at barcode...<br><small>No need to keep it inside the box — just keep it visible.</small></p>';
                 console.log('Scanner started successfully with back camera');
             }).catch(err => {
                 console.error('Error starting scanner with back camera:', err);
@@ -193,6 +202,13 @@ async function lookupAndAddProduct(barcode) {
             return;
         }
         
+        // Store product info for add action
+        lastScannedProduct = {
+            barcode,
+            name: data.name,
+            nutritionalInfo: data.nutritional_info
+        };
+
         // Show product info
         resultDiv.innerHTML = `
             <div style="text-align: center;">
@@ -219,18 +235,32 @@ async function lookupAndAddProduct(barcode) {
                 </div>
                 
                 <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: center;">
-                    <button class="btn btn-primary" onclick="addScannedProduct('${barcode}', '${escapeHtml(data.name)}', ${JSON.stringify(data.nutritional_info)})">
+                    <button class="btn btn-primary" data-action="add-pantry">
                         Add to Pantry
                     </button>
-                    <button class="btn btn-secondary" onclick="initScanner()">
+                    <button class="btn btn-secondary" data-action="scan-again">
                         Scan Another
                     </button>
-                    <button class="btn btn-secondary" onclick="closeScanner()">
+                    <button class="btn btn-secondary" data-action="close-scanner">
                         Close
                     </button>
                 </div>
             </div>
         `;
+
+        const addButton = resultDiv.querySelector('[data-action="add-pantry"]');
+        const scanAgainButton = resultDiv.querySelector('[data-action="scan-again"]');
+        const closeButton = resultDiv.querySelector('[data-action="close-scanner"]');
+
+        if (addButton) {
+            addButton.addEventListener('click', () => {
+                if (lastScannedProduct) {
+                    addScannedProduct(lastScannedProduct.barcode, lastScannedProduct.name, lastScannedProduct.nutritionalInfo);
+                }
+            });
+        }
+        scanAgainButton?.addEventListener('click', () => initScanner());
+        closeButton?.addEventListener('click', () => closeScanner());
         
     } catch (error) {
         console.error('Error looking up barcode:', error);
@@ -311,12 +341,6 @@ function closeScanner() {
     if (modal) {
         modal.classList.remove('active');
     }
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 // Export functions for use in other scripts

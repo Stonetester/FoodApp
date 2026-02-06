@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosy Cottage Food App</title>
-    <meta name="description" content="Manage recipes, pantry, and meal planning with a cozy cottage feel">
-    <meta name="theme-color" content="#8B7355">
+    <title>Modo Gusto</title>
+    <meta name="description" content="Manage recipes, pantry, and meal planning with a retro vibe">
+    <meta name="theme-color" content="#8B5A2B">
     <!-- Favicon and app icons for mobile home screen -->
-    <link rel="icon" type="image/png" href="/images/favicon.png">
-    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="/images/app-icon.svg">
+    <link rel="apple-touch-icon" href="/images/app-icon.svg">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css">
@@ -22,16 +22,62 @@
             <div class="nav-container">
                 <div class="nav-logo">
                     <span class="logo-icon">🏠</span>
-                    <span class="logo-text">Cosy Cottage</span>
+                    <span class="logo-text">Modo Gusto</span>
+                </div>
+                <div class="nav-top-links">
+                    <a href="#" class="nav-link nav-link-inline" data-page="recipes">Recipes</a>
+                    <a href="#" class="nav-link nav-link-inline" data-page="mealplan">Meal Plan</a>
+                    <a href="#" class="nav-link nav-link-inline" data-page="pantry">Pantry</a>
                 </div>
                 <div class="nav-menu" id="navMenu">
-                    <a href="#" class="nav-link" data-page="dashboard">Dashboard</a>
-                    <a href="#" class="nav-link" data-page="recipes">Recipes</a>
-                    <a href="#" class="nav-link" data-page="userSearch">🔍 Find Recipes</a>
-                    <a href="#" class="nav-link" data-page="pantry">Pantry</a>
-                    <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
-                    <a href="#" class="nav-link" data-page="history">History</a>
-                    <a href="#" class="nav-link" id="logoutBtn">Logout</a>
+                    <a href="#" class="nav-link" data-page="dashboard">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z"/></svg>
+                        </span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-link" data-page="recipes">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h10V5H7zm2 3h6v2H9V8zm0 4h6v2H9v-2z"/></svg>
+                        </span>
+                        <span class="nav-text">Recipes</span>
+                    </a>
+                    <a href="#" class="nav-link" data-page="userSearch">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm9.3 12.9-3.2-3.2 1.4-1.4 3.2 3.2-1.4 1.4z"/></svg>
+                        </span>
+                        <span class="nav-text">Find Recipes</span>
+                    </a>
+                    <a href="#" class="nav-link" data-page="social">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm10 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM7 13c2.3 0 4.5 1.2 5 3.5H2C2.5 14.2 4.7 13 7 13zm10 0c2.3 0 4.5 1.2 5 3.5h-7c.5-2.3 2.7-3.5 5-3.5z"/></svg>
+                        </span>
+                        <span class="nav-text">Social</span>
+                    </a>
+                    <a href="#" class="nav-link" data-page="pantry">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v2H6V3zm0 4h12v14H6V7zm2 2v10h8V9H8zm2 2h4v2h-4v-2z"/></svg>
+                        </span>
+                        <span class="nav-text">Pantry</span>
+                    </a>
+                    <a href="#" class="nav-link" data-page="mealplan">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7zm12 8H5v8h14v-8z"/></svg>
+                        </span>
+                        <span class="nav-text">Meal Plan</span>
+                    </a>
+                    <a href="#" class="nav-link" data-page="history">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-7 7H3l3.5-3.5L10 12H7a5 5 0 1 0 5-5v2l3-3-3-3v2z"/></svg>
+                        </span>
+                        <span class="nav-text">History</span>
+                    </a>
+                    <a href="#" class="nav-link" id="logoutBtn">
+                        <span class="nav-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 17v-2h-4v-2h4V9l4 4-4 4zM14 3a2 2 0 0 1 2 2v3h-2V5H6v14h8v-3h2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8z"/></svg>
+                        </span>
+                        <span class="nav-text">Logout</span>
+                    </a>
                 </div>
                 <button class="nav-toggle" id="navToggle">☰</button>
             </div>
@@ -41,7 +87,7 @@
         <div id="loginPage" class="page active">
             <div class="login-container">
                 <div class="login-card">
-                    <h1 class="login-title">🏠 Cosy Cottage Food App</h1>
+                    <h1 class="login-title">🏠 Modo Gusto</h1>
                     <div class="login-tabs">
                         <button class="tab-btn active" data-tab="login">Login</button>
                         <button class="tab-btn" data-tab="register">Register</button>
@@ -86,17 +132,43 @@
             <div class="container">
                 <h1>Dashboard</h1>
                 <div class="dashboard-stats">
-                    <div class="stat-card">
+                    <div class="stat-card" data-page="recipes">
                         <h3 id="recipeCount">0</h3>
                         <p>Recipes</p>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" data-page="pantry">
                         <h3 id="pantryCount">0</h3>
                         <p>Pantry Items</p>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card" data-page="mealplan">
                         <h3 id="mealPlanCount">0</h3>
                         <p>Planned Meals</p>
+                    </div>
+                </div>
+                <div class="upcoming-section">
+                    <div class="section-header">
+                        <h2>Upcoming Meals</h2>
+                        <button class="btn btn-secondary" id="viewMealPlanBtn">View Meal Plan</button>
+                    </div>
+                    <div class="upcoming-grid">
+                        <div class="upcoming-card">
+                            <div class="upcoming-card-header">
+                                <h3>Today</h3>
+                                <button class="btn-link" data-day="today">Open Day View</button>
+                            </div>
+                            <div id="upcomingMealsToday" class="upcoming-meals-list">
+                                <p class="empty-state">No meals planned for today yet.</p>
+                            </div>
+                        </div>
+                        <div class="upcoming-card">
+                            <div class="upcoming-card-header">
+                                <h3>Tomorrow</h3>
+                                <button class="btn-link" data-day="tomorrow">Open Day View</button>
+                            </div>
+                            <div id="upcomingMealsTomorrow" class="upcoming-meals-list">
+                                <p class="empty-state">No meals planned for tomorrow yet.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="recent-section">
@@ -279,6 +351,14 @@
                     <h1>Meal Planning</h1>
                     <button class="btn btn-primary" id="addMealPlanBtn">+ Add Meal</button>
                 </div>
+                <div class="calendar-controls">
+                    <div class="view-switcher" id="calendarViewSwitcher">
+                        <button class="view-btn" data-view="dayGridMonth">Month</button>
+                        <button class="view-btn" data-view="timeGridWeek">Week</button>
+                        <button class="view-btn" data-view="timeGridDay">Day</button>
+                    </div>
+                    <button class="btn btn-secondary" id="calendarTodayBtn">Today</button>
+                </div>
                 <div id="mealPlanCalendar"></div>
             </div>
         </div>
@@ -350,7 +430,40 @@
             <div class="container">
                 <div class="page-header">
                     <h1>🔍 Discover Recipes</h1>
-                    <p>Find recipes from other users</p>
+                    <p>Search all recipes and find other users to follow.</p>
+                </div>
+
+                <div class="discover-section">
+                    <div class="section-header">
+                        <h2>Search all meals</h2>
+                        <p>Use keywords or filters to browse recipes from everyone.</p>
+                    </div>
+                    <div class="filters">
+                        <input type="text" id="discoverSearchInput" placeholder="Search meals by name or description..." class="search-input">
+                        <div class="tag-filters" id="discoverTagFilters">
+                            <label class="filter-tag">
+                                <input type="checkbox" value="gluten-free"> Gluten Free
+                            </label>
+                            <label class="filter-tag">
+                                <input type="checkbox" value="vegan"> Vegan
+                            </label>
+                            <label class="filter-tag">
+                                <input type="checkbox" value="dairy-free"> Dairy Free
+                            </label>
+                            <label class="filter-tag">
+                                <input type="checkbox" value="nut-free"> Nut Free
+                            </label>
+                            <label class="filter-tag">
+                                <input type="checkbox" value="vegetarian"> Vegetarian
+                            </label>
+                        </div>
+                        <button class="btn btn-primary" id="discoverSearchBtn">Search Meals</button>
+                    </div>
+                    <div id="discoverResults" class="recipe-grid">
+                        <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
+                            Start with a search to see meals from the community.
+                        </p>
+                    </div>
                 </div>
                 
                 <div class="search-section">
@@ -375,6 +488,46 @@
                         <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
                             Start typing to search for users and discover their recipes!
                         </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Page -->
+        <div id="socialPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>🤝 Social</h1>
+                    <p>Connect with friends and share recipes.</p>
+                </div>
+
+                <div class="social-grid">
+                    <div class="social-card">
+                        <h2>Add a friend</h2>
+                        <p>Send a friend request by username.</p>
+                        <div class="search-input-group">
+                            <input type="text" id="friendUsernameInput" class="search-input" placeholder="Enter username...">
+                            <button class="btn btn-primary" id="sendFriendRequestBtn">Send Request</button>
+                        </div>
+                        <div id="friendRequestStatus" class="status-message"></div>
+                    </div>
+                    <div class="social-card">
+                        <h2>Incoming requests</h2>
+                        <div id="incomingRequests" class="social-list">
+                            <p class="empty-state">No pending requests.</p>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <h2>Outgoing requests</h2>
+                        <div id="outgoingRequests" class="social-list">
+                            <p class="empty-state">No outgoing requests.</p>
+                        </div>
+                    </div>
+                    <div class="social-card">
+                        <h2>Your friends</h2>
+                        <div id="friendsList" class="social-list">
+                            <p class="empty-state">No friends added yet.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -479,9 +632,14 @@
                 <h2>Import Recipe from Image</h2>
                 <form id="importImageForm">
                     <div class="form-group">
-                        <label for="recipeImage">Upload Recipe Image</label>
-                        <input type="file" id="recipeImage" accept="image/*" capture="environment" required>
-                        <small>Upload a screenshot or photo of a recipe. The app will extract text using OCR. On mobile, you can take a photo directly.</small>
+                        <label>Choose image source</label>
+                        <div class="image-source-buttons">
+                            <button type="button" class="btn btn-secondary" id="takePhotoBtn">📷 Take Photo</button>
+                            <button type="button" class="btn btn-secondary" id="choosePhotoBtn">🖼️ Choose from Device</button>
+                        </div>
+                        <input type="file" id="recipeImageCamera" accept="image/*" capture="environment" hidden>
+                        <input type="file" id="recipeImageLibrary" accept="image/*" hidden>
+                        <small>Select a photo or take a new one. The app will extract text using OCR.</small>
                     </div>
                     <div id="imagePreview" style="margin: 1rem 0; text-align: center;"></div>
                     <div class="modal-actions">
@@ -516,6 +674,7 @@
     <script src="/js/scanner.js"></script>
     <script src="/js/mealplan.js"></script>
     <script src="/js/history.js"></script>
+    <script src="/js/social.js"></script>
     
     <!-- Fallback: Ensure login page is visible if JS fails -->
     <script>
@@ -536,5 +695,3 @@
     </script>
 </body>
 </html>
-
-

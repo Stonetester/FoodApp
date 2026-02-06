@@ -19,6 +19,27 @@ class User(UserMixin, db.Model):
     pantry_items = db.relationship('PantryItem', backref='user', lazy=True, cascade='all, delete-orphan')
     meal_plans = db.relationship('MealPlan', backref='user', lazy=True, cascade='all, delete-orphan')
     meal_history = db.relationship('MealHistory', backref='user', lazy=True, cascade='all, delete-orphan')
+    sent_friend_requests = db.relationship(
+        'FriendRequest',
+        foreign_keys='FriendRequest.requester_id',
+        backref='requester',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
+    received_friend_requests = db.relationship(
+        'FriendRequest',
+        foreign_keys='FriendRequest.recipient_id',
+        backref='recipient',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
+    friendships = db.relationship(
+        'Friendship',
+        foreign_keys='Friendship.user_id',
+        backref='user',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
     
     def __repr__(self):
         return f'<User {self.username}>'
@@ -63,6 +84,54 @@ class Recipe(db.Model):
     
     def __repr__(self):
         return f'<Recipe {self.title}>'
+
+class FriendRequest(db.Model):
+    __tablename__ = 'friend_requests'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    requester_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, default='pending', index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        db.UniqueConstraint('requester_id', 'recipient_id', name='unique_friend_request'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'requester_id': self.requester_id,
+            'recipient_id': self.recipient_id,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+    
+    def __repr__(self):
+        return f'<FriendRequest {self.requester_id}->{self.recipient_id} ({self.status})>'
+
+class Friendship(db.Model):
+    __tablename__ = 'friendships'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'friend_id', name='unique_friendship'),
+    )
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'friend_id': self.friend_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+    
+    def __repr__(self):
+        return f'<Friendship {self.user_id}->{self.friend_id}>'
 
 class RecipeIngredient(db.Model):
     __tablename__ = 'recipe_ingredients'

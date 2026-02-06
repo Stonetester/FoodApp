@@ -3,6 +3,7 @@
 
 let currentUserRecipes = [];
 let selectedUser = null;
+let discoverFilters = { search: '', tags: [] };
 
 document.addEventListener('DOMContentLoaded', () => {
     setupUserSearchListeners();
@@ -31,6 +32,99 @@ function setupUserSearchListeners() {
         closeUserRecipesBtn.addEventListener('click', () => {
             document.getElementById('userRecipesModal').classList.remove('active');
         });
+    }
+
+    // Discover recipes search
+    const discoverSearchBtn = document.getElementById('discoverSearchBtn');
+    if (discoverSearchBtn) {
+        discoverSearchBtn.addEventListener('click', () => {
+            discoverFilters.search = document.getElementById('discoverSearchInput').value.trim();
+            loadDiscoverRecipes();
+        });
+    }
+
+    const discoverSearchInput = document.getElementById('discoverSearchInput');
+    if (discoverSearchInput) {
+        discoverSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                discoverFilters.search = discoverSearchInput.value.trim();
+                loadDiscoverRecipes();
+            }
+        });
+    }
+
+    document.querySelectorAll('#discoverTagFilters input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            discoverFilters.tags = Array.from(document.querySelectorAll('#discoverTagFilters input[type="checkbox"]:checked'))
+                .map(cb => cb.value);
+            loadDiscoverRecipes();
+        });
+    });
+}
+
+async function loadDiscoverRecipes() {
+    const resultsContainer = document.getElementById('discoverResults');
+    if (!resultsContainer) return;
+    
+    const isFiltered = discoverFilters.search || (discoverFilters.tags && discoverFilters.tags.length > 0);
+    resultsContainer.innerHTML = `<p style="text-align: center;">${isFiltered ? 'Searching meals...' : 'Loading meals...'}</p>`;
+    
+    try {
+        const recipes = await api.discoverRecipes(discoverFilters);
+        displayDiscoverRecipes(recipes);
+    } catch (error) {
+        console.error('Error loading discover recipes:', error);
+        resultsContainer.innerHTML = '<p class="error-message">Failed to load recipes. Please try again.</p>';
+    }
+}
+
+function displayDiscoverRecipes(recipes) {
+    const resultsContainer = document.getElementById('discoverResults');
+    resultsContainer.innerHTML = '';
+    
+    if (!recipes || recipes.length === 0) {
+        resultsContainer.innerHTML = '<p style="text-align: center; color: var(--text); padding: 2rem;">No recipes found. Try a different search.</p>';
+        return;
+    }
+    
+    recipes.forEach(recipe => {
+        resultsContainer.appendChild(createDiscoverRecipeCard(recipe));
+    });
+}
+
+function createDiscoverRecipeCard(recipe) {
+    const card = document.createElement('div');
+    card.className = 'recipe-card discover-recipe-card';
+    
+    const tagsHtml = recipe.tags && recipe.tags.length > 0
+        ? `<div class="recipe-card-tags">${recipe.tags.map(tag => `<span class="recipe-tag">${tag}</span>`).join('')}</div>`
+        : '';
+    
+    card.innerHTML = `
+        ${recipe.image_url ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="recipe-card-image" onerror="this.style.display='none'">` : ''}
+        <div class="recipe-card-content">
+            <h3 class="recipe-card-title">${recipe.title}</h3>
+            ${recipe.owner ? `<p class="recipe-owner">By ${recipe.owner.username}</p>` : ''}
+            ${recipe.description ? `<p class="recipe-card-description">${recipe.description}</p>` : ''}
+            ${tagsHtml}
+            <div class="recipe-card-actions">
+                <button class="btn btn-secondary" onclick="viewDiscoverRecipeDetail(${recipe.id})">View Details</button>
+                ${recipe.is_owner ? '' : `<button class="btn btn-primary" onclick="copyRecipeToMyCollection(${recipe.id})">Copy Recipe</button>`}
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+async function viewDiscoverRecipeDetail(recipeId) {
+    try {
+        const recipe = await api.getDiscoverRecipe(recipeId);
+        const isOtherUser = recipe.owner && !recipe.is_owner;
+        showRecipeDetailModal(recipe, isOtherUser);
+    } catch (error) {
+        console.error('Error loading discover recipe details:', error);
+        alert('Failed to load recipe details');
     }
 }
 
@@ -306,17 +400,48 @@ function showRecipeDetailModal(recipe, isOtherUser) {
                 ${instructionsHtml}
             </div>
             
-            ${isOtherUser ? `
-                <div class="recipe-actions">
+            <div class="recipe-actions">
+                <button class="btn btn-secondary" onclick="shareRecipeLink(${recipe.id}, '${recipe.title.replace(/'/g, "\\'")}')">
+                    📤 Share
+                </button>
+                <button class="btn btn-secondary" onclick="shareRecipeQR(${recipe.id})">
+                    📱 QR Code
+                </button>
+                ${isOtherUser ? `
                     <button class="btn btn-primary" onclick="copyRecipeFromDetail(${recipe.id})">
                         📥 Copy to My Recipes
                     </button>
-                </div>
-            ` : ''}
+                ` : ''}
+            </div>
         </div>
     `;
     
     modal.classList.add('active');
+}
+
+async function shareRecipeLink(recipeId, title) {
+    const shareUrl = `${window.location.origin}?recipe=${recipeId}`;
+    const shareText = `Check out this recipe: ${title}`;
+    
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Cosy Cottage Recipe',
+                text: shareText,
+                url: shareUrl
+            });
+            return;
+        } catch (error) {
+            console.error('Share failed:', error);
+        }
+    }
+    
+    try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        alert('Recipe link copied to clipboard!');
+    } catch (error) {
+        alert('Could not copy the share link. Please copy it manually from the address bar.');
+    }
 }
 
 async function copyRecipeToMyCollection(recipeId) {
@@ -367,3 +492,6 @@ window.viewUserRecipes = viewUserRecipes;
 window.viewRecipeDetail = viewRecipeDetail;
 window.copyRecipeToMyCollection = copyRecipeToMyCollection;
 window.copyRecipeFromDetail = copyRecipeFromDetail;
+window.loadDiscoverRecipes = loadDiscoverRecipes;
+window.viewDiscoverRecipeDetail = viewDiscoverRecipeDetail;
+window.shareRecipeLink = shareRecipeLink;

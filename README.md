@@ -192,6 +192,274 @@ This shows you how to:
 4. Add notes (optional)
 5. Ratings appear on recipes!
 
+## 🧪 Developer Setup (Local Dev Testing)
+
+These steps are for developers running the app locally for day-to-day testing.
+
+### 1) Install prerequisites
+
+- **Python 3.8+** (verify with `python --version`)
+- **MySQL** (or use SQLite for a quick local setup)
+- **Git** (optional, but recommended for updates)
+
+### 2) Create a virtual environment
+
+From the repo root:
+
+```bash
+cd backend
+python -m venv venv
+```
+
+Activate it:
+
+**Windows (PowerShell):**
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+**macOS/Linux (bash/zsh):**
+```bash
+source venv/bin/activate
+```
+
+### 3) Install Python dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4) Configure environment variables
+
+The backend reads its config from environment variables. You can set them in your shell or in a `.env` file in `backend/`.
+
+Minimum recommended variables:
+
+```bash
+DATABASE_URL=mysql+pymysql://foodapp_user:YourPasswordHere@localhost/foodapp
+SECRET_KEY=replace-with-a-long-random-string
+```
+
+**Quick local option (SQLite):**
+```bash
+DATABASE_URL=sqlite:///foodapp.db
+```
+
+### 5) Start the backend server
+
+From the `backend/` directory:
+
+```bash
+python run.py
+```
+
+You should see:
+
+```
+📱 Access the app at: http://localhost:5000
+```
+
+Open your browser to `http://localhost:5000` and log in / register.
+
+### 6) (Optional) Seed some test data
+
+Add a few recipes and pantry items from the UI so you have data to test the dashboard, calendar, and social features.
+
+## 🧰 GitHub Workflow: Updating the App via Branches & Pull Requests
+
+Use this step-by-step guide every time you want to make changes, open a PR, and keep your branch up to date with the main code.
+
+### 1) Sync your local `main` (or default) branch
+
+1. Open a terminal and go to the repo:
+   ```bash
+   cd /path/to/FoodApp
+   ```
+2. Switch to your main branch:
+   ```bash
+   git checkout main
+   ```
+3. Pull the latest code from GitHub:
+   ```bash
+   git pull origin main
+   ```
+
+**Why?** This ensures your base branch is current before you start new work.
+
+### 2) Create a new feature branch
+
+Pick a short, descriptive name:
+```bash
+git checkout -b feature/retro-vibes
+```
+
+**Why?** Feature branches keep your work isolated, making reviews and merges safer.
+
+### 3) Make changes locally
+
+Edit files in your editor as needed. Then check your work:
+```bash
+git status -sb
+```
+
+### 4) Stage changes
+
+Add only the files you intend to commit:
+```bash
+git add frontend/public/css/style.css frontend/public/index.html
+```
+
+If you want to stage everything:
+```bash
+git add -A
+```
+
+### 5) Commit changes
+
+Write a clear commit message:
+```bash
+git commit -m "Update retro palette and UI shadows"
+```
+
+**Tip:** Keep commits focused. Smaller commits are easier to review and revert.
+
+### 6) Push your branch to GitHub
+
+```bash
+git push -u origin feature/retro-vibes
+```
+
+The `-u` flag links your local branch to the remote branch so future pushes can be just `git push`.
+
+### 7) Open a Pull Request (PR)
+
+1. Go to your GitHub repo in a browser.
+2. You’ll see a prompt to “Compare & pull request.” Click it.
+3. Fill in the PR title and description:
+   - **Title:** short, clear summary.
+   - **Description:** what you changed, why you changed it, and testing notes.
+4. Submit the PR.
+
+### 8) Update your branch if main changes while you work
+
+If new commits land on `main`, bring them into your branch to avoid conflicts later:
+
+```bash
+git checkout main
+git pull origin main
+git checkout feature/retro-vibes
+git merge main
+```
+
+If there are conflicts, Git will tell you which files. Open those files, resolve conflicts, then:
+```bash
+git add <file>
+git commit -m "Resolve merge conflicts"
+```
+
+### 9) Keep PRs clean (optional but recommended)
+
+If your branch has many small commits and you want to squash them:
+
+```bash
+git rebase -i main
+```
+
+Mark commits as `squash` or `fixup`, then save and exit. After rebasing:
+```bash
+git push --force-with-lease
+```
+
+**Caution:** Only force-push your own branch, never `main`.
+
+### 10) Merge the PR
+
+Once approved, merge using GitHub’s **Squash and merge** or **Merge commit** (depending on your team’s preference).
+
+### 11) Clean up your local branch
+
+After merge:
+```bash
+git checkout main
+git pull origin main
+git branch -d feature/retro-vibes
+```
+
+If the branch still exists on GitHub and you want to remove it:
+```bash
+git push origin --delete feature/retro-vibes
+```
+
+## 🌍 Make the App Public with Cloudflared (Development Sharing)
+
+Use this when you want to share your local dev instance with a teammate or test on your phone while on mobile data.
+
+### 1) Install cloudflared
+
+Download from: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/
+
+### 2) Start your local app
+
+Make sure `python run.py` is running and you can access `http://localhost:5000`.
+
+### 3) Start a temporary tunnel
+
+From any terminal:
+
+```bash
+cloudflared tunnel --url http://localhost:5000
+```
+
+Cloudflared will output a public HTTPS URL like:
+
+```
+https://example-try.cloudflare.com
+```
+
+Open that URL from your phone or share it with others. The app remains public only while the tunnel command is running.
+
+### 4) Keep the tunnel open
+
+Don’t close the terminal. If you stop the command, the public URL stops working.
+
+## 🔐 How to Add/Enforce Authentication (Detailed Steps)
+
+The app already uses **Flask-Login** for authentication. If you need to extend or enforce auth on new endpoints, follow these steps:
+
+1. **Protect your API routes**  
+   Add `@login_required` to any new Flask route that should require a signed-in user.  
+   Example:
+   ```python
+   @api_bp.route('/my/secure/data')
+   @login_required
+   def my_secure_data():
+       ...
+   ```
+
+2. **Expose auth endpoints**  
+   The existing auth routes live in `backend/app/auth.py`:
+   - `POST /api/auth/register`
+   - `POST /api/auth/login`
+   - `POST /api/auth/logout`
+   - `GET /api/auth/me`
+   - `GET /api/auth/check`
+
+3. **Ensure the frontend checks auth**  
+   The frontend calls `/api/auth/me` during startup. If the request fails, it shows the login screen. Keep that call in your app init to enforce auth before showing UI.
+
+4. **Set a strong SECRET_KEY**  
+   In production, make sure you set:
+   ```bash
+   SECRET_KEY=your-long-secret-key
+   ```
+   This secures Flask sessions.
+
+5. **Use HTTPS in production**  
+   Set `SESSION_COOKIE_SECURE=True` and run behind HTTPS (Cloudflared provides HTTPS automatically).
+
+6. **Add auth to new UI features**  
+   If you add new pages or buttons, make sure the API calls go through the `api` service in `frontend/public/js/api.js` so session cookies are sent automatically.
+
 ## 🖥️ System Requirements
 
 **Minimum:**
@@ -502,5 +770,6 @@ Built with:
 **Enjoy your Cosy Cottage Food App! 🏡🍳**
 
 Made with ❤️ for home cooks everywhere
-#   F o o d A p p  
+ 
+ 
  

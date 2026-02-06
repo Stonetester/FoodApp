@@ -5,6 +5,7 @@ let currentUser = null;
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
+    setupResponsiveClass();
 });
 
 async function initializeApp() {
@@ -59,11 +60,45 @@ function setupEventListeners() {
         await handleLogout();
     });
 
+    // Dashboard stat cards navigation
+    document.querySelectorAll('.stat-card[data-page]').forEach(card => {
+        card.addEventListener('click', (e) => {
+            const page = e.currentTarget.dataset.page;
+            if (page) {
+                navigateToPage(page);
+            }
+        });
+    });
+
+    // Dashboard meal plan shortcuts
+    const viewMealPlanBtn = document.getElementById('viewMealPlanBtn');
+    if (viewMealPlanBtn) {
+        viewMealPlanBtn.addEventListener('click', () => {
+            navigateToPage('mealplan');
+        });
+    }
+    document.querySelectorAll('.btn-link[data-day]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const day = e.currentTarget.dataset.day;
+            const targetDate = new Date();
+            if (day === 'tomorrow') {
+                targetDate.setDate(targetDate.getDate() + 1);
+            }
+            navigateToPage('mealplan');
+            const dateStr = targetDate.toISOString().split('T')[0];
+            setTimeout(() => {
+                if (window.showDayDetail) {
+                    window.showDayDetail(dateStr);
+                }
+            }, 300);
+        });
+    });
+
     // Navigation
     document.querySelectorAll('.nav-link[data-page]').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            const page = e.target.dataset.page;
+            const page = e.currentTarget.dataset.page;
             navigateToPage(page);
         });
     });
@@ -166,14 +201,46 @@ async function handleLogout() {
 function showLogin() {
     document.getElementById('loginPage').classList.add('active');
     document.getElementById('navbar').style.display = 'none';
+    document.body.classList.remove('app-authenticated');
     hideAllPages();
 }
 
 function showApp() {
     document.getElementById('loginPage').classList.remove('active');
     document.getElementById('navbar').style.display = 'block';
+    document.body.classList.add('app-authenticated');
     navigateToPage('dashboard');
     loadDashboard();
+    handleSharedRecipeLink();
+}
+
+function setupResponsiveClass() {
+    const updateClass = () => {
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        document.body.classList.toggle('is-mobile', isMobile);
+    };
+    updateClass();
+    window.addEventListener('resize', updateClass);
+}
+
+function handleSharedRecipeLink() {
+    const params = new URLSearchParams(window.location.search);
+    const recipeId = params.get('recipe');
+    if (!recipeId) {
+        return;
+    }
+    
+    const recipeIdNumber = parseInt(recipeId, 10);
+    if (Number.isNaN(recipeIdNumber)) {
+        return;
+    }
+    
+    navigateToPage('userSearch');
+    setTimeout(() => {
+        if (window.viewDiscoverRecipeDetail) {
+            window.viewDiscoverRecipeDetail(recipeIdNumber);
+        }
+    }, 400);
 }
 
 function hideAllPages() {
@@ -190,7 +257,9 @@ function navigateToPage(pageName) {
         'recipes': 'recipesPage',
         'pantry': 'pantryPage',
         'mealplan': 'mealplanPage',
-        'history': 'historyPage'
+        'history': 'historyPage',
+        'userSearch': 'userSearchPage',
+        'social': 'socialPage'
     };
 
     const pageId = pageMap[pageName];
@@ -200,6 +269,14 @@ function navigateToPage(pageName) {
         // Load page-specific data
         if (pageName === 'recipes') {
             loadRecipes();
+        } else if (pageName === 'userSearch') {
+            if (window.loadDiscoverRecipes) {
+                window.loadDiscoverRecipes();
+            }
+        } else if (pageName === 'social') {
+            if (window.loadSocialData) {
+                window.loadSocialData();
+            }
         } else if (pageName === 'pantry') {
             loadPantry();
         } else if (pageName === 'mealplan') {
@@ -218,6 +295,13 @@ async function loadDashboard() {
         const recipes = await api.getRecipes();
         const pantryItems = await api.getPantryItems();
         const mealPlans = await api.getMealPlan();
+        const today = new Date();
+        const tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 1);
+        const upcomingMeals = await api.getMealPlan(
+            today.toISOString().split('T')[0],
+            tomorrow.toISOString().split('T')[0]
+        );
 
         document.getElementById('recipeCount').textContent = recipes.length;
         document.getElementById('pantryCount').textContent = pantryItems.length;
@@ -235,9 +319,64 @@ async function loadDashboard() {
                 recentRecipesContainer.appendChild(createRecipeCard(recipe));
             });
         }
+
+        renderUpcomingMeals(upcomingMeals, today, tomorrow);
     } catch (error) {
         console.error('Error loading dashboard:', error);
     }
+}
+
+function renderUpcomingMeals(upcomingMeals, today, tomorrow) {
+    const todayStr = today.toISOString().split('T')[0];
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const todayContainer = document.getElementById('upcomingMealsToday');
+    const tomorrowContainer = document.getElementById('upcomingMealsTomorrow');
+    
+    if (!todayContainer || !tomorrowContainer) {
+        return;
+    }
+    
+    const mealsByDate = {
+        [todayStr]: [],
+        [tomorrowStr]: []
+    };
+    
+    upcomingMeals.forEach(meal => {
+        const dateKey = meal.planned_date;
+        if (mealsByDate[dateKey]) {
+            mealsByDate[dateKey].push(meal);
+        }
+    });
+    
+    const renderList = (container, meals) => {
+        container.innerHTML = '';
+        if (!meals || meals.length === 0) {
+            container.innerHTML = '<p class="empty-state">No meals planned yet.</p>';
+            return;
+        }
+        
+        meals.forEach(meal => {
+            const item = document.createElement('div');
+            item.className = 'upcoming-meal-item';
+            item.innerHTML = `
+                <div class="upcoming-meal-info">
+                    <span class="meal-type-badge">${meal.meal_type}</span>
+                    <h4>${meal.recipe ? meal.recipe.title : 'Meal'}</h4>
+                    ${meal.recipe && meal.recipe.image_url ? `<img src="${meal.recipe.image_url}" alt="${meal.recipe.title}" class="upcoming-meal-image">` : ''}
+                    ${meal.notes ? `<p class="upcoming-notes">${meal.notes}</p>` : ''}
+                </div>
+                <button class="btn btn-secondary" data-recipe-id="${meal.recipe_id}">View Recipe</button>
+            `;
+            const button = item.querySelector('button');
+            button.addEventListener('click', () => {
+                viewRecipe(meal.recipe_id);
+            });
+            container.appendChild(item);
+        });
+    };
+    
+    renderList(todayContainer, mealsByDate[todayStr]);
+    renderList(tomorrowContainer, mealsByDate[tomorrowStr]);
 }
 
 function createRecipeCard(recipe) {
@@ -274,4 +413,3 @@ function viewRecipe(id) {
 // Export for use in other modules
 window.navigateToPage = navigateToPage;
 window.currentUser = () => currentUser;
-
