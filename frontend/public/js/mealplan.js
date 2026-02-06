@@ -4,7 +4,6 @@ let calendar = null;
 let mealPlans = [];
 let currentCalendarView = 'dayGridMonth';
 let sectionFocusDate = new Date();
-const hiddenSnackDates = new Set();
 const snackSlots = [
     { key: 'before-breakfast', label: 'Snacks before breakfast', note: 'Before breakfast' },
     { key: 'between-breakfast-lunch', label: 'Snacks between breakfast & lunch', note: 'Between breakfast & lunch' },
@@ -543,19 +542,11 @@ function renderMealSections(viewName) {
                 <h3>${date.toLocaleDateString('en-US', { weekday: 'long' })}</h3>
                 <p>${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
             </div>
-            <div class="meal-day-header-actions">
-                <button class="btn btn-secondary" type="button" data-date="${dateStr}" data-action="add-main">
-                    + Add Meal
-                </button>
-                <button class="btn btn-secondary btn-snack-toggle" type="button" data-date="${dateStr}" data-action="toggle-snacks">
-                    ${hiddenSnackDates.has(dateStr) ? 'Show snacks' : 'Hide snacks'}
-                </button>
-            </div>
+            <button class="btn btn-secondary" type="button" data-date="${dateStr}" data-action="add-main">
+                + Add Meal
+            </button>
         `;
         card.appendChild(header);
-        if (hiddenSnackDates.has(dateStr)) {
-            card.classList.add('snacks-collapsed');
-        }
 
         const mealList = document.createElement('div');
         mealList.className = 'meal-day-list';
@@ -586,8 +577,7 @@ function renderMealSections(viewName) {
                     </div>
                     ${plannedMeal && plannedMeal.recipe ? `
                         <div class="meal-section-item">
-                            ${plannedMeal.recipe.image_url ? `<img src="${plannedMeal.recipe.image_url}" alt="${plannedMeal.recipe.title}" class="meal-section-image" onerror="this.style.display='none'">` : ''}
-                            <div class="meal-section-details">
+                            <div>
                                 <strong>${plannedMeal.recipe.title}</strong>
                                 ${plannedMeal.recipe.description ? `<p>${plannedMeal.recipe.description}</p>` : ''}
                             </div>
@@ -613,7 +603,6 @@ function renderMealSections(viewName) {
                     </div>
                     ${snacks.length ? snacks.map(snack => `
                         <div class="snack-item">
-                            ${snack.recipe && snack.recipe.image_url ? `<img src="${snack.recipe.image_url}" alt="${snack.recipe.title}" class="snack-image" onerror="this.style.display='none'">` : ''}
                             <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
                             <div class="meal-section-actions">
                                 <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
@@ -641,7 +630,6 @@ function renderMealSections(viewName) {
                 </div>
                 ${anytimeSnacks.map(snack => `
                     <div class="snack-item">
-                        ${snack.recipe && snack.recipe.image_url ? `<img src="${snack.recipe.image_url}" alt="${snack.recipe.title}" class="snack-image" onerror="this.style.display='none'">` : ''}
                         <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
                         <div class="meal-section-actions">
                             <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
@@ -666,23 +654,6 @@ function renderMealSections(viewName) {
     sectionsEl.querySelectorAll('[data-action="add-main"]').forEach(button => {
         button.addEventListener('click', async () => {
             await openMealPlanModal(null, button.dataset.date, 'breakfast');
-        });
-    });
-
-    sectionsEl.querySelectorAll('[data-action="toggle-snacks"]').forEach(button => {
-        button.addEventListener('click', () => {
-            const dateStr = button.dataset.date;
-            const card = button.closest('.meal-day-card');
-            if (!card) return;
-            if (card.classList.contains('snacks-collapsed')) {
-                card.classList.remove('snacks-collapsed');
-                hiddenSnackDates.delete(dateStr);
-                button.textContent = 'Hide snacks';
-            } else {
-                card.classList.add('snacks-collapsed');
-                hiddenSnackDates.add(dateStr);
-                button.textContent = 'Show snacks';
-            }
         });
     });
 
