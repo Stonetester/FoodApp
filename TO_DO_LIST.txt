@@ -1,6 +1,22 @@
-NOTES
+Current Tasking:
+The delet recipe button does not work
+make the calender week and day view be sections for the main three meals, breakfast lunch and dinner, then have an option to add snacks before, after, or in between them, like a little plus sign that lets u add any number of snacks 
+The icons under the recipe and the main app icon need to fit the vibe more. make then retro but mono colored
+The menu hamburger sign is on the righth side, so put the menu slide out on the right side
+add the app motto at the top in italics smaller than the title (maybe beside or below it) and have it say: meal prepping with passion
 
-[x] When pulling recipe from an image, make an option pop up to take a picture or to select photo from device or storage
+
+FUTURE
+add star rating system
+feedback comment from people on meals
+Ownership of meals or who added them
+Better parsing of screen shots and URL for thing such as gluten free and servicing and allergies and more 
+
+
+
+Past:
+
+[x] When pulling recipe from an image, make an option to take a picture or to select photo from device or storage
 [x] Make the barcode scanner be able to scan from further away and the bar code does not have to be right within the box on screen
 [x] When adding something to pantry by barcode, make sure the add button works on mobile and pc. After scanning the barcode and extracting the info about the item. The add to pantry button does not work 
 [x] Dashboard should show what meals are coming up in today and tomorrow. 
@@ -12,11 +28,3 @@ NOTES
 
 
 
-
-
-
-FUTURE
-
-feedback comment from people on meals
-Ownership of meals or who added them
-Better parsing of screen shots and URL for thing such as gluten free and servicing and allergies and more 
