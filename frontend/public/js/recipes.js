@@ -140,13 +140,62 @@ function createRecipeCard(recipe) {
             <p class="recipe-card-description">${recipe.description || ''}</p>
             <div class="recipe-card-tags">${tagsHtml}</div>
             <div class="recipe-card-actions">
-                <button class="btn-icon" onclick="viewRecipeDetail(${recipe.id})" title="View">👁️</button>
-                <button class="btn-icon" onclick="editRecipe(${recipe.id})" title="Edit">✏️</button>
-                <button class="btn-icon" onclick="deleteRecipe(${recipe.id})" title="Delete">🗑️</button>
-                <button class="btn-icon" onclick="shareRecipeQR(${recipe.id})" title="Share QR">📱</button>
+                <button class="btn-icon" type="button" data-action="view" title="View recipe">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" type="button" data-action="edit" title="Edit recipe">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" type="button" data-action="delete" title="Delete recipe">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 6h18"/>
+                        <path d="M8 6V4h8v2"/>
+                        <path d="M6 6l1 14h10l1-14"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" type="button" data-action="share" title="Share QR">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 4h6v6H4z"/>
+                        <path d="M14 4h6v6h-6z"/>
+                        <path d="M4 14h6v6H4z"/>
+                        <path d="M14 14h2v2h-2zM18 18h2v2h-2zM16 16h2v2h-2z"/>
+                    </svg>
+                </button>
             </div>
         </div>
     `;
+
+    const viewBtn = card.querySelector('[data-action="view"]');
+    const editBtn = card.querySelector('[data-action="edit"]');
+    const deleteBtn = card.querySelector('[data-action="delete"]');
+    const shareBtn = card.querySelector('[data-action="share"]');
+
+    viewBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        viewRecipeDetail(recipe.id);
+    });
+    editBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        editRecipe(recipe.id);
+    });
+    deleteBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        deleteRecipe(recipe.id);
+    });
+    shareBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        shareRecipeQR(recipe.id);
+    });
 
     return card;
 }
