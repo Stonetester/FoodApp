@@ -4,7 +4,6 @@ let calendar = null;
 let mealPlans = [];
 let currentCalendarView = 'dayGridMonth';
 let sectionFocusDate = new Date();
-const hiddenSnackDates = new Set();
 const snackSlots = [
     { key: 'before-breakfast', label: 'Snacks before breakfast', note: 'Before breakfast' },
     { key: 'between-breakfast-lunch', label: 'Snacks between breakfast & lunch', note: 'Between breakfast & lunch' },
@@ -50,6 +49,20 @@ function setupMealPlanListeners() {
     if (calendarTodayBtn) {
         calendarTodayBtn.addEventListener('click', () => {
             handleToday();
+        });
+    }
+
+    const calendarPrevBtn = document.getElementById('calendarPrevBtn');
+    if (calendarPrevBtn) {
+        calendarPrevBtn.addEventListener('click', () => {
+            handlePrev();
+        });
+    }
+
+    const calendarNextBtn = document.getElementById('calendarNextBtn');
+    if (calendarNextBtn) {
+        calendarNextBtn.addEventListener('click', () => {
+            handleNext();
         });
     }
 
@@ -121,7 +134,7 @@ function initializeCalendar() {
         } : {
             left: '',
             center: 'title',
-            right: ''
+            right: 'dayGridMonth'
         },
         events: events,
         eventContent: (info) => {
@@ -140,7 +153,7 @@ function initializeCalendar() {
                 html: `
                     <div class="calendar-event">
                         ${showImage ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="calendar-event-image" onerror="this.style.display='none'">` : ''}
-                        ${viewType === 'dayGridMonth' || viewType === 'dayGridWeek' ? `<span class="calendar-event-icon">${mealTypeIcon}</span>` : ''}
+                        ${!showImage && viewType === 'dayGridMonth' ? `<span class="calendar-event-icon">${mealTypeIcon}</span>` : ''}
                         <span class="calendar-event-title">${title}</span>
                     </div>
                 `
@@ -447,7 +460,7 @@ function handleViewChange(viewName) {
     const sectionsEl = document.getElementById('mealPlanSections');
     const calendarEl = document.getElementById('mealPlanCalendar');
 
-    if (viewName === 'mealDay') {
+    if (viewName === 'mealWeek' || viewName === 'mealDay') {
         sectionFocusDate = calendar ? calendar.getDate() : sectionFocusDate;
         if (calendarEl) {
             calendarEl.style.display = 'none';
@@ -459,17 +472,9 @@ function handleViewChange(viewName) {
     } else {
         if (calendar) {
             calendar.changeView(viewName);
-            setTimeout(() => {
-                calendar.updateSize();
-                calendar.render();
-            }, 0);
         }
         if (calendarEl) {
             calendarEl.style.display = 'block';
-            requestAnimationFrame(() => {
-                calendar.updateSize();
-                calendar.render();
-            });
         }
         if (sectionsEl) {
             sectionsEl.style.display = 'none';
@@ -480,11 +485,35 @@ function handleViewChange(viewName) {
 }
 
 function handleToday() {
-    if (currentCalendarView === 'mealDay') {
+    if (currentCalendarView === 'mealWeek' || currentCalendarView === 'mealDay') {
         sectionFocusDate = new Date();
         renderMealSections(currentCalendarView);
     } else if (calendar) {
         calendar.today();
+    }
+}
+
+function handlePrev() {
+    if (currentCalendarView === 'mealWeek') {
+        sectionFocusDate.setDate(sectionFocusDate.getDate() - 7);
+        renderMealSections(currentCalendarView);
+    } else if (currentCalendarView === 'mealDay') {
+        sectionFocusDate.setDate(sectionFocusDate.getDate() - 1);
+        renderMealSections(currentCalendarView);
+    } else if (calendar) {
+        calendar.prev();
+    }
+}
+
+function handleNext() {
+    if (currentCalendarView === 'mealWeek') {
+        sectionFocusDate.setDate(sectionFocusDate.getDate() + 7);
+        renderMealSections(currentCalendarView);
+    } else if (currentCalendarView === 'mealDay') {
+        sectionFocusDate.setDate(sectionFocusDate.getDate() + 1);
+        renderMealSections(currentCalendarView);
+    } else if (calendar) {
+        calendar.next();
     }
 }
 
@@ -515,19 +544,11 @@ function renderMealSections(viewName) {
                 <h3>${date.toLocaleDateString('en-US', { weekday: 'long' })}</h3>
                 <p>${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
             </div>
-            <div class="meal-day-header-actions">
-                <button class="btn btn-secondary" type="button" data-date="${dateStr}" data-action="add-main">
-                    + Add Meal
-                </button>
-                <button class="btn btn-secondary btn-snack-toggle" type="button" data-date="${dateStr}" data-action="toggle-snacks">
-                    ${hiddenSnackDates.has(dateStr) ? 'Show snacks' : 'Hide snacks'}
-                </button>
-            </div>
+            <button class="btn btn-secondary" type="button" data-date="${dateStr}" data-action="add-main">
+                + Add Meal
+            </button>
         `;
         card.appendChild(header);
-        if (hiddenSnackDates.has(dateStr)) {
-            card.classList.add('snacks-collapsed');
-        }
 
         const mealList = document.createElement('div');
         mealList.className = 'meal-day-list';
@@ -549,11 +570,6 @@ function renderMealSections(viewName) {
                 mealSlot.className = 'meal-section';
                 const plannedMeal = mealsByType[type];
 
-                const mealIcon = {
-                    breakfast: '🌅',
-                    lunch: '☀️',
-                    dinner: '🌙'
-                }[type] || '🍽️';
                 mealSlot.innerHTML = `
                     <div class="meal-section-header">
                         <h4>${type.charAt(0).toUpperCase() + type.slice(1)}</h4>
@@ -563,9 +579,7 @@ function renderMealSections(viewName) {
                     </div>
                     ${plannedMeal && plannedMeal.recipe ? `
                         <div class="meal-section-item">
-                            <span class="meal-section-icon" aria-hidden="true">${mealIcon}</span>
-                            ${plannedMeal.recipe.image_url ? `<img src="${plannedMeal.recipe.image_url}" alt="${plannedMeal.recipe.title}" class="meal-section-image" onerror="this.style.display='none'">` : ''}
-                            <div class="meal-section-details">
+                            <div>
                                 <strong>${plannedMeal.recipe.title}</strong>
                                 ${plannedMeal.recipe.description ? `<p>${plannedMeal.recipe.description}</p>` : ''}
                             </div>
@@ -591,8 +605,6 @@ function renderMealSections(viewName) {
                     </div>
                     ${snacks.length ? snacks.map(snack => `
                         <div class="snack-item">
-                            <span class="meal-section-icon" aria-hidden="true">🍎</span>
-                            ${snack.recipe && snack.recipe.image_url ? `<img src="${snack.recipe.image_url}" alt="${snack.recipe.title}" class="snack-image" onerror="this.style.display='none'">` : ''}
                             <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
                             <div class="meal-section-actions">
                                 <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
@@ -620,8 +632,6 @@ function renderMealSections(viewName) {
                 </div>
                 ${anytimeSnacks.map(snack => `
                     <div class="snack-item">
-                        <span class="meal-section-icon" aria-hidden="true">🍎</span>
-                        ${snack.recipe && snack.recipe.image_url ? `<img src="${snack.recipe.image_url}" alt="${snack.recipe.title}" class="snack-image" onerror="this.style.display='none'">` : ''}
                         <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
                         <div class="meal-section-actions">
                             <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
@@ -646,23 +656,6 @@ function renderMealSections(viewName) {
     sectionsEl.querySelectorAll('[data-action="add-main"]').forEach(button => {
         button.addEventListener('click', async () => {
             await openMealPlanModal(null, button.dataset.date, 'breakfast');
-        });
-    });
-
-    sectionsEl.querySelectorAll('[data-action="toggle-snacks"]').forEach(button => {
-        button.addEventListener('click', () => {
-            const dateStr = button.dataset.date;
-            const card = button.closest('.meal-day-card');
-            if (!card) return;
-            if (card.classList.contains('snacks-collapsed')) {
-                card.classList.remove('snacks-collapsed');
-                hiddenSnackDates.delete(dateStr);
-                button.textContent = 'Hide snacks';
-            } else {
-                card.classList.add('snacks-collapsed');
-                hiddenSnackDates.add(dateStr);
-                button.textContent = 'Show snacks';
-            }
         });
     });
 

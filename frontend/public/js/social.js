@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let friendSearchTimeout = null;
-let socialPollInterval = null;
 
 function setupSocialListeners() {
     const sendBtn = document.getElementById('sendFriendRequestBtn');
@@ -51,45 +50,6 @@ function setupSocialListeners() {
             }, 250);
         });
     }
-}
-
-function startSocialPolling() {
-    if (socialPollInterval) {
-        return;
-    }
-    const socialPage = document.getElementById('socialPage');
-    if (socialPage && socialPage.classList.contains('active')) {
-        loadSocialData();
-    }
-    socialPollInterval = setInterval(() => {
-        const activePage = document.getElementById('socialPage');
-        if (activePage && activePage.classList.contains('active')) {
-            loadSocialData();
-        }
-    }, 10000);
-}
-
-async function sendFriendRequest(username) {
-    const response = await fetch('/api/friends/request', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ username })
-    });
-
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to send request.');
-        }
-        return data;
-    }
-
-    const text = await response.text();
-    throw new Error(text || 'Server returned invalid response.');
 }
 
 async function loadSocialData() {
