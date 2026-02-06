@@ -1,5 +1,12 @@
 // Social features: friend requests and friends list
 
+let socialPollingInterval = null;
+
+function startSocialPolling() {
+    loadSocialData();
+    socialPollingInterval = setInterval(loadSocialData, 30000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     setupSocialListeners();
     startSocialPolling();
@@ -26,7 +33,7 @@ function setupSocialListeners() {
             status.classList.remove('status-error');
             
             try {
-                await sendFriendRequest(username);
+                await api.sendFriendRequest(username);
                 status.textContent = `Friend request sent to ${username}.`;
                 status.classList.remove('status-error');
                 input.value = '';
