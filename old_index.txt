@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosy Cottage Food App</title>
+    <meta name="description" content="Manage recipes, pantry, and meal planning with a cozy cottage feel">
+    <meta name="theme-color" content="#8B7355">
+    <!-- Favicon and app icons for mobile home screen -->
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="navbar" id="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <span class="logo-icon">🏠</span>
+                    <span class="logo-text">Cosy Cottage</span>
+                </div>
+                <div class="nav-menu" id="navMenu">
+                    <a href="#" class="nav-link" data-page="dashboard">Dashboard</a>
+                    <a href="#" class="nav-link" data-page="recipes">Recipes</a>
+                    <a href="#" class="nav-link" data-page="userSearch">🔍 Find Recipes</a>
+                    <a href="#" class="nav-link" data-page="pantry">Pantry</a>
+                    <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
+                    <a href="#" class="nav-link" data-page="history">History</a>
+                    <a href="#" class="nav-link" id="logoutBtn">Logout</a>
+                </div>
+                <button class="nav-toggle" id="navToggle">☰</button>
+            </div>
+        </nav>
+
+        <!-- Login/Register Page -->
+        <div id="loginPage" class="page active">
+            <div class="login-container">
+                <div class="login-card">
+                    <h1 class="login-title">🏠 Cosy Cottage Food App</h1>
+                    <div class="login-tabs">
+                        <button class="tab-btn active" data-tab="login">Login</button>
+                        <button class="tab-btn" data-tab="register">Register</button>
+                    </div>
+                    <div id="loginForm" class="form-container active">
+                        <form id="loginFormElement">
+                            <div class="form-group">
+                                <label for="loginUsername">Username</label>
+                                <input type="text" id="loginUsername" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="loginPassword">Password</label>
+                                <input type="password" id="loginPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Login</button>
+                        </form>
+                    </div>
+                    <div id="registerForm" class="form-container">
+                        <form id="registerFormElement">
+                            <div class="form-group">
+                                <label for="registerUsername">Username</label>
+                                <input type="text" id="registerUsername" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="registerEmail">Email</label>
+                                <input type="email" id="registerEmail" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="registerPassword">Password</label>
+                                <input type="password" id="registerPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Register</button>
+                        </form>
+                    </div>
+                    <div id="loginError" class="error-message"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboardPage" class="page">
+            <div class="container">
+                <h1>Dashboard</h1>
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <h3 id="recipeCount">0</h3>
+                        <p>Recipes</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="pantryCount">0</h3>
+                        <p>Pantry Items</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="mealPlanCount">0</h3>
+                        <p>Planned Meals</p>
+                    </div>
+                </div>
+                <div class="recent-section">
+                    <h2>Recent Recipes</h2>
+                    <div id="recentRecipes" class="recipe-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipes Page -->
+        <div id="recipesPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>Recipes</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" id="importUrlBtn">📥 Import from URL</button>
+                        <button class="btn btn-secondary" id="importImageBtn">📷 Import from Image</button>
+                        <button class="btn btn-primary" id="addRecipeBtn">+ Add Recipe</button>
+                    </div>
+                </div>
+                <div class="filters">
+                    <input type="text" id="recipeSearch" placeholder="Search recipes..." class="search-input">
+                    <div class="tag-filters">
+                        <label class="filter-tag">
+                            <input type="checkbox" value="gluten-free"> Gluten Free
+                        </label>
+                        <label class="filter-tag">
+                            <input type="checkbox" value="vegan"> Vegan
+                        </label>
+                        <label class="filter-tag">
+                            <input type="checkbox" value="dairy-free"> Dairy Free
+                        </label>
+                        <label class="filter-tag">
+                            <input type="checkbox" value="nut-free"> Nut Free
+                        </label>
+                        <label class="filter-tag">
+                            <input type="checkbox" value="vegetarian"> Vegetarian
+                        </label>
+                    </div>
+                </div>
+                <div id="recipesList" class="recipe-grid"></div>
+            </div>
+        </div>
+
+        <!-- Recipe Detail/Edit Modal -->
+        <div id="recipeModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modalTitle">Add Recipe</h2>
+                <form id="recipeForm">
+                    <input type="hidden" id="recipeId">
+                    <div class="form-group">
+                        <label for="recipeTitle">Title</label>
+                        <input type="text" id="recipeTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recipeDescription">Description</label>
+                        <textarea id="recipeDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="recipePrepTime">Prep Time (minutes)</label>
+                            <input type="number" id="recipePrepTime">
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeCookTime">Cook Time (minutes)</label>
+                            <input type="number" id="recipeCookTime">
+                        </div>
+                        <div class="form-group">
+                            <label for="recipeServings">Servings</label>
+                            <input type="number" id="recipeServings">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Ingredients</label>
+                        <div id="ingredientsList"></div>
+                        <button type="button" class="btn btn-secondary" id="addIngredientBtn">+ Add Ingredient</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Dietary Tags</label>
+                        <div class="tag-inputs">
+                            <label class="tag-checkbox">
+                                <input type="checkbox" value="gluten-free"> Gluten Free
+                            </label>
+                            <label class="tag-checkbox">
+                                <input type="checkbox" value="vegan"> Vegan
+                            </label>
+                            <label class="tag-checkbox">
+                                <input type="checkbox" value="dairy-free"> Dairy Free
+                            </label>
+                            <label class="tag-checkbox">
+                                <input type="checkbox" value="nut-free"> Nut Free
+                            </label>
+                            <label class="tag-checkbox">
+                                <input type="checkbox" value="vegetarian"> Vegetarian
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="recipeInstructions">Instructions</label>
+                        <textarea id="recipeInstructions" rows="6"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="recipeImageUrl">Image URL</label>
+                        <input type="url" id="recipeImageUrl">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save Recipe</button>
+                        <button type="button" class="btn btn-secondary" id="cancelRecipeBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pantry Page -->
+        <div id="pantryPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>Pantry</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" id="scanBarcodeBtn">📷 Scan Barcode</button>
+                        <button class="btn btn-primary" id="addPantryItemBtn">+ Add Item</button>
+                    </div>
+                </div>
+                <div id="pantryList" class="pantry-grid"></div>
+            </div>
+        </div>
+
+        <!-- Pantry Item Modal -->
+        <div id="pantryModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="pantryModalTitle">Add Pantry Item</h2>
+                <form id="pantryForm">
+                    <input type="hidden" id="pantryItemId">
+                    <div class="form-group">
+                        <label for="pantryItemName">Item Name</label>
+                        <input type="text" id="pantryItemName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pantryBarcode">Barcode</label>
+                        <input type="text" id="pantryBarcode">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="pantryQuantity">Quantity</label>
+                            <input type="number" step="0.01" id="pantryQuantity">
+                        </div>
+                        <div class="form-group">
+                            <label for="pantryUnit">Unit</label>
+                            <input type="text" id="pantryUnit" placeholder="e.g., cups, oz, lbs">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="pantryExpiryDate">Expiry Date</label>
+                        <input type="date" id="pantryExpiryDate">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save Item</button>
+                        <button type="button" class="btn btn-secondary" id="cancelPantryBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Barcode Scanner Modal -->
+        <div id="scannerModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Scan Barcode</h2>
+                <div id="scannerContainer"></div>
+                <div id="scannerResult"></div>
+            </div>
+        </div>
+
+        <!-- Meal Plan Page -->
+        <div id="mealplanPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>Meal Planning</h1>
+                    <button class="btn btn-primary" id="addMealPlanBtn">+ Add Meal</button>
+                </div>
+                <div id="mealPlanCalendar"></div>
+            </div>
+        </div>
+
+        <!-- Meal Plan Modal -->
+        <div id="mealPlanModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Add Meal to Plan</h2>
+                <form id="mealPlanForm">
+                    <input type="hidden" id="mealPlanId">
+                    <div class="form-group">
+                        <label for="mealPlanRecipe">Recipe</label>
+                        <select id="mealPlanRecipe" required></select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mealPlanDate">Date</label>
+                            <input type="date" id="mealPlanDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="mealPlanType">Meal Type</label>
+                            <select id="mealPlanType" required>
+                                <option value="breakfast">Breakfast</option>
+                                <option value="lunch">Lunch</option>
+                                <option value="dinner">Dinner</option>
+                                <option value="snack">Snack</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mealPlanNotes">Notes</label>
+                        <textarea id="mealPlanNotes" rows="3"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Save Meal</button>
+                        <button type="button" class="btn btn-secondary" id="cancelMealPlanBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- History Page -->
+        <div id="historyPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>Meal History</h1>
+                    <button class="btn btn-primary" id="logMealBtn">+ Log Meal</button>
+                </div>
+                <div class="filters">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="historyStartDate">Start Date</label>
+                            <input type="date" id="historyStartDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="historyEndDate">End Date</label>
+                            <input type="date" id="historyEndDate">
+                        </div>
+                        <button class="btn btn-secondary" id="filterHistoryBtn">Filter</button>
+                    </div>
+                </div>
+                <div id="historyList" class="history-list"></div>
+            </div>
+        </div>
+
+        <!-- User Search Page -->
+        <div id="userSearchPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>🔍 Discover Recipes</h1>
+                    <p>Find recipes from other users</p>
+                </div>
+                
+                <div class="search-section">
+                    <div class="form-group">
+                        <label for="userSearchInput">Search for users by username:</label>
+                        <div class="search-input-group">
+                            <input 
+                                type="text" 
+                                id="userSearchInput" 
+                                class="search-input" 
+                                placeholder="Enter username to search..."
+                                autocomplete="off"
+                            >
+                            <button id="searchUsersBtn" class="btn btn-primary">
+                                🔍 Search
+                            </button>
+                        </div>
+                        <p class="search-hint">Tip: You can search by partial names (e.g., "john" will find "john123", "johnny", etc.)</p>
+                    </div>
+                    
+                    <div id="userSearchResults" class="user-search-results">
+                        <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
+                            Start typing to search for users and discover their recipes!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Recipes Modal -->
+        <div id="userRecipesModal" class="modal">
+            <div class="modal-content modal-large">
+                <span class="close" id="closeUserRecipesBtn">&times;</span>
+                <h2 id="userRecipesTitle">User's Recipes</h2>
+                <div id="userRecipesList" class="recipe-grid">
+                    <!-- User recipes will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipe Detail Modal -->
+        <div id="recipeDetailModal" class="modal">
+            <div class="modal-content modal-large">
+                <span class="close" onclick="document.getElementById('recipeDetailModal').classList.remove('active')">&times;</span>
+                <div id="recipeDetailContent">
+                    <!-- Recipe details will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Meal Modal -->
+        <div id="logMealModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Log Meal</h2>
+                <form id="logMealForm">
+                    <div class="form-group">
+                        <label for="logMealRecipe">Recipe</label>
+                        <select id="logMealRecipe" required></select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="logMealDate">Date</label>
+                            <input type="date" id="logMealDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="logMealType">Meal Type</label>
+                            <select id="logMealType" required>
+                                <option value="breakfast">Breakfast</option>
+                                <option value="lunch">Lunch</option>
+                                <option value="dinner">Dinner</option>
+                                <option value="snack">Snack</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="logMealRating">Rating (1-5)</label>
+                        <input type="number" id="logMealRating" min="1" max="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="logMealNotes">Notes</label>
+                        <textarea id="logMealNotes" rows="3"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Log Meal</button>
+                        <button type="button" class="btn btn-secondary" id="cancelLogMealBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- QR Code Modal -->
+        <div id="qrModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Recipe QR Code</h2>
+                <div id="qrCodeContainer"></div>
+                <p>Scan this QR code to share the recipe!</p>
+            </div>
+        </div>
+
+        <!-- Import URL Modal -->
+        <div id="importUrlModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Import Recipe from URL</h2>
+                <form id="importUrlForm">
+                    <div class="form-group">
+                        <label for="recipeUrl">Recipe URL</label>
+                        <input type="url" id="recipeUrl" placeholder="https://example.com/recipe" required>
+                        <small>Enter a URL to a recipe page. The app will try to extract recipe information.</small>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Import Recipe</button>
+                        <button type="button" class="btn btn-secondary" id="cancelImportUrlBtn">Cancel</button>
+                    </div>
+                </form>
+                <div id="importUrlResult"></div>
+            </div>
+        </div>
+
+        <!-- Import Image Modal -->
+        <div id="importImageModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Import Recipe from Image</h2>
+                <form id="importImageForm">
+                    <div class="form-group">
+                        <label for="recipeImage">Upload Recipe Image</label>
+                        <input type="file" id="recipeImage" accept="image/*" capture="environment" required>
+                        <small>Upload a screenshot or photo of a recipe. The app will extract text using OCR. On mobile, you can take a photo directly.</small>
+                    </div>
+                    <div id="imagePreview" style="margin: 1rem 0; text-align: center;"></div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Extract Recipe</button>
+                        <button type="button" class="btn btn-secondary" id="cancelImportImageBtn">Cancel</button>
+                    </div>
+                </form>
+                <div id="importImageResult"></div>
+            </div>
+        </div>
+
+        <!-- Day Detail Modal (Calendar) -->
+        <div id="dayDetailModal" class="modal">
+            <div class="modal-content" style="max-width: 800px;">
+                <span class="close">&times;</span>
+                <h2 id="dayDetailTitle">Meal Plan for <span id="dayDetailDate"></span></h2>
+                <div id="dayMealSlots">
+                    <!-- Breakfast, Lunch, Dinner, Snack slots will be populated here -->
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="closeDayDetailBtn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/recipes.js"></script>
+    <script src="/js/users.js"></script>
+    <script src="/js/pantry.js"></script>
+    <script src="/js/scanner.js"></script>
+    <script src="/js/mealplan.js"></script>
+    <script src="/js/history.js"></script>
+    
+    <!-- Fallback: Ensure login page is visible if JS fails -->
+    <script>
+        // If JavaScript hasn't initialized after 1 second, show login page
+        setTimeout(function() {
+            const loginPage = document.getElementById('loginPage');
+            const anyPageActive = document.querySelector('.page.active');
+            if (loginPage && !anyPageActive) {
+                loginPage.classList.add('active');
+                console.log('Fallback: Showing login page');
+            }
+        }, 1000);
+        
+        // Log any script loading errors
+        window.addEventListener('error', function(e) {
+            console.error('Script error:', e.filename, e.message, e.lineno);
+        });
+    </script>
+</body>
+</html>
+
+
