@@ -26,7 +26,7 @@ function setupSocialListeners() {
             status.classList.remove('status-error');
             
             try {
-                await api.sendFriendRequest(username);
+                await sendFriendRequest(username);
                 status.textContent = `Friend request sent to ${username}.`;
                 status.classList.remove('status-error');
                 input.value = '';
