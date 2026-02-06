@@ -63,6 +63,23 @@ function setupRecipeListeners() {
         handleRecipeImageSelection(e.target.files[0]);
     });
 
+    // Recipe photo buttons
+    document.getElementById('captureRecipePhotoBtn')?.addEventListener('click', () => {
+        document.getElementById('recipePhotoCamera')?.click();
+    });
+
+    document.getElementById('uploadRecipePhotoBtn')?.addEventListener('click', () => {
+        document.getElementById('recipePhotoLibrary')?.click();
+    });
+
+    document.getElementById('recipePhotoCamera')?.addEventListener('change', (e) => {
+        handleRecipePhotoSelection(e.target.files[0]);
+    });
+
+    document.getElementById('recipePhotoLibrary')?.addEventListener('change', (e) => {
+        handleRecipePhotoSelection(e.target.files[0]);
+    });
+
     // Recipe form submission
     document.getElementById('recipeForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -210,6 +227,7 @@ function openRecipeModal(recipe = null) {
     const modal = document.getElementById('recipeModal');
     const form = document.getElementById('recipeForm');
     const title = document.getElementById('modalTitle');
+    const photoPreview = document.getElementById('recipePhotoPreview');
     
     console.log('Modal element:', modal);
     console.log('Form element:', form);
@@ -314,6 +332,15 @@ function openRecipeModal(recipe = null) {
         if (imageUrlField) {
             imageUrlField.value = recipe.image_url || '';
         }
+        if (photoPreview) {
+            if (recipe.image_url) {
+                photoPreview.src = recipe.image_url;
+                photoPreview.hidden = false;
+            } else {
+                photoPreview.hidden = true;
+                photoPreview.src = '';
+            }
+        }
 
         // Load ingredients
         console.log('Loading ingredients...');
@@ -361,6 +388,10 @@ function openRecipeModal(recipe = null) {
         document.querySelectorAll('.tag-inputs input[type="checkbox"]').forEach(cb => {
             cb.checked = false;
         });
+        if (photoPreview) {
+            photoPreview.hidden = true;
+            photoPreview.src = '';
+        }
     }
 
     console.log('Showing modal...');
@@ -499,6 +530,9 @@ async function deleteRecipe(id) {
         loadRecipes();
         if (window.loadDashboard) {
             window.loadDashboard();
+        }
+        if (window.loadMealPlan) {
+            window.loadMealPlan();
         }
     } catch (error) {
         console.error('Error deleting recipe:', error);
@@ -667,6 +701,42 @@ function handleRecipeImageSelection(file) {
     };
     reader.onerror = () => {
         if (preview) preview.innerHTML = '<p class="error-message">Error loading image preview</p>';
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleRecipePhotoSelection(file) {
+    const preview = document.getElementById('recipePhotoPreview');
+    const imageUrlField = document.getElementById('recipeImageUrl');
+
+    if (!file) {
+        if (preview) {
+            preview.hidden = true;
+            preview.src = '';
+        }
+        return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file.');
+        return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Image is too large (max 10MB).');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const dataUrl = event.target.result;
+        if (imageUrlField) {
+            imageUrlField.value = dataUrl;
+        }
+        if (preview) {
+            preview.src = dataUrl;
+            preview.hidden = false;
+        }
     };
     reader.readAsDataURL(file);
 }
