@@ -1,7 +1,7 @@
 {
-  "name": "Cosy Cottage Food App",
-  "short_name": "Cosy Cottage",
-  "description": "Manage recipes, pantry, and meal planning",
+  "name": "Modo Gusto",
+  "short_name": "Modo Gusto",
+  "description": "Manage recipes, pantry, and meal planning with a retro vibe",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F6F1D3",

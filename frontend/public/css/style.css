@@ -28,57 +28,37 @@ body {
     color: var(--text);
     line-height: 1.6;
     min-height: 100vh;
-    background-image:
-        radial-gradient(circle at 14px 14px, rgba(43, 27, 16, 0.08) 2px, transparent 0),
-        radial-gradient(circle at 40px 40px, rgba(43, 27, 16, 0.06) 2px, transparent 0),
-        repeating-linear-gradient(90deg, rgba(224, 123, 44, 0.18) 0 8px, transparent 8px 32px),
-        repeating-linear-gradient(135deg, rgba(111, 122, 79, 0.12) 0 10px, transparent 10px 36px);
-    background-size: 64px 64px, 64px 64px, 100% 100%, 100% 100%;
 }
 
 body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background-image:
-        radial-gradient(circle at 0% 20%, rgba(224, 123, 44, 0.18) 0 12%, transparent 12% 100%),
-        radial-gradient(circle at 100% 80%, rgba(111, 122, 79, 0.16) 0 14%, transparent 14% 100%);
-    opacity: 0.6;
-    z-index: 0;
-}
-
-#app,
-nav,
-.page,
-.modal {
-    position: relative;
-    z-index: 1;
+    display: none;
 }
 
 #app {
-    display: flex;
+    display: block;
 }
 
 /* Navigation */
 .navbar {
     background-color: var(--primary);
-    padding: 1.5rem 1rem;
-    box-shadow: 8px 0 0 var(--border), 0 12px 24px rgba(46, 27, 13, 0.25);
+    padding: 0 1.5rem;
+    height: 72px;
+    box-shadow: 0 6px 0 var(--border), 0 12px 24px rgba(43, 27, 16, 0.25);
     position: fixed;
     top: 0;
     left: 0;
-    width: 240px;
-    height: 100vh;
+    width: 100%;
     z-index: 1000;
-    border-right: 4px solid var(--border);
+    border-bottom: 3px solid var(--border);
 }
 
 .nav-container {
     display: flex;
-    flex-direction: column;
-    gap: 2rem;
+    flex-direction: row;
+    gap: 1.5rem;
     height: 100%;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .nav-logo {
@@ -98,9 +78,21 @@ nav,
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    width: 100%;
-    flex: 1;
+    width: 260px;
+    flex: 0 0 auto;
     overflow-y: auto;
+    position: fixed;
+    top: 72px;
+    left: -280px;
+    height: calc(100vh - 72px);
+    padding: 1.5rem 1rem;
+    background-color: var(--primary);
+    transition: left 0.3s;
+    box-shadow: 6px 6px 0 var(--border);
+}
+
+.nav-menu.active {
+    left: 0;
 }
 
 .nav-link {
@@ -139,23 +131,39 @@ nav,
 }
 
 .nav-toggle {
-    display: none;
+    display: inline-flex;
     background: none;
     border: none;
     color: var(--white);
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     cursor: pointer;
+}
+
+.nav-top-links {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.nav-link-inline {
+    background-color: var(--surface);
+    color: var(--text);
+    border: 2px solid var(--border);
+    box-shadow: 4px 4px 0 var(--border);
+    padding: 0.4rem 0.9rem;
+}
+
+.nav-link-inline:hover {
+    background-color: var(--highlight);
+    color: var(--text);
+    transform: translate(-1px, -1px);
 }
 
 /* Pages */
 .page {
     display: none;
     min-height: 100vh;
-    padding: 2.5rem 2rem;
-}
-
-body.app-authenticated .page {
-    margin-left: 240px;
+    padding: 6rem 2rem 2.5rem;
 }
 
 .page.active {
@@ -948,44 +956,17 @@ body.is-mobile .page-header h1 {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    #app {
-        flex-direction: column;
-    }
-
     .navbar {
-        width: 100%;
         height: 64px;
-        padding: 0 1rem;
-        position: fixed;
-    }
-
-    .nav-container {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
     }
 
     .nav-menu {
-        position: fixed;
-        left: -100%;
         top: 64px;
-        flex-direction: column;
-        background-color: var(--primary);
-        width: 240px;
         height: calc(100vh - 64px);
-        text-align: center;
-        transition: 0.3s;
-        box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
-        padding: 1.5rem 1rem;
     }
 
-    .nav-menu.active {
-        left: 0;
-    }
-
-    .nav-toggle {
-        display: block;
+    .nav-top-links {
+        display: none;
     }
 
     .page-header {
@@ -1006,11 +987,6 @@ body.is-mobile .page-header h1 {
 
     .dashboard-stats {
         grid-template-columns: 1fr;
-    }
-
-    body.app-authenticated .page {
-        margin-left: 0;
-        padding-top: 5rem;
     }
 
     .container {
