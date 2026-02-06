@@ -36,6 +36,9 @@ function setupSocialListeners() {
                 status.textContent = error.message || 'Failed to send request.';
                 status.classList.add('status-error');
             }
+            friendSearchTimeout = setTimeout(() => {
+                loadFriendSearchResults(query);
+            }, 250);
         });
     }
 
@@ -49,6 +52,79 @@ function setupSocialListeners() {
                 loadFriendSearchResults(query);
             }, 250);
         });
+    }
+}
+
+async function handleFriendRequestSubmit() {
+    const input = document.getElementById('friendUsernameInput');
+    const status = document.getElementById('friendRequestStatus');
+    if (!input || !status) {
+        return;
+    }
+    const username = input.value.trim();
+
+    if (!username) {
+        status.textContent = 'Please enter a username.';
+        status.classList.add('status-error');
+        return;
+    }
+
+    status.textContent = 'Sending request...';
+    status.classList.remove('status-error');
+
+    try {
+        await sendFriendRequestSafe(username);
+        status.textContent = `Friend request sent to ${username}.`;
+        status.classList.remove('status-error');
+        input.value = '';
+        renderFriendSearchResults([]);
+        await loadSocialData();
+    } catch (error) {
+        status.textContent = error.message || 'Failed to send request.';
+        status.classList.add('status-error');
+    }
+}
+
+function startSocialPolling() {
+    if (socialPollInterval) {
+        return;
+    }
+    const socialPage = document.getElementById('socialPage');
+    if (socialPage && socialPage.classList.contains('active')) {
+        loadSocialData();
+    }
+    socialPollInterval = setInterval(() => {
+        const activePage = document.getElementById('socialPage');
+        if (activePage && activePage.classList.contains('active')) {
+            loadSocialData();
+        }
+    }, 10000);
+}
+
+async function sendFriendRequestSafe(username) {
+    try {
+        return await api.sendFriendRequest(username);
+    } catch (error) {
+        const fallback = await fetch('/api/friends/request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ username })
+        });
+
+        const contentType = fallback.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            const data = await fallback.json();
+            if (!fallback.ok) {
+                throw new Error(data.error || 'Failed to send request.');
+            }
+            return data;
+        }
+
+        const text = await fallback.text();
+        throw new Error(text || error.message || 'Server returned invalid response.');
     }
 }
 
