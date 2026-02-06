@@ -21,8 +21,15 @@
         <nav class="navbar" id="navbar">
             <div class="nav-container">
                 <div class="nav-logo">
-                    <span class="logo-icon">🏠</span>
-                    <span class="logo-text">Modo Gusto</span>
+                    <span class="logo-icon" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" role="img" focusable="false">
+                            <path d="M8 22L24 10l16 12v16H30V28h-12v10H8z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span class="logo-text">
+                        <span class="logo-title">Modo Gusto</span>
+                        <span class="nav-motto">meal prepping with passion</span>
+                    </span>
                 </div>
                 <div class="nav-top-links">
                     <a href="#" class="nav-link nav-link-inline" data-page="recipes">Recipes</a>
@@ -314,8 +321,12 @@
                 <div class="calendar-controls">
                     <div class="view-switcher" id="calendarViewSwitcher">
                         <button class="view-btn" data-view="dayGridMonth">Month</button>
-                        <button class="view-btn" data-view="timeGridWeek">Week</button>
-                        <button class="view-btn" data-view="timeGridDay">Day</button>
+                        <button class="view-btn" data-view="mealWeek">Week</button>
+                        <button class="view-btn" data-view="mealDay">Day</button>
+                    </div>
+                    <div class="calendar-nav">
+                        <button class="btn btn-secondary" id="calendarPrevBtn">Prev</button>
+                        <button class="btn btn-secondary" id="calendarNextBtn">Next</button>
                     </div>
                     <button class="btn btn-secondary" id="calendarTodayBtn">Today</button>
                 </div>
@@ -422,7 +433,7 @@
                     </div>
                     <div id="discoverResults" class="recipe-grid">
                         <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
-                            Start with a search to see meals from the community.
+                            Loading all meals from the community...
                         </p>
                     </div>
                 </div>
