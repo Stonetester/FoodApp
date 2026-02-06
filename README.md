@@ -265,6 +265,131 @@ Open your browser to `http://localhost:5000` and log in / register.
 
 Add a few recipes and pantry items from the UI so you have data to test the dashboard, calendar, and social features.
 
+## 🧰 GitHub Workflow: Updating the App via Branches & Pull Requests
+
+Use this step-by-step guide every time you want to make changes, open a PR, and keep your branch up to date with the main code.
+
+### 1) Sync your local `main` (or default) branch
+
+1. Open a terminal and go to the repo:
+   ```bash
+   cd /path/to/FoodApp
+   ```
+2. Switch to your main branch:
+   ```bash
+   git checkout main
+   ```
+3. Pull the latest code from GitHub:
+   ```bash
+   git pull origin main
+   ```
+
+**Why?** This ensures your base branch is current before you start new work.
+
+### 2) Create a new feature branch
+
+Pick a short, descriptive name:
+```bash
+git checkout -b feature/retro-vibes
+```
+
+**Why?** Feature branches keep your work isolated, making reviews and merges safer.
+
+### 3) Make changes locally
+
+Edit files in your editor as needed. Then check your work:
+```bash
+git status -sb
+```
+
+### 4) Stage changes
+
+Add only the files you intend to commit:
+```bash
+git add frontend/public/css/style.css frontend/public/index.html
+```
+
+If you want to stage everything:
+```bash
+git add -A
+```
+
+### 5) Commit changes
+
+Write a clear commit message:
+```bash
+git commit -m "Update retro palette and UI shadows"
+```
+
+**Tip:** Keep commits focused. Smaller commits are easier to review and revert.
+
+### 6) Push your branch to GitHub
+
+```bash
+git push -u origin feature/retro-vibes
+```
+
+The `-u` flag links your local branch to the remote branch so future pushes can be just `git push`.
+
+### 7) Open a Pull Request (PR)
+
+1. Go to your GitHub repo in a browser.
+2. You’ll see a prompt to “Compare & pull request.” Click it.
+3. Fill in the PR title and description:
+   - **Title:** short, clear summary.
+   - **Description:** what you changed, why you changed it, and testing notes.
+4. Submit the PR.
+
+### 8) Update your branch if main changes while you work
+
+If new commits land on `main`, bring them into your branch to avoid conflicts later:
+
+```bash
+git checkout main
+git pull origin main
+git checkout feature/retro-vibes
+git merge main
+```
+
+If there are conflicts, Git will tell you which files. Open those files, resolve conflicts, then:
+```bash
+git add <file>
+git commit -m "Resolve merge conflicts"
+```
+
+### 9) Keep PRs clean (optional but recommended)
+
+If your branch has many small commits and you want to squash them:
+
+```bash
+git rebase -i main
+```
+
+Mark commits as `squash` or `fixup`, then save and exit. After rebasing:
+```bash
+git push --force-with-lease
+```
+
+**Caution:** Only force-push your own branch, never `main`.
+
+### 10) Merge the PR
+
+Once approved, merge using GitHub’s **Squash and merge** or **Merge commit** (depending on your team’s preference).
+
+### 11) Clean up your local branch
+
+After merge:
+```bash
+git checkout main
+git pull origin main
+git branch -d feature/retro-vibes
+```
+
+If the branch still exists on GitHub and you want to remove it:
+```bash
+git push origin --delete feature/retro-vibes
+```
+
 ## 🌍 Make the App Public with Cloudflared (Development Sharing)
 
 Use this when you want to share your local dev instance with a teammate or test on your phone while on mobile data.

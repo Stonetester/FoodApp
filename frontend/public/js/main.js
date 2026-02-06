@@ -5,6 +5,7 @@ let currentUser = null;
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
+    setupResponsiveClass();
 });
 
 async function initializeApp() {
@@ -97,7 +98,7 @@ function setupEventListeners() {
     document.querySelectorAll('.nav-link[data-page]').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            const page = e.target.dataset.page;
+            const page = e.currentTarget.dataset.page;
             navigateToPage(page);
         });
     });
@@ -200,12 +201,14 @@ async function handleLogout() {
 function showLogin() {
     document.getElementById('loginPage').classList.add('active');
     document.getElementById('navbar').style.display = 'none';
+    document.body.classList.remove('app-authenticated');
     hideAllPages();
 }
 
 function showApp() {
     document.getElementById('loginPage').classList.remove('active');
     document.getElementById('navbar').style.display = 'block';
+    document.body.classList.add('app-authenticated');
     navigateToPage('dashboard');
     loadDashboard();
     handleSharedRecipeLink();
