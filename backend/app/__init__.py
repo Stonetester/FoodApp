@@ -5,6 +5,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.config import Config
 from app.models import db, User
+from app.schema_check import ensure_social_schema
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -60,10 +61,12 @@ def create_app(config_class=Config):
         if request.path.startswith('/api/'):
             return jsonify({'error': 'Internal server error'}), 500
         return error
-    
-    # Create tables
-    with app.app_context():
-        db.create_all()
-        print("✅ Database tables created successfully")
+
+    @app.cli.command("social-schema-check")
+    def social_schema_check():
+        """Check social schema without applying migrations."""
+        with db.engine.begin() as conn:
+            ensure_social_schema(conn, apply=False)
+        print("✅ Social schema check passed.")
     
     return app
