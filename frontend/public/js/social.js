@@ -6,13 +6,40 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let friendSearchTimeout = null;
-let socialPollInterval = null;
 
 function setupSocialListeners() {
     const sendBtn = document.getElementById('sendFriendRequestBtn');
     const friendInput = document.getElementById('friendUsernameInput');
     if (sendBtn) {
-        sendBtn.addEventListener('click', handleFriendRequestSubmit);
+        sendBtn.addEventListener('click', async () => {
+            const input = document.getElementById('friendUsernameInput');
+            const status = document.getElementById('friendRequestStatus');
+            const username = input.value.trim();
+            
+            if (!username) {
+                status.textContent = 'Please enter a username.';
+                status.classList.add('status-error');
+                return;
+            }
+            
+            status.textContent = 'Sending request...';
+            status.classList.remove('status-error');
+            
+            try {
+                await sendFriendRequest(username);
+                status.textContent = `Friend request sent to ${username}.`;
+                status.classList.remove('status-error');
+                input.value = '';
+                renderFriendSearchResults([]);
+                await loadSocialData();
+            } catch (error) {
+                status.textContent = error.message || 'Failed to send request.';
+                status.classList.add('status-error');
+            }
+            friendSearchTimeout = setTimeout(() => {
+                loadFriendSearchResults(query);
+            }, 250);
+        });
     }
 
     if (friendInput) {
@@ -204,7 +231,6 @@ async function removeFriend(friendId) {
 }
 
 window.loadSocialData = loadSocialData;
-window.sendFriendRequest = handleFriendRequestSubmit;
 
 async function loadFriendSearchResults(query) {
     const resultsContainer = document.getElementById('friendSearchResults');
