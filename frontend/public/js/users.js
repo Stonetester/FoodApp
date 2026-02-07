@@ -45,6 +45,10 @@ function setupUserSearchListeners() {
 
     const discoverSearchInput = document.getElementById('discoverSearchInput');
     if (discoverSearchInput) {
+        discoverSearchInput.addEventListener('input', () => {
+            discoverFilters.search = discoverSearchInput.value.trim();
+            loadDiscoverRecipes();
+        });
         discoverSearchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 discoverFilters.search = discoverSearchInput.value.trim();
@@ -66,16 +70,7 @@ async function loadDiscoverRecipes() {
     const resultsContainer = document.getElementById('discoverResults');
     if (!resultsContainer) return;
     
-    if (!discoverFilters.search && (!discoverFilters.tags || discoverFilters.tags.length === 0)) {
-        resultsContainer.innerHTML = `
-            <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
-                Start with a search to see meals from the community.
-            </p>
-        `;
-        return;
-    }
-    
-    resultsContainer.innerHTML = '<p style="text-align: center;">Searching meals...</p>';
+    resultsContainer.innerHTML = '<p style="text-align: center;">Loading meals...</p>';
     
     try {
         const recipes = await api.discoverRecipes(discoverFilters);
