@@ -1,11 +1,15 @@
-from flask import Blueprint, request, jsonify, send_from_directory, send_file
+from flask import Blueprint, request, jsonify, send_from_directory, send_file, current_app
 from flask_login import login_required, current_user
 from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship
 from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image
 from datetime import datetime, date
 from collections import Counter
+from sqlalchemy import text
+import logging
 import json
 import os
+
+logger = logging.getLogger(__name__)
 
 main_bp = Blueprint('main', __name__)
 api_bp = Blueprint('api', __name__)
@@ -782,15 +786,31 @@ def send_friend_request():
     if reverse_request:
         return jsonify({'error': 'This user already sent you a request'}), 400
     
+    # --- diagnostic logging: verify we're writing to the expected DB ---
+    db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '').split('@')[-1]  # hide password
+    actual_db = db.session.execute(text("SELECT DATABASE()")).scalar()
+    count_before = db.session.execute(text("SELECT COUNT(*) FROM friend_requests")).scalar()
+    logger.info(
+        "[send_friend_request] DB host/name from URI: %s | SELECT DATABASE(): %s | "
+        "friend_requests row count BEFORE insert: %s",
+        db_uri, actual_db, count_before
+    )
+
     friend_request = FriendRequest(
         requester_id=current_user.id,
         recipient_id=recipient.id,
         status='pending'
     )
-    
+
     db.session.add(friend_request)
     db.session.commit()
-    
+
+    count_after = db.session.execute(text("SELECT COUNT(*) FROM friend_requests")).scalar()
+    logger.info(
+        "[send_friend_request] friend_requests row count AFTER insert: %s (was %s)",
+        count_after, count_before
+    )
+
     return jsonify({
         'message': 'Friend request sent',
         'request_id': friend_request.id
