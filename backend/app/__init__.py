@@ -357,11 +357,17 @@ def create_app(config_class=Config):
     
     # Initialize rate limiter for security
     limiter = Limiter(
-        app=app,
-        key_func=get_remote_address,
-        default_limits=["200 per day", "50 per hour"],
-        storage_uri="memory://"
-    )
+       key_func=get_remote_address,
+       default_limits=["200 per day", "50 per hour"],
+       storage_uri="memory://"
+     )
+
+    # DEV MODE: disable limiter so it doesn't spam 429 while you're building
+    if app.debug:
+        limiter.enabled = False
+    else:
+        limiter.init_app(app)
+
     
     # Register blueprints
     from app.routes import main_bp, api_bp
@@ -390,8 +396,9 @@ def create_app(config_class=Config):
     
     # Create tables
     with app.app_context():
-        db.create_all()
-        ensure_social_schema()
-        print("✅ Database tables created successfully")
+        #db.create_all()
+        #ensure_social_schema()
+        #print("✅ Database tables created successfully")
+        print("✅ App started (DB schema not auto-modified on startup)")
     
     return app
