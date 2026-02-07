@@ -107,17 +107,7 @@ def _has_unique_index_on_columns(conn, table_name, columns):
             return True
     return False
 
-def _has_non_primary_unique_index_on_columns(conn, table_name, columns):
-    target = ",".join(columns)
-    for row in _get_indexes(conn, table_name):
-        if row["index_name"] == "PRIMARY":
-            continue
-        if row["non_unique"] == 0 and row["columns"] == target:
-            return True
-    return False
-
-def _ensure_auto_increment_id(conn, table_name, order_by_columns, legacy_pk_columns=None):
-    legacy_pk_columns = legacy_pk_columns or []
+def _ensure_auto_increment_id(conn, table_name, order_by_columns):
     columns = _get_columns(conn, table_name)
     if "id" not in columns:
         conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN id INT NULL"))
@@ -159,19 +149,6 @@ def _ensure_auto_increment_id(conn, table_name, order_by_columns, legacy_pk_colu
             )
 
         primary_keys = _get_primary_key_columns(conn, table_name)
-        if primary_keys and primary_keys != ["id"]:
-            if legacy_pk_columns and primary_keys == legacy_pk_columns:
-                conn.execute(text(f"ALTER TABLE {table_name} DROP PRIMARY KEY"))
-                if not _has_non_primary_unique_index_on_columns(conn, table_name, primary_keys):
-                    legacy_index_name = f"uniq_{table_name}_" + "_".join(primary_keys)
-                    if not _has_index(conn, table_name, legacy_index_name):
-                        conn.execute(
-                            text(
-                                f"CREATE UNIQUE INDEX {legacy_index_name} "
-                                f"ON {table_name} ({', '.join(primary_keys)})"
-                            )
-                        )
-                primary_keys = _get_primary_key_columns(conn, table_name)
         if not primary_keys:
             conn.execute(text(f"ALTER TABLE {table_name} ADD PRIMARY KEY (id)"))
 
@@ -241,12 +218,7 @@ def _ensure_friend_requests_schema(conn):
     if "created_at" not in columns:
         conn.execute(text("ALTER TABLE friend_requests ADD COLUMN created_at DATETIME"))
 
-    _ensure_auto_increment_id(
-        conn,
-        "friend_requests",
-        ["created_at", "requester_id", "recipient_id"],
-        legacy_pk_columns=["requester_id", "recipient_id"],
-    )
+    _ensure_auto_increment_id(conn, "friend_requests", ["created_at", "requester_id", "recipient_id"])
 
     columns = _get_columns(conn, "friend_requests")
     if "requester_id" in columns and columns["requester_id"]["is_nullable"] == "YES":
@@ -324,12 +296,7 @@ def _ensure_friendships_schema(conn):
     if "created_at" not in columns:
         conn.execute(text("ALTER TABLE friendships ADD COLUMN created_at DATETIME"))
 
-    _ensure_auto_increment_id(
-        conn,
-        "friendships",
-        ["user_id", "friend_id"],
-        legacy_pk_columns=["user_id", "friend_id"],
-    )
+    _ensure_auto_increment_id(conn, "friendships", ["user_id", "friend_id"])
 
     if not _has_unique_index_on_columns(conn, "friendships", ["user_id", "friend_id"]):
         if not _has_index(conn, "friendships", "unique_friendship"):
