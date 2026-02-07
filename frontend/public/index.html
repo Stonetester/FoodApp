@@ -663,6 +663,13 @@
     
     <!-- Fallback: Ensure login page is visible if JS fails -->
     <script>
+        window.sendFriendRequest = window.sendFriendRequest || function() {
+            const button = document.getElementById('sendFriendRequestBtn');
+            if (button) {
+                button.dispatchEvent(new Event('click'));
+            }
+        };
+
         // If JavaScript hasn't initialized after 1 second, show login page
         setTimeout(function() {
             const loginPage = document.getElementById('loginPage');
