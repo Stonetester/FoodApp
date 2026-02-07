@@ -74,10 +74,6 @@ def ensure_social_schema():
     inspector = inspect(db.engine)
     dialect = db.engine.dialect.name
 
-    def get_pk_columns(table_name):
-        pk = inspector.get_pk_constraint(table_name) or {}
-        return set(pk.get("constrained_columns") or [])
-
     def has_column(table_name, column_name):
         return column_name in {col["name"] for col in inspector.get_columns(table_name)}
 
@@ -86,12 +82,9 @@ def ensure_social_schema():
         db.session.commit()
 
     if inspector.has_table("friendships"):
-        pk_columns = get_pk_columns("friendships")
         if not has_column("friendships", "id"):
-            if not pk_columns and dialect == "mysql":
+            if dialect == "mysql":
                 add_column("friendships", "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST")
-            elif not pk_columns:
-                add_column("friendships", "id INTEGER")
             else:
                 add_column("friendships", "id INTEGER")
         if not has_column("friendships", "user_id"):
@@ -102,12 +95,9 @@ def ensure_social_schema():
             add_column("friendships", "created_at DATETIME")
 
     if inspector.has_table("friend_requests"):
-        pk_columns = get_pk_columns("friend_requests")
         if not has_column("friend_requests", "id"):
-            if not pk_columns and dialect == "mysql":
+            if dialect == "mysql":
                 add_column("friend_requests", "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST")
-            elif not pk_columns:
-                add_column("friend_requests", "id INTEGER")
             else:
                 add_column("friend_requests", "id INTEGER")
         if not has_column("friend_requests", "requester_id"):
