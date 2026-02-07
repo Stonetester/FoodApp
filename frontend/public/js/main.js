@@ -219,18 +219,9 @@ function showApp() {
 
 function updateRecipesTitle() {
     const titleEl = document.getElementById('recipesTitle');
+    if (!titleEl) return;
     const username = currentUser?.username || 'Your';
-    if (titleEl) {
-        titleEl.textContent = `${username}'s Recipes`;
-    }
-    const navBtn = document.getElementById('recipesNavBtn');
-    if (navBtn) {
-        navBtn.textContent = `${username}'s Recipes`;
-    }
-    const menuBtn = document.getElementById('recipesMenuBtn');
-    if (menuBtn) {
-        menuBtn.textContent = `${username}'s Recipes`;
-    }
+    titleEl.textContent = `${username}'s Recipes`;
 }
 
 function handleSharedRecipeLink() {
