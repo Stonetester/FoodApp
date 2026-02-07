@@ -1,13 +1,21 @@
 import os
+import sys
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
+
 def _default_database_uri():
-    """Return the DATABASE_URL from the environment, falling back to SQLite."""
+    """Return the DATABASE_URL from the environment.
+
+    FAIL LOUDLY if MySQL is configured but unreachable -- never silently
+    fall back to SQLite, which causes ghost writes to a different DB.
+    """
     url = os.environ.get('DATABASE_URL')
     if url:
-        # Quick connectivity check for MySQL URLs
         if url.startswith(('mysql', 'mysql+pymysql')):
             try:
                 import socket
@@ -18,12 +26,37 @@ def _default_database_uri():
                 s = socket.create_connection((host, port), timeout=2)
                 s.close()
                 return url
-            except (OSError, Exception):
-                pass  # MySQL unreachable, fall back to SQLite
+            except (OSError, Exception) as exc:
+                msg = (
+                    f"\n{'='*60}\n"
+                    f"  DATABASE CONNECTION FAILED\n"
+                    f"{'='*60}\n"
+                    f"  Could not connect to MySQL at {host}:{port}\n"
+                    f"  DATABASE_URL = {url.split('@')[-1]}\n"
+                    f"  Error: {exc}\n\n"
+                    f"  The app will NOT silently fall back to SQLite.\n"
+                    f"  Fix your MySQL connection or unset DATABASE_URL to\n"
+                    f"  intentionally use SQLite.\n"
+                    f"{'='*60}\n"
+                )
+                print(msg, file=sys.stderr)
+                logger.critical(msg)
+                raise RuntimeError(
+                    f"MySQL unreachable at {host}:{port} -- refusing to "
+                    f"silently fall back to SQLite. Fix MySQL or unset "
+                    f"DATABASE_URL to use SQLite intentionally."
+                ) from exc
         else:
             return url
+
+    # No DATABASE_URL set at all -- SQLite is intentional
     basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    return 'sqlite:///' + os.path.join(basedir, 'foodapp.db')
+    sqlite_path = os.path.join(basedir, 'foodapp.db')
+    logger.warning(
+        "No DATABASE_URL set -- using SQLite at %s (not recommended for production)",
+        sqlite_path
+    )
+    return 'sqlite:///' + sqlite_path
 
 class Config:
     """Base configuration"""

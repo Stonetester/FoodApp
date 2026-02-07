@@ -1,21 +1,25 @@
 -- ============================================================================
 -- Idempotent migration: fix friend_requests & friendships schema
--- Safe to run multiple times. Uses information_schema checks. No DROPs.
+-- Safe to run multiple times. Checks information_schema before every ALTER.
+-- Handles the case where a table already has a PRIMARY KEY (e.g. composite).
+--
 -- Run against the `foodapp` database:
 --   mysql -u foodapp_user -p foodapp < migrate_friends_schema.sql
 -- ============================================================================
 
--- Verify which database we're operating on
 SELECT DATABASE() AS current_database;
 
 -- ---- friend_requests table --------------------------------------------------
 
--- Add `id` primary key if missing
+-- Add `id` primary key -- must check for EXISTING PK first
 SET @col_exists = (SELECT COUNT(*) FROM information_schema.columns
     WHERE table_schema = DATABASE() AND table_name = 'friend_requests' AND column_name = 'id');
-SET @sql = IF(@col_exists = 0,
-    'ALTER TABLE friend_requests ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST',
-    'SELECT "friend_requests.id already exists" AS info');
+SET @has_pk = (SELECT COUNT(*) FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE() AND table_name = 'friend_requests' AND constraint_type = 'PRIMARY KEY');
+SET @sql = IF(@col_exists > 0, 'SELECT "friend_requests.id already exists" AS info',
+           IF(@has_pk > 0,
+              'ALTER TABLE friend_requests DROP PRIMARY KEY, ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST',
+              'ALTER TABLE friend_requests ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST'));
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- Add `requester_id`
@@ -82,12 +86,15 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- ---- friendships table ------------------------------------------------------
 
--- Add `id` primary key if missing
+-- Add `id` primary key -- must check for EXISTING PK first
 SET @col_exists = (SELECT COUNT(*) FROM information_schema.columns
     WHERE table_schema = DATABASE() AND table_name = 'friendships' AND column_name = 'id');
-SET @sql = IF(@col_exists = 0,
-    'ALTER TABLE friendships ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST',
-    'SELECT "friendships.id already exists" AS info');
+SET @has_pk = (SELECT COUNT(*) FROM information_schema.table_constraints
+    WHERE table_schema = DATABASE() AND table_name = 'friendships' AND constraint_type = 'PRIMARY KEY');
+SET @sql = IF(@col_exists > 0, 'SELECT "friendships.id already exists" AS info',
+           IF(@has_pk > 0,
+              'ALTER TABLE friendships DROP PRIMARY KEY, ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST',
+              'ALTER TABLE friendships ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY FIRST'));
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- Add `user_id`
