@@ -5,6 +5,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.config import Config
 from app.models import db, User
+from sqlalchemy import inspect, text
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -64,6 +65,40 @@ def create_app(config_class=Config):
     # Create tables
     with app.app_context():
         db.create_all()
+        ensure_social_schema()
         print("✅ Database tables created successfully")
     
     return app
+
+def ensure_social_schema():
+    inspector = inspect(db.engine)
+    dialect = db.engine.dialect.name
+
+    def has_column(table_name, column_name):
+        return column_name in {col["name"] for col in inspector.get_columns(table_name)}
+
+    def add_column(table_name, column_sql):
+        db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_sql}"))
+        db.session.commit()
+
+    if inspector.has_table("friendships"):
+        if not has_column("friendships", "id"):
+            add_column("friendships", "id INTEGER")
+        if not has_column("friendships", "user_id"):
+            add_column("friendships", "user_id INTEGER")
+        if not has_column("friendships", "friend_id"):
+            add_column("friendships", "friend_id INTEGER")
+        if not has_column("friendships", "created_at"):
+            add_column("friendships", "created_at DATETIME")
+
+    if inspector.has_table("friend_requests"):
+        if not has_column("friend_requests", "id"):
+            add_column("friend_requests", "id INTEGER")
+        if not has_column("friend_requests", "requester_id"):
+            add_column("friend_requests", "requester_id INTEGER")
+        if not has_column("friend_requests", "recipient_id"):
+            add_column("friend_requests", "recipient_id INTEGER")
+        if not has_column("friend_requests", "status"):
+            add_column("friend_requests", "status VARCHAR(20)")
+        if not has_column("friend_requests", "created_at"):
+            add_column("friend_requests", "created_at DATETIME")

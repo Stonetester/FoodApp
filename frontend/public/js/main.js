@@ -14,6 +14,7 @@ async function initializeApp() {
         const user = await api.getCurrentUser();
         currentUser = user;
         showApp();
+        updateRecipesTitle();
     } catch (error) {
         console.log('User not logged in, showing login page');
         showLogin();
@@ -158,6 +159,7 @@ async function handleLogin() {
         const result = await api.login(username, password);
         currentUser = result.user;
         showApp();
+        updateRecipesTitle();
         errorDiv.textContent = '';
         errorDiv.classList.remove('show');
     } catch (error) {
@@ -191,10 +193,11 @@ async function handleRegister() {
 async function handleLogout() {
     try {
         await api.logout();
-        currentUser = null;
-        showLogin();
     } catch (error) {
         console.error('Logout error:', error);
+    } finally {
+        currentUser = null;
+        showLogin();
     }
 }
 
@@ -212,6 +215,22 @@ function showApp() {
     navigateToPage('dashboard');
     loadDashboard();
     handleSharedRecipeLink();
+}
+
+function updateRecipesTitle() {
+    const titleEl = document.getElementById('recipesTitle');
+    const username = currentUser?.username || 'Your';
+    if (titleEl) {
+        titleEl.textContent = `${username}'s Recipes`;
+    }
+    const navBtn = document.getElementById('recipesNavBtn');
+    if (navBtn) {
+        navBtn.textContent = `${username}'s Recipes`;
+    }
+    const menuBtn = document.getElementById('recipesMenuBtn');
+    if (menuBtn) {
+        menuBtn.textContent = `${username}'s Recipes`;
+    }
 }
 
 function handleSharedRecipeLink() {
