@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from sqlalchemy import inspect, text
 from app.config import Config
 from app.models import db, User
 
@@ -18,6 +19,63 @@ def unauthorized():
     # For non-API routes, redirect to login (handled by login_view)
     from flask import redirect, url_for
     return redirect(url_for('auth.login'))
+
+def _get_columns(conn, table_name):
+    try:
+        inspector = inspect(conn)
+        columns = inspector.get_columns(table_name)
+    except Exception as exc:
+        print(f"❌ Schema check failed in _get_columns for {table_name}")
+        raise RuntimeError(f"Schema check failed in _get_columns for {table_name}") from exc
+    return {column["name"]: column for column in columns}
+
+def _get_indexes(conn, table_name):
+    try:
+        inspector = inspect(conn)
+        return inspector.get_indexes(table_name)
+    except Exception as exc:
+        print(f"❌ Schema check failed in _get_indexes for {table_name}")
+        raise RuntimeError(f"Schema check failed in _get_indexes for {table_name}") from exc
+
+def _ensure_friend_requests_schema(conn):
+    columns = _get_columns(conn, "friend_requests")
+    if "sender_id" in columns and "requester_id" in columns:
+        try:
+            conn.execute(
+                text(
+                    """
+                    UPDATE friend_requests
+                    SET sender_id = requester_id
+                    WHERE sender_id IS NULL AND requester_id IS NOT NULL
+                    """
+                )
+            )
+        except Exception as exc:
+            print("❌ Failed backfilling sender_id from requester_id")
+            raise RuntimeError("Failed backfilling sender_id from requester_id") from exc
+
+    if "receiver_id" in columns and "recipient_id" in columns:
+        try:
+            conn.execute(
+                text(
+                    """
+                    UPDATE friend_requests
+                    SET receiver_id = recipient_id
+                    WHERE receiver_id IS NULL AND recipient_id IS NOT NULL
+                    """
+                )
+            )
+        except Exception as exc:
+            print("❌ Failed backfilling receiver_id from recipient_id")
+            raise RuntimeError("Failed backfilling receiver_id from recipient_id") from exc
+
+def _ensure_friendships_schema(conn):
+    _get_columns(conn, "friendships")
+
+def ensure_social_schema():
+    with db.engine.begin() as conn:
+        _ensure_friend_requests_schema(conn)
+        _ensure_friendships_schema(conn)
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -64,6 +122,7 @@ def create_app(config_class=Config):
     # Create tables
     with app.app_context():
         db.create_all()
+        ensure_social_schema()
         print("✅ Database tables created successfully")
     
     return app
