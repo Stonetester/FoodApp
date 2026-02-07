@@ -699,7 +699,11 @@ def get_user_recipes(user_id):
 @login_required
 def get_friends():
     """Get current user's friends list"""
-    friendships = Friendship.query.filter_by(user_id=current_user.id).all()
+    friendships = (
+        Friendship.query.filter_by(user_id=current_user.id)
+        .with_entities(Friendship.friend_id)
+        .all()
+    )
     friend_ids = [friendship.friend_id for friendship in friendships]
     friends = User.query.filter(User.id.in_(friend_ids)).all() if friend_ids else []
     
@@ -762,7 +766,11 @@ def send_friend_request():
     if not recipient:
         return jsonify({'error': 'User not found'}), 404
     
-    existing_friendship = Friendship.query.filter_by(user_id=current_user.id, friend_id=recipient.id).first()
+    existing_friendship = (
+        Friendship.query.filter_by(user_id=current_user.id, friend_id=recipient.id)
+        .with_entities(Friendship.user_id)
+        .first()
+    )
     if existing_friendship:
         return jsonify({'error': 'You are already friends'}), 400
     
@@ -824,7 +832,11 @@ def respond_to_friend_request():
     ]
     
     for friendship in friendships:
-        existing = Friendship.query.filter_by(user_id=friendship.user_id, friend_id=friendship.friend_id).first()
+        existing = (
+            Friendship.query.filter_by(user_id=friendship.user_id, friend_id=friendship.friend_id)
+            .with_entities(Friendship.user_id)
+            .first()
+        )
         if not existing:
             db.session.add(friendship)
     

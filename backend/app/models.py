@@ -96,6 +96,7 @@ class FriendRequest(db.Model):
     
     __table_args__ = (
         db.UniqueConstraint('requester_id', 'recipient_id', name='unique_friend_request'),
+        db.Index('idx_friend_requests_requester_recipient', 'requester_id', 'recipient_id'),
     )
     
     def to_dict(self):
@@ -120,6 +121,7 @@ class Friendship(db.Model):
     
     __table_args__ = (
         db.UniqueConstraint('user_id', 'friend_id', name='unique_friendship'),
+        db.Index('idx_friendships_user_friend', 'user_id', 'friend_id'),
     )
     
     def to_dict(self):
