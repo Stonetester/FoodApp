@@ -96,6 +96,10 @@ class FriendRequest(db.Model):
     
     __table_args__ = (
         db.UniqueConstraint('sender_id', 'receiver_id', name='unique_friend_request'),
+        db.CheckConstraint(
+            "status IN ('pending', 'accepted', 'declined')",
+            name='check_friend_request_status'
+        ),
     )
 
     
