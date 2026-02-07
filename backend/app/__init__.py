@@ -61,9 +61,4 @@ def create_app(config_class=Config):
             return jsonify({'error': 'Internal server error'}), 500
         return error
     
-    # Create tables
-    with app.app_context():
-        db.create_all()
-        print("✅ Database tables created successfully")
-    
     return app
