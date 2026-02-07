@@ -21,15 +21,15 @@ class User(UserMixin, db.Model):
     meal_history = db.relationship('MealHistory', backref='user', lazy=True, cascade='all, delete-orphan')
     sent_friend_requests = db.relationship(
         'FriendRequest',
-        foreign_keys='FriendRequest.requester_id',
-        backref='requester',
+        foreign_keys='FriendRequest.sender_id',
+        backref='sender',
         lazy=True,
         cascade='all, delete-orphan'
     )
     received_friend_requests = db.relationship(
         'FriendRequest',
-        foreign_keys='FriendRequest.recipient_id',
-        backref='recipient',
+        foreign_keys='FriendRequest.receiver_id',
+        backref='receiver',
         lazy=True,
         cascade='all, delete-orphan'
     )
@@ -89,8 +89,8 @@ class FriendRequest(db.Model):
     __tablename__ = 'friend_requests'
     
     id = db.Column(db.Integer, primary_key=True)
-    requester_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     status = db.Column(db.String(20), nullable=False, default='pending', index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -102,21 +102,20 @@ class FriendRequest(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'requester_id': self.requester_id,
-            'recipient_id': self.recipient_id,
+            'sender_id': self.sender_id,
+            'receiver_id': self.receiver_id,
             'status': self.status,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
     
     def __repr__(self):
-        return f'<FriendRequest {self.requester_id}->{self.recipient_id} ({self.status})>'
+        return f'<FriendRequest {self.sender_id}->{self.receiver_id} ({self.status})>'
 
 class Friendship(db.Model):
     __tablename__ = 'friendships'
     
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     __table_args__ = (
@@ -126,7 +125,6 @@ class Friendship(db.Model):
     
     def to_dict(self):
         return {
-            'id': self.id,
             'user_id': self.user_id,
             'friend_id': self.friend_id,
             'created_at': self.created_at.isoformat() if self.created_at else None

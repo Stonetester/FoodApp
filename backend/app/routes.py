@@ -721,16 +721,16 @@ def get_friends():
 @login_required
 def get_friend_requests():
     """Get incoming and outgoing friend requests"""
-    incoming = FriendRequest.query.filter_by(recipient_id=current_user.id, status='pending').all()
-    outgoing = FriendRequest.query.filter_by(requester_id=current_user.id, status='pending').all()
+    incoming = FriendRequest.query.filter_by(receiver_id=current_user.id, status='pending').all()
+    outgoing = FriendRequest.query.filter_by(sender_id=current_user.id, status='pending').all()
     
     return jsonify({
         'incoming': [
             {
                 'id': req.id,
                 'user': {
-                    'id': req.requester.id,
-                    'username': req.requester.username
+                    'id': req.sender.id,
+                    'username': req.sender.username
                 },
                 'created_at': req.created_at.isoformat() if req.created_at else None
             }
@@ -740,8 +740,8 @@ def get_friend_requests():
             {
                 'id': req.id,
                 'user': {
-                    'id': req.recipient.id,
-                    'username': req.recipient.username
+                    'id': req.receiver.id,
+                    'username': req.receiver.username
                 },
                 'created_at': req.created_at.isoformat() if req.created_at else None
             }
@@ -775,24 +775,24 @@ def send_friend_request():
         return jsonify({'error': 'You are already friends'}), 400
     
     existing_request = FriendRequest.query.filter_by(
-        requester_id=current_user.id,
-        recipient_id=recipient.id,
+        sender_id=current_user.id,
+        receiver_id=recipient.id,
         status='pending'
     ).first()
     if existing_request:
         return jsonify({'error': 'Friend request already sent'}), 400
     
     reverse_request = FriendRequest.query.filter_by(
-        requester_id=recipient.id,
-        recipient_id=current_user.id,
+        sender_id=recipient.id,
+        receiver_id=current_user.id,
         status='pending'
     ).first()
     if reverse_request:
         return jsonify({'error': 'This user already sent you a request'}), 400
     
     friend_request = FriendRequest(
-        requester_id=current_user.id,
-        recipient_id=recipient.id,
+        sender_id=current_user.id,
+        receiver_id=recipient.id,
         status='pending'
     )
     
@@ -815,7 +815,7 @@ def respond_to_friend_request():
     if not request_id or action not in {'accept', 'decline'}:
         return jsonify({'error': 'Request ID and valid action are required'}), 400
     
-    friend_request = FriendRequest.query.filter_by(id=request_id, recipient_id=current_user.id).first()
+    friend_request = FriendRequest.query.filter_by(id=request_id, receiver_id=current_user.id).first()
     if not friend_request or friend_request.status != 'pending':
         return jsonify({'error': 'Friend request not found'}), 404
     
@@ -827,8 +827,8 @@ def respond_to_friend_request():
     friend_request.status = 'accepted'
     
     friendships = [
-        Friendship(user_id=friend_request.requester_id, friend_id=friend_request.recipient_id),
-        Friendship(user_id=friend_request.recipient_id, friend_id=friend_request.requester_id)
+        Friendship(user_id=friend_request.sender_id, friend_id=friend_request.receiver_id),
+        Friendship(user_id=friend_request.receiver_id, friend_id=friend_request.sender_id)
     ]
     
     for friendship in friendships:
