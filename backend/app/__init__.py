@@ -6,6 +6,7 @@ from flask_limiter.util import get_remote_address
 from sqlalchemy import text
 from app.config import Config
 from app.models import db, User
+from app.schema_check import ensure_social_schema
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
