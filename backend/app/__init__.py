@@ -83,7 +83,10 @@ def ensure_social_schema():
 
     if inspector.has_table("friendships"):
         if not has_column("friendships", "id"):
-            add_column("friendships", "id INTEGER")
+            if dialect == "mysql":
+                add_column("friendships", "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST")
+            else:
+                add_column("friendships", "id INTEGER")
         if not has_column("friendships", "user_id"):
             add_column("friendships", "user_id INTEGER")
         if not has_column("friendships", "friend_id"):
@@ -93,7 +96,10 @@ def ensure_social_schema():
 
     if inspector.has_table("friend_requests"):
         if not has_column("friend_requests", "id"):
-            add_column("friend_requests", "id INTEGER")
+            if dialect == "mysql":
+                add_column("friend_requests", "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST")
+            else:
+                add_column("friend_requests", "id INTEGER")
         if not has_column("friend_requests", "requester_id"):
             add_column("friend_requests", "requester_id INTEGER")
         if not has_column("friend_requests", "recipient_id"):
