@@ -6,7 +6,6 @@ from flask_limiter.util import get_remote_address
 from app.config import Config
 from app.models import db, User
 from sqlalchemy import inspect, text
-from sqlalchemy.exc import OperationalError
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -78,30 +77,16 @@ def ensure_social_schema():
     def has_column(table_name, column_name):
         return column_name in {col["name"] for col in inspector.get_columns(table_name)}
 
-    def primary_key_columns(table_name):
-        pk_info = inspector.get_pk_constraint(table_name) or {}
-        return pk_info.get("constrained_columns") or []
-
     def add_column(table_name, column_sql):
-        try:
-            db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_sql}"))
-            db.session.commit()
-        except OperationalError as error:
-            message = str(error).lower()
-            if "multiple primary key" in message:
-                db.session.rollback()
-                return
-            db.session.rollback()
-            raise
+        db.session.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_sql}"))
+        db.session.commit()
 
     if inspector.has_table("friendships"):
         if not has_column("friendships", "id"):
-            if primary_key_columns("friendships"):
-                add_column("friendships", "id INTEGER")
-            elif dialect == "mysql":
-                add_column("friendships", "id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY")
+            if dialect == "mysql":
+                add_column("friendships", "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST")
             else:
-                add_column("friendships", "id INTEGER PRIMARY KEY")
+                add_column("friendships", "id INTEGER")
         if not has_column("friendships", "user_id"):
             add_column("friendships", "user_id INTEGER")
         if not has_column("friendships", "friend_id"):
@@ -111,12 +96,10 @@ def ensure_social_schema():
 
     if inspector.has_table("friend_requests"):
         if not has_column("friend_requests", "id"):
-            if primary_key_columns("friend_requests"):
-                add_column("friend_requests", "id INTEGER")
-            elif dialect == "mysql":
-                add_column("friend_requests", "id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY")
+            if dialect == "mysql":
+                add_column("friend_requests", "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST")
             else:
-                add_column("friend_requests", "id INTEGER PRIMARY KEY")
+                add_column("friend_requests", "id INTEGER")
         if not has_column("friend_requests", "requester_id"):
             add_column("friend_requests", "requester_id INTEGER")
         if not has_column("friend_requests", "recipient_id"):
