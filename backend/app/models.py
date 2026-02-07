@@ -95,7 +95,8 @@ class FriendRequest(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     __table_args__ = (
-        db.UniqueConstraint('sender_id', 'receiver_id', name='unique_friend_request'),
+        db.UniqueConstraint('requester_id', 'recipient_id', name='unique_friend_request'),
+        db.Index('idx_friend_requests_requester_recipient', 'requester_id', 'recipient_id'),
     )
     
     def to_dict(self):
@@ -118,6 +119,7 @@ class Friendship(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     __table_args__ = (
+        db.UniqueConstraint('user_id', 'friend_id', name='unique_friendship'),
         db.Index('idx_friendships_user_friend', 'user_id', 'friend_id'),
     )
     
