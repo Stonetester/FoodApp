@@ -221,7 +221,7 @@ def delete_recipe(recipe_id):
     
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
-    
+    MealPlan.query.filter_by(user_id=current_user.id, recipe_id=recipe_id).delete()
     db.session.delete(recipe)
     db.session.commit()
     
