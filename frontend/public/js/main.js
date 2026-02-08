@@ -2,10 +2,22 @@
 
 let currentUser = null;
 
+function setupResponsiveClass() {
+    const apply = () => {
+        document.body.classList.toggle('is-mobile', window.innerWidth < 768);
+    };
+    apply();
+    window.addEventListener('resize', apply);
+}
+
+window.setupResponsiveClass = setupResponsiveClass;
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
-    setupResponsiveClass();
+    if (typeof setupResponsiveClass === 'function') {
+        setupResponsiveClass();
+    }
 });
 
 async function initializeApp() {
@@ -410,15 +422,6 @@ function viewRecipe(id) {
         }
     }, 100);
 }
-
-function setupResponsiveClass() {
-    const apply = () => {
-        document.body.classList.toggle('is-mobile', window.innerWidth < 768);
-    };
-    apply();
-    window.addEventListener('resize', apply);
-}
-
 
 // Export for use in other modules
 window.navigateToPage = navigateToPage;

@@ -5,7 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let friendSearchTimeout = null;
-let socialPollInterval = null;
+var socialPollInterval = window.socialPollInterval ?? null;
+window.socialPollInterval = socialPollInterval;
 
 
 function setupSocialListeners() {
@@ -93,10 +94,13 @@ async function handleFriendRequestSubmit() {
     }
 }
 
+window.sendFriendRequest = handleFriendRequestSubmit;
+
 function stopSocialPolling() {
     if (socialPollInterval) {
         clearInterval(socialPollInterval);
         socialPollInterval = null;
+        window.socialPollInterval = null;
     }
 }
 
@@ -118,6 +122,7 @@ function startSocialPolling() {
             loadSocialData();
         }
     }, 10000);
+    window.socialPollInterval = socialPollInterval;
 }
 
 async function sendFriendRequestSafe(username) {
