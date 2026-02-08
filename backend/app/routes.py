@@ -750,7 +750,25 @@ def get_friend_requests():
         ]
     }), 200
 
-def _create_friend_request(receiver_id):
+@api_bp.route('/friends/requests/send', methods=['POST'])
+@login_required
+def send_friend_request():
+    """Send a friend request by user id"""
+    data = request.get_json() or {}
+    receiver_id = data.get('receiver_id')
+
+    try:
+        receiver_id = int(receiver_id)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Valid receiver_id is required'}), 400
+
+    if receiver_id == current_user.id:
+        return jsonify({'error': 'You cannot add yourself as a friend'}), 400
+
+    recipient = User.query.get(receiver_id)
+    if not recipient:
+        return jsonify({'error': 'User not found'}), 404
+
     existing_friendship = (
         Friendship.query.filter_by(user_id=current_user.id, friend_id=receiver_id)
         .with_entities(Friendship.user_id)
@@ -809,48 +827,6 @@ def _create_friend_request(receiver_id):
         return jsonify({'error': 'Unable to send friend request'}), 500
 
     return jsonify({'friend_request': friend_request.to_dict()}), 201
-
-
-@api_bp.route('/friends/request', methods=['POST'])
-@login_required
-def send_friend_request_by_username():
-    """Send a friend request by username"""
-    data = request.get_json() or {}
-    username = (data.get('username') or '').strip()
-
-    if not username:
-        return jsonify({'error': 'Username is required'}), 400
-
-    if username == current_user.username:
-        return jsonify({'error': 'You cannot add yourself as a friend'}), 400
-
-    recipient = User.query.filter_by(username=username).first()
-    if not recipient:
-        return jsonify({'error': 'User not found'}), 404
-
-    return _create_friend_request(recipient.id)
-
-
-@api_bp.route('/friends/requests/send', methods=['POST'])
-@login_required
-def send_friend_request():
-    """Send a friend request by user id"""
-    data = request.get_json() or {}
-    receiver_id = data.get('receiver_id')
-
-    try:
-        receiver_id = int(receiver_id)
-    except (TypeError, ValueError):
-        return jsonify({'error': 'Valid receiver_id is required'}), 400
-
-    if receiver_id == current_user.id:
-        return jsonify({'error': 'You cannot add yourself as a friend'}), 400
-
-    recipient = User.query.get(receiver_id)
-    if not recipient:
-        return jsonify({'error': 'User not found'}), 404
-
-    return _create_friend_request(receiver_id)
 
 @api_bp.route('/friends/respond', methods=['POST'])
 @login_required
