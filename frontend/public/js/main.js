@@ -2,10 +2,16 @@
 
 let currentUser = null;
 
+const maintenanceAnnouncement = {
+    enabled: true,
+    message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
+};
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     setupResponsiveClass();
+    applyMaintenanceBanners();
 });
 
 async function initializeApp() {
@@ -417,6 +423,19 @@ function setupResponsiveClass() {
     };
     apply();
     window.addEventListener('resize', apply);
+}
+
+function applyMaintenanceBanners() {
+    const banners = document.querySelectorAll('[data-maintenance-banner]');
+    const isEnabled = maintenanceAnnouncement.enabled;
+    banners.forEach((banner) => {
+        const messageEl = banner.querySelector('[data-maintenance-message]');
+        if (messageEl) {
+            messageEl.textContent = maintenanceAnnouncement.message;
+        }
+        banner.classList.toggle('is-hidden', !isEnabled);
+    });
+    document.body.classList.toggle('has-maintenance-banner', isEnabled);
 }
 
 
