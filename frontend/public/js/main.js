@@ -252,6 +252,7 @@ function hideAllPages() {
 
 function navigateToPage(pageName) {
     hideAllPages();
+    if (window.stopSocialPolling) window.stopSocialPolling();
     
     const pageMap = {
         'dashboard': 'dashboardPage',
@@ -275,9 +276,8 @@ function navigateToPage(pageName) {
                 window.loadDiscoverRecipes();
             }
         } else if (pageName === 'social') {
-            if (window.loadSocialData) {
-                window.loadSocialData();
-            }
+            if (window.loadSocialData) window.loadSocialData();
+            if (window.startSocialPolling) window.startSocialPolling();
         } else if (pageName === 'pantry') {
             loadPantry();
         } else if (pageName === 'mealplan') {
@@ -410,6 +410,15 @@ function viewRecipe(id) {
         }
     }, 100);
 }
+
+function setupResponsiveClass() {
+    const apply = () => {
+        document.body.classList.toggle('is-mobile', window.innerWidth < 768);
+    };
+    apply();
+    window.addEventListener('resize', apply);
+}
+
 
 // Export for use in other modules
 window.navigateToPage = navigateToPage;

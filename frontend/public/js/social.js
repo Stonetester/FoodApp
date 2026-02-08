@@ -2,10 +2,11 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     setupSocialListeners();
-    startSocialPolling();
 });
 
 let friendSearchTimeout = null;
+let socialPollInterval = null;
+
 
 function setupSocialListeners() {
     const sendBtn = document.getElementById('sendFriendRequestBtn');
@@ -91,6 +92,17 @@ async function handleFriendRequestSubmit() {
         status.classList.add('status-error');
     }
 }
+
+function stopSocialPolling() {
+    if (socialPollInterval) {
+        clearInterval(socialPollInterval);
+        socialPollInterval = null;
+    }
+}
+
+window.startSocialPolling = startSocialPolling;
+window.stopSocialPolling = stopSocialPolling;
+
 
 function startSocialPolling() {
     if (socialPollInterval) {
