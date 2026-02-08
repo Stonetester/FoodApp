@@ -14,6 +14,7 @@ async function initializeApp() {
         const user = await api.getCurrentUser();
         currentUser = user;
         showApp();
+        updateRecipesTitle();
     } catch (error) {
         console.log('User not logged in, showing login page');
         showLogin();
@@ -158,6 +159,7 @@ async function handleLogin() {
         const result = await api.login(username, password);
         currentUser = result.user;
         showApp();
+        updateRecipesTitle();
         errorDiv.textContent = '';
         errorDiv.classList.remove('show');
     } catch (error) {
@@ -191,10 +193,11 @@ async function handleRegister() {
 async function handleLogout() {
     try {
         await api.logout();
-        currentUser = null;
-        showLogin();
     } catch (error) {
         console.error('Logout error:', error);
+    } finally {
+        currentUser = null;
+        showLogin();
     }
 }
 
@@ -212,6 +215,13 @@ function showApp() {
     navigateToPage('dashboard');
     loadDashboard();
     handleSharedRecipeLink();
+}
+
+function updateRecipesTitle() {
+    const titleEl = document.getElementById('recipesTitle');
+    if (!titleEl) return;
+    const username = currentUser?.username || 'Your';
+    titleEl.textContent = `${username}'s Recipes`;
 }
 
 function handleSharedRecipeLink() {
@@ -242,6 +252,7 @@ function hideAllPages() {
 
 function navigateToPage(pageName) {
     hideAllPages();
+    if (window.stopSocialPolling) window.stopSocialPolling();
     
     const pageMap = {
         'dashboard': 'dashboardPage',
@@ -265,9 +276,8 @@ function navigateToPage(pageName) {
                 window.loadDiscoverRecipes();
             }
         } else if (pageName === 'social') {
-            if (window.loadSocialData) {
-                window.loadSocialData();
-            }
+            if (window.loadSocialData) window.loadSocialData();
+            if (window.startSocialPolling) window.startSocialPolling();
         } else if (pageName === 'pantry') {
             loadPantry();
         } else if (pageName === 'mealplan') {
@@ -400,6 +410,15 @@ function viewRecipe(id) {
         }
     }, 100);
 }
+
+function setupResponsiveClass() {
+    const apply = () => {
+        document.body.classList.toggle('is-mobile', window.innerWidth < 768);
+    };
+    apply();
+    window.addEventListener('resize', apply);
+}
+
 
 // Export for use in other modules
 window.navigateToPage = navigateToPage;
