@@ -15,19 +15,29 @@ function setupSocialListeners() {
             const input = document.getElementById('friendUsernameInput');
             const status = document.getElementById('friendRequestStatus');
             const username = input.value.trim();
-            
+
             if (!username) {
                 status.textContent = 'Please enter a username.';
                 status.classList.add('status-error');
                 return;
             }
-            
+
             status.textContent = 'Sending request...';
             status.classList.remove('status-error');
-            
+
             try {
-                await sendFriendRequest(username);
-                status.textContent = `Friend request sent to ${username}.`;
+                const matches = await api.searchUsers(username);
+
+                const exact = (matches || []).find(u => (u.username || '').toLowerCase() === username.toLowerCase());
+                const target = exact || (matches && matches[0]);
+
+                if (!target) {
+                    throw new Error(`User "${username}" not found.`);
+                }
+
+                await api.sendFriendRequest(target.id);
+
+                status.textContent = `Friend request sent to ${target.username}.`;
                 status.classList.remove('status-error');
                 input.value = '';
                 renderFriendSearchResults([]);
@@ -36,9 +46,6 @@ function setupSocialListeners() {
                 status.textContent = error.message || 'Failed to send request.';
                 status.classList.add('status-error');
             }
-            friendSearchTimeout = setTimeout(() => {
-                loadFriendSearchResults(query);
-            }, 250);
         });
     }
 
@@ -102,30 +109,15 @@ function startSocialPolling() {
 }
 
 async function sendFriendRequestSafe(username) {
-    try {
-        return await api.sendFriendRequest(username);
-    } catch (error) {
-        const fallback = await fetch('/api/friends/request', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({ username })
-        });
+    const matches = await api.searchUsers(username);
+    const exact = (matches || []).find(u => (u.username || '').toLowerCase() === username.toLowerCase());
+    const target = exact || (matches && matches[0]);
 
-        const contentType = fallback.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-            const data = await fallback.json();
-            if (!fallback.ok) {
-                throw new Error(data.error || 'Failed to send request.');
-            }
-            return data;
-        }
-
-        const text = await fallback.text();
-        throw new Error(text || error.message || 'Server returned invalid response.');
+    if (!target) {
+        throw new Error(`User "${username}" not found.`);
     }
+
+    return api.sendFriendRequest(target.id);
 }
 
 async function loadSocialData() {
