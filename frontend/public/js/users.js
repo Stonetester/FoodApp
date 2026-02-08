@@ -498,3 +498,4 @@ window.copyRecipeFromDetail = copyRecipeFromDetail;
 window.loadDiscoverRecipes = loadDiscoverRecipes;
 window.viewDiscoverRecipeDetail = viewDiscoverRecipeDetail;
 window.shareRecipeLink = shareRecipeLink;
+window.createUserRecipeCard = createUserRecipeCard;

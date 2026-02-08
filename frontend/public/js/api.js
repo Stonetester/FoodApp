@@ -221,6 +221,18 @@ class ApiService {
         return this.request('/api/friends');
     }
 
+    async getUserRecipes(userId) {
+        return this.request(`/api/users/${userId}/recipes`);
+    }
+
+    async getUserMealPlan(userId, startDate, endDate) {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        const query = params.toString();
+        return this.request(`/api/users/${userId}/mealplan${query ? '?' + query : ''}`);
+    }
+
     async getFriendRequests() {
         return this.request('/api/friends/requests');
     }

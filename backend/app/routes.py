@@ -695,6 +695,35 @@ def get_user_recipes(user_id):
     
     return jsonify(result), 200
 
+@api_bp.route('/users/<int:user_id>/mealplan', methods=['GET'])
+@login_required
+def get_user_meal_plan(user_id):
+    """Get meal plan for a specific user (friends only)"""
+    if user_id != current_user.id:
+        is_friend = Friendship.query.filter_by(user_id=current_user.id, friend_id=user_id).first()
+        if not is_friend:
+            return jsonify({'error': 'You do not have access to this meal plan'}), 403
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    query = MealPlan.query.filter_by(user_id=user_id)
+
+    if start_date:
+        start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        query = query.filter(MealPlan.planned_date >= start)
+
+    if end_date:
+        end = datetime.strptime(end_date, '%Y-%m-%d').date()
+        query = query.filter(MealPlan.planned_date <= end)
+
+    plans = query.order_by(MealPlan.planned_date.asc()).all()
+    return jsonify([plan.to_dict() for plan in plans]), 200
+
 # ==================== FRIENDS & SOCIAL ====================
 @api_bp.route('/friends', methods=['GET'])
 @login_required
