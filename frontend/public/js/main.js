@@ -208,10 +208,10 @@ async function handleLogout() {
 }
 
 function showLogin() {
+    hideAllPages();
     document.getElementById('loginPage').classList.add('active');
     document.getElementById('navbar').style.display = 'none';
     document.body.classList.remove('app-authenticated');
-    hideAllPages();
 }
 
 function showApp() {

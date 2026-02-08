@@ -11,6 +11,7 @@ let socialPollInterval = null;
 function setupSocialListeners() {
     const sendBtn = document.getElementById('sendFriendRequestBtn');
     const friendInput = document.getElementById('friendUsernameInput');
+    const refreshBtn = document.getElementById('refreshSocialBtn');
     if (sendBtn) {
         sendBtn.addEventListener('click', async () => {
             const input = document.getElementById('friendUsernameInput');
@@ -46,6 +47,19 @@ function setupSocialListeners() {
             } catch (error) {
                 status.textContent = error.message || 'Failed to send request.';
                 status.classList.add('status-error');
+            }
+        });
+    }
+
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.setAttribute('disabled', 'disabled');
+            refreshBtn.classList.add('is-loading');
+            try {
+                await loadSocialData();
+            } finally {
+                refreshBtn.removeAttribute('disabled');
+                refreshBtn.classList.remove('is-loading');
             }
         });
     }
