@@ -809,6 +809,10 @@ def send_friend_request():
     db.session.add(friend_request)
     try:
         db.session.commit()
+        current_app.logger.info(
+           "FRIEND REQUEST COMMITTED: id=%s sender=%s receiver=%s",
+           friend_request.id, current_user.id, receiver_id
+        )
     except IntegrityError:
         db.session.rollback()
         current_app.logger.warning(
