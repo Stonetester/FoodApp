@@ -479,6 +479,11 @@ function handleViewChange(viewName) {
         if (sectionsEl) {
             sectionsEl.style.display = 'none';
         }
+        if (calendar) {
+            requestAnimationFrame(() => {
+                calendar.updateSize();
+            });
+        }
     }
 
     updateViewButtons(viewName);
