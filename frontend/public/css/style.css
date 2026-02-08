@@ -1377,14 +1377,6 @@ body.is-mobile .page-header h1 {
     margin-top: 1rem;
 }
 
-.friends-mealplan-calendar {
-    margin-top: 1rem;
-    background: var(--surface);
-    padding: 1rem;
-    border-radius: 12px;
-    border: 2px solid var(--border);
-}
-
 .friends-mealplan-day {
     background: var(--light-cream);
     border-radius: 12px;
@@ -1554,15 +1546,6 @@ body.is-mobile .page-header h1 {
 
     .meal-day-list {
         padding: 0.75rem 1rem 1rem;
-    }
-
-    .friends-panel-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .friends-panel-header .btn {
-        width: 100%;
     }
 }
 

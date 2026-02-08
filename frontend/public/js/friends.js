@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let friendsCache = [];
 let selectedFriendId = null;
-let friendCalendar = null;
 
 function setupFriendsListeners() {
     const refreshBtn = document.getElementById('refreshFriendsBtn');
@@ -159,7 +158,6 @@ function renderFriendMealPlan(mealPlans) {
 
     if (!mealPlans || mealPlans.length === 0) {
         mealPlanEl.innerHTML = '<p class="empty-state">No upcoming meals shared yet.</p>';
-        renderFriendMealPlanCalendar([]);
         return;
     }
 
@@ -190,48 +188,6 @@ function renderFriendMealPlan(mealPlans) {
         });
         mealPlanEl.appendChild(dateBlock);
     });
-
-    renderFriendMealPlanCalendar(mealPlans);
 }
 
 window.loadFriendsPage = loadFriendsPage;
-
-function renderFriendMealPlanCalendar(mealPlans) {
-    const calendarEl = document.getElementById('friendMealPlanCalendar');
-    if (!calendarEl) return;
-
-    const events = (mealPlans || []).map(plan => ({
-        id: plan.id,
-        title: plan.recipe ? plan.recipe.title : 'Meal',
-        start: plan.planned_date,
-        backgroundColor: getMealTypeColor(plan.meal_type),
-        borderColor: getMealTypeColor(plan.meal_type)
-    }));
-
-    if (!friendCalendar) {
-        friendCalendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: {
-                left: '',
-                center: 'title',
-                right: ''
-            },
-            events
-        });
-        friendCalendar.render();
-    } else {
-        friendCalendar.removeAllEvents();
-        friendCalendar.addEventSource(events);
-        friendCalendar.updateSize();
-    }
-}
-
-function getMealTypeColor(mealType) {
-    const colors = {
-        breakfast: '#E6A556',
-        lunch: '#D78B3A',
-        dinner: '#6E7A44',
-        snack: '#C96A2B'
-    };
-    return colors[mealType] || '#7A8471';
-}
