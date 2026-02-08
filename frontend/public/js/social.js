@@ -4,28 +4,44 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSocialListeners();
 });
 
+let friendSearchTimeout = null;
+let socialPollInterval = null;
+
+
 function setupSocialListeners() {
     const sendBtn = document.getElementById('sendFriendRequestBtn');
+    const friendInput = document.getElementById('friendUsernameInput');
     if (sendBtn) {
         sendBtn.addEventListener('click', async () => {
             const input = document.getElementById('friendUsernameInput');
             const status = document.getElementById('friendRequestStatus');
             const username = input.value.trim();
-            
+
             if (!username) {
                 status.textContent = 'Please enter a username.';
                 status.classList.add('status-error');
                 return;
             }
-            
+
             status.textContent = 'Sending request...';
             status.classList.remove('status-error');
-            
+
             try {
-                await api.sendFriendRequest(username);
-                status.textContent = `Friend request sent to ${username}.`;
+                const matches = await api.searchUsers(username);
+
+                const exact = (matches || []).find(u => (u.username || '').toLowerCase() === username.toLowerCase());
+                const target = exact || (matches && matches[0]);
+
+                if (!target) {
+                    throw new Error(`User "${username}" not found.`);
+                }
+
+                await api.sendFriendRequest(target.id);
+
+                status.textContent = `Friend request sent to ${target.username}.`;
                 status.classList.remove('status-error');
                 input.value = '';
+                renderFriendSearchResults([]);
                 await loadSocialData();
             } catch (error) {
                 status.textContent = error.message || 'Failed to send request.';
@@ -33,6 +49,87 @@ function setupSocialListeners() {
             }
         });
     }
+
+    if (friendInput) {
+        friendInput.addEventListener('input', () => {
+            const query = friendInput.value.trim();
+            if (friendSearchTimeout) {
+                clearTimeout(friendSearchTimeout);
+            }
+            friendSearchTimeout = setTimeout(() => {
+                loadFriendSearchResults(query);
+            }, 250);
+        });
+    }
+}
+
+async function handleFriendRequestSubmit() {
+    const input = document.getElementById('friendUsernameInput');
+    const status = document.getElementById('friendRequestStatus');
+    if (!input || !status) {
+        return;
+    }
+    const username = input.value.trim();
+
+    if (!username) {
+        status.textContent = 'Please enter a username.';
+        status.classList.add('status-error');
+        return;
+    }
+
+    status.textContent = 'Sending request...';
+    status.classList.remove('status-error');
+
+    try {
+        await sendFriendRequestSafe(username);
+        status.textContent = `Friend request sent to ${username}.`;
+        status.classList.remove('status-error');
+        input.value = '';
+        renderFriendSearchResults([]);
+        await loadSocialData();
+    } catch (error) {
+        status.textContent = error.message || 'Failed to send request.';
+        status.classList.add('status-error');
+    }
+}
+
+function stopSocialPolling() {
+    if (socialPollInterval) {
+        clearInterval(socialPollInterval);
+        socialPollInterval = null;
+    }
+}
+
+window.startSocialPolling = startSocialPolling;
+window.stopSocialPolling = stopSocialPolling;
+
+
+function startSocialPolling() {
+    if (socialPollInterval) {
+        return;
+    }
+    const socialPage = document.getElementById('socialPage');
+    if (socialPage && socialPage.classList.contains('active')) {
+        loadSocialData();
+    }
+    socialPollInterval = setInterval(() => {
+        const activePage = document.getElementById('socialPage');
+        if (activePage && activePage.classList.contains('active')) {
+            loadSocialData();
+        }
+    }, 10000);
+}
+
+async function sendFriendRequestSafe(username) {
+    const matches = await api.searchUsers(username);
+    const exact = (matches || []).find(u => (u.username || '').toLowerCase() === username.toLowerCase());
+    const target = exact || (matches && matches[0]);
+
+    if (!target) {
+        throw new Error(`User "${username}" not found.`);
+    }
+
+    return api.sendFriendRequest(target.id);
 }
 
 async function loadSocialData() {
@@ -138,3 +235,58 @@ async function removeFriend(friendId) {
 }
 
 window.loadSocialData = loadSocialData;
+
+async function loadFriendSearchResults(query) {
+    const resultsContainer = document.getElementById('friendSearchResults');
+    if (!resultsContainer) return;
+
+    if (!query || query.length < 2) {
+        renderFriendSearchResults([]);
+        return;
+    }
+
+    resultsContainer.innerHTML = '<p class="status-message">Searching users...</p>';
+    try {
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`, {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Search failed: ${response.status}`);
+        }
+
+        const users = await response.json();
+        renderFriendSearchResults(users);
+    } catch (error) {
+        console.error('Error searching users for friends:', error);
+        resultsContainer.innerHTML = '<p class="status-message status-error">Unable to load suggestions.</p>';
+    }
+}
+
+function renderFriendSearchResults(users) {
+    const resultsContainer = document.getElementById('friendSearchResults');
+    if (!resultsContainer) return;
+
+    resultsContainer.innerHTML = '';
+
+    if (!users || users.length === 0) {
+        return;
+    }
+
+    users.forEach(user => {
+        const item = document.createElement('div');
+        item.className = 'friend-search-item';
+        item.innerHTML = `
+            <span>@${user.username}</span>
+            <button class="btn btn-secondary" type="button" data-username="${user.username}">Select</button>
+        `;
+        item.querySelector('button')?.addEventListener('click', () => {
+            const input = document.getElementById('friendUsernameInput');
+            if (input) {
+                input.value = user.username;
+                renderFriendSearchResults([]);
+            }
+        });
+        resultsContainer.appendChild(item);
+    });
+}

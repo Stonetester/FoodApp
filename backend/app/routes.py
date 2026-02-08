@@ -1,5 +1,6 @@
-from flask import Blueprint, request, jsonify, send_from_directory, send_file
+from flask import Blueprint, request, jsonify, send_from_directory, send_file, current_app
 from flask_login import login_required, current_user
+from sqlalchemy.exc import IntegrityError
 from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship
 from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image
 from datetime import datetime, date
@@ -221,7 +222,7 @@ def delete_recipe(recipe_id):
     
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
-    
+    MealPlan.query.filter_by(user_id=current_user.id, recipe_id=recipe_id).delete()
     db.session.delete(recipe)
     db.session.commit()
     
@@ -699,7 +700,11 @@ def get_user_recipes(user_id):
 @login_required
 def get_friends():
     """Get current user's friends list"""
-    friendships = Friendship.query.filter_by(user_id=current_user.id).all()
+    friendships = (
+        Friendship.query.filter_by(user_id=current_user.id)
+        .with_entities(Friendship.friend_id)
+        .all()
+    )
     friend_ids = [friendship.friend_id for friendship in friendships]
     friends = User.query.filter(User.id.in_(friend_ids)).all() if friend_ids else []
     
@@ -717,16 +722,16 @@ def get_friends():
 @login_required
 def get_friend_requests():
     """Get incoming and outgoing friend requests"""
-    incoming = FriendRequest.query.filter_by(recipient_id=current_user.id, status='pending').all()
-    outgoing = FriendRequest.query.filter_by(requester_id=current_user.id, status='pending').all()
+    incoming = FriendRequest.query.filter_by(receiver_id=current_user.id, status='pending').all()
+    outgoing = FriendRequest.query.filter_by(sender_id=current_user.id, status='pending').all()
     
     return jsonify({
         'incoming': [
             {
                 'id': req.id,
                 'user': {
-                    'id': req.requester.id,
-                    'username': req.requester.username
+                    'id': req.sender.id,
+                    'username': req.sender.username
                 },
                 'created_at': req.created_at.isoformat() if req.created_at else None
             }
@@ -736,8 +741,8 @@ def get_friend_requests():
             {
                 'id': req.id,
                 'user': {
-                    'id': req.recipient.id,
-                    'username': req.recipient.username
+                    'id': req.receiver.id,
+                    'username': req.receiver.username
                 },
                 'created_at': req.created_at.isoformat() if req.created_at else None
             }
@@ -745,56 +750,87 @@ def get_friend_requests():
         ]
     }), 200
 
-@api_bp.route('/friends/request', methods=['POST'])
+@api_bp.route('/friends/requests/send', methods=['POST'])
 @login_required
 def send_friend_request():
-    """Send a friend request by username"""
+    """Send a friend request by user id"""
     data = request.get_json() or {}
-    username = (data.get('username') or '').strip()
-    
-    if not username:
-        return jsonify({'error': 'Username is required'}), 400
-    
-    if username == current_user.username:
+    receiver_id = data.get('receiver_id')
+
+    try:
+        receiver_id = int(receiver_id)
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Valid receiver_id is required'}), 400
+
+    if receiver_id == current_user.id:
         return jsonify({'error': 'You cannot add yourself as a friend'}), 400
-    
-    recipient = User.query.filter_by(username=username).first()
+
+    recipient = User.query.get(receiver_id)
     if not recipient:
         return jsonify({'error': 'User not found'}), 404
-    
-    existing_friendship = Friendship.query.filter_by(user_id=current_user.id, friend_id=recipient.id).first()
+
+    existing_friendship = (
+        Friendship.query.filter_by(user_id=current_user.id, friend_id=receiver_id)
+        .with_entities(Friendship.user_id)
+        .first()
+    )
+    if not existing_friendship:
+        existing_friendship = (
+            Friendship.query.filter_by(user_id=receiver_id, friend_id=current_user.id)
+            .with_entities(Friendship.user_id)
+            .first()
+        )
     if existing_friendship:
         return jsonify({'error': 'You are already friends'}), 400
-    
+
     existing_request = FriendRequest.query.filter_by(
-        requester_id=current_user.id,
-        recipient_id=recipient.id,
-        status='pending'
-    ).first()
+        sender_id=current_user.id,
+        receiver_id=receiver_id
+    ).order_by(FriendRequest.id.desc()).first()
     if existing_request:
-        return jsonify({'error': 'Friend request already sent'}), 400
-    
+        if existing_request.status == 'pending':
+            return jsonify({'friend_request': existing_request.to_dict()}), 200
+        return jsonify({'error': 'Friend request already exists'}), 409
+
     reverse_request = FriendRequest.query.filter_by(
-        requester_id=recipient.id,
-        recipient_id=current_user.id,
+        sender_id=receiver_id,
+        receiver_id=current_user.id,
         status='pending'
     ).first()
     if reverse_request:
-        return jsonify({'error': 'This user already sent you a request'}), 400
-    
+        return jsonify({'error': 'This user already sent you a request'}), 409
+
     friend_request = FriendRequest(
-        requester_id=current_user.id,
-        recipient_id=recipient.id,
+        sender_id=current_user.id,
+        receiver_id=receiver_id,
         status='pending'
     )
-    
+
     db.session.add(friend_request)
-    db.session.commit()
-    
-    return jsonify({
-        'message': 'Friend request sent',
-        'request_id': friend_request.id
-    }), 201
+    try:
+        db.session.commit()
+        current_app.logger.info(
+           "FRIEND REQUEST COMMITTED: id=%s sender=%s receiver=%s",
+           friend_request.id, current_user.id, receiver_id
+        )
+    except IntegrityError:
+        db.session.rollback()
+        current_app.logger.warning(
+            "Friend request already exists for sender %s -> receiver %s",
+            current_user.id,
+            receiver_id
+        )
+        return jsonify({'error': 'Friend request already exists'}), 409
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            "Failed to create friend request for sender %s -> receiver %s",
+            current_user.id,
+            receiver_id
+        )
+        return jsonify({'error': 'Unable to send friend request'}), 500
+
+    return jsonify({'friend_request': friend_request.to_dict()}), 201
 
 @api_bp.route('/friends/respond', methods=['POST'])
 @login_required
@@ -807,7 +843,7 @@ def respond_to_friend_request():
     if not request_id or action not in {'accept', 'decline'}:
         return jsonify({'error': 'Request ID and valid action are required'}), 400
     
-    friend_request = FriendRequest.query.filter_by(id=request_id, recipient_id=current_user.id).first()
+    friend_request = FriendRequest.query.filter_by(id=request_id, receiver_id=current_user.id).first()
     if not friend_request or friend_request.status != 'pending':
         return jsonify({'error': 'Friend request not found'}), 404
     
@@ -819,12 +855,16 @@ def respond_to_friend_request():
     friend_request.status = 'accepted'
     
     friendships = [
-        Friendship(user_id=friend_request.requester_id, friend_id=friend_request.recipient_id),
-        Friendship(user_id=friend_request.recipient_id, friend_id=friend_request.requester_id)
+        Friendship(user_id=friend_request.sender_id, friend_id=friend_request.receiver_id),
+        Friendship(user_id=friend_request.receiver_id, friend_id=friend_request.sender_id)
     ]
     
     for friendship in friendships:
-        existing = Friendship.query.filter_by(user_id=friendship.user_id, friend_id=friendship.friend_id).first()
+        existing = (
+            Friendship.query.filter_by(user_id=friendship.user_id, friend_id=friendship.friend_id)
+            .with_entities(Friendship.user_id)
+            .first()
+        )
         if not existing:
             db.session.add(friendship)
     

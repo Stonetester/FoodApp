@@ -225,10 +225,15 @@ class ApiService {
         return this.request('/api/friends/requests');
     }
 
-    async sendFriendRequest(username) {
-        return this.request('/api/friends/request', {
+    async searchUsers(query) {
+        const params = new URLSearchParams({ q: query });
+        return this.request(`/api/users/search?${params.toString()}`);
+    }
+
+    async sendFriendRequest(receiverId) {
+        return this.request('/api/friends/requests/send', {
             method: 'POST',
-            body: JSON.stringify({ username })
+            body: JSON.stringify({ receiver_id: receiverId })
         });
     }
 

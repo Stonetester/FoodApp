@@ -1,0 +1,37 @@
+# Environment files
+.env
+.env.*
+
+# Secrets & keys
+*.key
+*.pem
+*.p12
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependency directories
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+
+# Build artifacts
+/dist/
+/build/
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Cookies or session exports
+cookies.txt
