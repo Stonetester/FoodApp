@@ -2,10 +2,18 @@
 
 let currentUser = null;
 
+const maintenanceAnnouncement = {
+    enabled: true,
+    message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.',
+    storageKey: 'maintenanceAnnouncementDismissed'
+};
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     setupResponsiveClass();
+    applyMaintenanceBanners();
+    setupMaintenanceBannerDismiss();
 });
 
 async function initializeApp() {
@@ -417,6 +425,30 @@ function setupResponsiveClass() {
     };
     apply();
     window.addEventListener('resize', apply);
+}
+
+function applyMaintenanceBanners() {
+    const banners = document.querySelectorAll('[data-maintenance-banner]');
+    const isDismissed = localStorage.getItem(maintenanceAnnouncement.storageKey) === 'true';
+    const isEnabled = maintenanceAnnouncement.enabled && !isDismissed;
+    banners.forEach((banner) => {
+        const messageEl = banner.querySelector('[data-maintenance-message]');
+        if (messageEl) {
+            messageEl.textContent = maintenanceAnnouncement.message;
+        }
+        banner.classList.toggle('is-hidden', !isEnabled);
+    });
+    document.body.classList.toggle('has-maintenance-banner', isEnabled);
+}
+
+function setupMaintenanceBannerDismiss() {
+    const dismissButtons = document.querySelectorAll('[data-maintenance-dismiss]');
+    dismissButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            localStorage.setItem(maintenanceAnnouncement.storageKey, 'true');
+            applyMaintenanceBanners();
+        });
+    });
 }
 
 

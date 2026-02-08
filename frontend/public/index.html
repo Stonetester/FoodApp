@@ -17,6 +17,15 @@
 </head>
 <body>
     <div id="app">
+        <div class="maintenance-banner maintenance-banner--global" data-maintenance-banner role="status" aria-live="polite">
+            <span class="maintenance-banner__icon" aria-hidden="true">🛠️</span>
+            <span class="maintenance-banner__message" data-maintenance-message>
+                We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.
+            </span>
+            <button class="maintenance-banner__close" type="button" aria-label="Dismiss maintenance announcement" data-maintenance-dismiss>
+                ×
+            </button>
+        </div>
         <!-- Navigation -->
         <nav class="navbar" id="navbar">
             <div class="nav-container">
