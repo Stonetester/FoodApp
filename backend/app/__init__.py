@@ -160,8 +160,8 @@ def _ensure_friend_requests_schema(conn):
                 """
                 CREATE TABLE IF NOT EXISTS friend_requests (
                     id INT NOT NULL AUTO_INCREMENT,
-                    requester_id INT NOT NULL,
-                    recipient_id INT NOT NULL,
+                    sender_id INT NOT NULL,
+                    receiver_id INT NOT NULL,
                     status VARCHAR(20) NOT NULL DEFAULT 'pending',
                     created_at DATETIME,
                     PRIMARY KEY (id)
@@ -171,30 +171,30 @@ def _ensure_friend_requests_schema(conn):
         )
 
     columns = _get_columns(conn, "friend_requests")
-    if "requester_id" not in columns:
-        conn.execute(text("ALTER TABLE friend_requests ADD COLUMN requester_id INT NULL"))
+    if "sender_id" not in columns:
+        conn.execute(text("ALTER TABLE friend_requests ADD COLUMN sender_id INT NULL"))
         columns = _get_columns(conn, "friend_requests")
-        if "sender_id" in columns:
+        if "requester_id" in columns:
             conn.execute(
                 text(
                     """
                     UPDATE friend_requests
-                    SET requester_id = sender_id
-                    WHERE requester_id IS NULL
+                    SET sender_id = requester_id
+                    WHERE sender_id IS NULL
                     """
                 )
             )
 
-    if "recipient_id" not in columns:
-        conn.execute(text("ALTER TABLE friend_requests ADD COLUMN recipient_id INT NULL"))
+    if "receiver_id" not in columns:
+        conn.execute(text("ALTER TABLE friend_requests ADD COLUMN receiver_id INT NULL"))
         columns = _get_columns(conn, "friend_requests")
-        if "receiver_id" in columns:
+        if "recipient_id" in columns:
             conn.execute(
                 text(
                     """
                     UPDATE friend_requests
-                    SET recipient_id = receiver_id
-                    WHERE recipient_id IS NULL
+                    SET receiver_id = recipient_id
+                    WHERE receiver_id IS NULL
                     """
                 )
             )
@@ -219,52 +219,52 @@ def _ensure_friend_requests_schema(conn):
     if "created_at" not in columns:
         conn.execute(text("ALTER TABLE friend_requests ADD COLUMN created_at DATETIME"))
 
-    _ensure_auto_increment_id(conn, "friend_requests", ["created_at", "requester_id", "recipient_id"])
+    _ensure_auto_increment_id(conn, "friend_requests", ["created_at", "sender_id", "receiver_id"])
 
     columns = _get_columns(conn, "friend_requests")
-    if "requester_id" in columns and columns["requester_id"]["is_nullable"] == "YES":
+    if "sender_id" in columns and columns["sender_id"]["is_nullable"] == "YES":
         nulls = conn.execute(
             text(
                 """
                 SELECT COUNT(*)
                 FROM friend_requests
-                WHERE requester_id IS NULL
+                WHERE sender_id IS NULL
                 """
             )
         ).scalar()
         if nulls == 0:
             conn.execute(
                 text(
-                    "ALTER TABLE friend_requests MODIFY COLUMN requester_id INT NOT NULL"
+                    "ALTER TABLE friend_requests MODIFY COLUMN sender_id INT NOT NULL"
                 )
             )
 
-    if "recipient_id" in columns and columns["recipient_id"]["is_nullable"] == "YES":
+    if "receiver_id" in columns and columns["receiver_id"]["is_nullable"] == "YES":
         nulls = conn.execute(
             text(
                 """
                 SELECT COUNT(*)
                 FROM friend_requests
-                WHERE recipient_id IS NULL
+                WHERE receiver_id IS NULL
                 """
             )
         ).scalar()
         if nulls == 0:
             conn.execute(
                 text(
-                    "ALTER TABLE friend_requests MODIFY COLUMN recipient_id INT NOT NULL"
+                    "ALTER TABLE friend_requests MODIFY COLUMN receiver_id INT NOT NULL"
                 )
             )
 
     if not _has_unique_index_on_columns(
-        conn, "friend_requests", ["requester_id", "recipient_id"]
+        conn, "friend_requests", ["sender_id", "receiver_id"]
     ):
         if not _has_index(conn, "friend_requests", "unique_friend_request"):
             conn.execute(
                 text(
                     """
                     CREATE UNIQUE INDEX unique_friend_request
-                    ON friend_requests (requester_id, recipient_id)
+                    ON friend_requests (sender_id, receiver_id)
                     """
                 )
             )

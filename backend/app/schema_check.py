@@ -9,6 +9,7 @@ EXPECTED_FRIEND_REQUEST_COLUMNS = {
 }
 
 EXPECTED_FRIENDSHIP_COLUMNS = {
+    "id",
     "user_id",
     "friend_id",
     "created_at",
@@ -51,8 +52,8 @@ def ensure_social_schema(conn, apply=False):
             issues.append(
                 f"friendships missing columns: {', '.join(sorted(missing))}"
             )
-        if "id" in columns:
-            issues.append("friendships has unexpected column: id")
+        if "id" not in columns:
+            issues.append("friendships missing column: id")
 
     if issues:
         message = "Schema check failed:\n- " + "\n- ".join(issues)
