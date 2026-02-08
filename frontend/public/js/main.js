@@ -208,10 +208,10 @@ async function handleLogout() {
 }
 
 function showLogin() {
+    hideAllPages();
     document.getElementById('loginPage').classList.add('active');
     document.getElementById('navbar').style.display = 'none';
     document.body.classList.remove('app-authenticated');
-    hideAllPages();
 }
 
 function showApp() {
@@ -267,7 +267,8 @@ function navigateToPage(pageName) {
         'mealplan': 'mealplanPage',
         'history': 'historyPage',
         'userSearch': 'userSearchPage',
-        'social': 'socialPage'
+        'social': 'socialPage',
+        'friends': 'friendsPage'
     };
 
     const pageId = pageMap[pageName];
@@ -284,6 +285,8 @@ function navigateToPage(pageName) {
         } else if (pageName === 'social') {
             if (window.loadSocialData) window.loadSocialData();
             if (window.startSocialPolling) window.startSocialPolling();
+        } else if (pageName === 'friends') {
+            if (window.loadFriendsPage) window.loadFriendsPage();
         } else if (pageName === 'pantry') {
             loadPantry();
         } else if (pageName === 'mealplan') {
