@@ -1547,15 +1547,6 @@ body.is-mobile .page-header h1 {
     .meal-day-list {
         padding: 0.75rem 1rem 1rem;
     }
-
-    .friends-panel-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .friends-panel-header .btn {
-        width: 100%;
-    }
 }
 
 /* Loading Spinner */
