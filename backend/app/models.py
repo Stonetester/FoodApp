@@ -118,8 +118,9 @@ class FriendRequest(db.Model):
 class Friendship(db.Model):
     __tablename__ = 'friendships'
     
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    friend_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     __table_args__ = (
