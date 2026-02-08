@@ -7,6 +7,9 @@ from datetime import datetime, date
 from collections import Counter
 import json
 import os
+import base64
+import re
+import uuid
 
 main_bp = Blueprint('main', __name__)
 api_bp = Blueprint('api', __name__)
@@ -16,6 +19,8 @@ api_bp = Blueprint('api', __name__)
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Go up one level to FoodApp root, then into frontend/public
 FRONTEND_DIR = os.path.join(os.path.dirname(BACKEND_DIR), 'frontend', 'public')
+UPLOADS_DIR = os.path.join(FRONTEND_DIR, 'uploads', 'recipes')
+os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 # Debug: Verify path exists
 if not os.path.exists(FRONTEND_DIR):
@@ -41,6 +46,31 @@ def serve_js(filename):
 @main_bp.route('/images/<path:filename>')
 def serve_images(filename):
     return send_from_directory(os.path.join(FRONTEND_DIR, 'images'), filename)
+
+@main_bp.route('/uploads/<path:filename>')
+def serve_uploads(filename):
+    return send_from_directory(os.path.join(FRONTEND_DIR, 'uploads'), filename)
+
+def normalize_image_url(image_url):
+    if not image_url:
+        return None
+    if isinstance(image_url, str) and image_url.startswith('data:image'):
+        return save_data_url_image(image_url)
+    return image_url
+
+def save_data_url_image(data_url):
+    match = re.match(r'^data:image/([a-zA-Z0-9.+-]+);base64,(.+)$', data_url)
+    if not match:
+        raise ValueError('Invalid image data')
+    extension = match.group(1).lower()
+    if extension == 'jpeg':
+        extension = 'jpg'
+    image_data = base64.b64decode(match.group(2))
+    filename = f"{uuid.uuid4().hex}.{extension}"
+    file_path = os.path.join(UPLOADS_DIR, filename)
+    with open(file_path, 'wb') as file_handle:
+        file_handle.write(image_data)
+    return f"/uploads/recipes/{filename}"
 
 # Catch-all route for frontend routing (SPA)
 @main_bp.route('/<path:path>')
@@ -104,6 +134,8 @@ def create_recipe():
         if not data.get('title'):
             return jsonify({'error': 'Title is required'}), 400
         
+        image_url = normalize_image_url(data.get('image_url'))
+
         recipe = Recipe(
             user_id=current_user.id,
             title=data.get('title', '').strip(),
@@ -112,7 +144,7 @@ def create_recipe():
             prep_time=int(data.get('prep_time')) if data.get('prep_time') else None,
             cook_time=int(data.get('cook_time')) if data.get('cook_time') else None,
             servings=int(data.get('servings')) if data.get('servings') else None,
-            image_url=data.get('image_url') if data.get('image_url') else None
+            image_url=image_url
         )
         
         db.session.add(recipe)
@@ -170,7 +202,8 @@ def update_recipe(recipe_id):
         recipe.prep_time = int(data.get('prep_time')) if data.get('prep_time') else recipe.prep_time
         recipe.cook_time = int(data.get('cook_time')) if data.get('cook_time') else recipe.cook_time
         recipe.servings = int(data.get('servings')) if data.get('servings') else recipe.servings
-        recipe.image_url = data.get('image_url') if data.get('image_url') else recipe.image_url
+        if 'image_url' in data:
+            recipe.image_url = normalize_image_url(data.get('image_url'))
         recipe.updated_at = datetime.utcnow()
         
         # Update ingredients
