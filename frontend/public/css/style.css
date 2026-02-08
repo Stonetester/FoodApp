@@ -1293,6 +1293,124 @@ body.is-mobile .page-header h1 {
     font-size: 0.9rem;
 }
 
+/* Friends Page */
+.friends-layout {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 2fr;
+    gap: 1.5rem;
+}
+
+.friends-panel,
+.friends-detail {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    box-shadow: 6px 6px 0 var(--border);
+    padding: 1.5rem;
+}
+
+.friends-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.friends-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border: 2px solid var(--border);
+    background: var(--light-cream);
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.friends-list-item.active {
+    background: var(--accent);
+    color: var(--text);
+}
+
+.friends-meta {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-top: 0.25rem;
+}
+
+.friends-list-chevron {
+    font-size: 1.3rem;
+    opacity: 0.7;
+}
+
+.friends-detail-header {
+    margin-bottom: 1.5rem;
+}
+
+.friends-detail-section {
+    margin-bottom: 2rem;
+}
+
+.friends-detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.friends-recipe-grid {
+    margin-top: 1rem;
+}
+
+.friends-mealplan-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.friends-mealplan-day {
+    background: var(--light-cream);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 2px solid var(--border);
+}
+
+.friends-mealplan-day h4 {
+    margin-bottom: 0.75rem;
+    color: var(--primary);
+}
+
+.friends-mealplan-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.friends-mealplan-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.friends-mealplan-type {
+    text-transform: capitalize;
+    font-weight: 600;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+}
+
 /* QR Code */
 #qrCodeContainer {
     text-align: center;
@@ -1337,6 +1455,10 @@ body.is-mobile .page-header h1 {
     }
 
     .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .friends-layout {
         grid-template-columns: 1fr;
     }
 
