@@ -1358,14 +1358,6 @@ body.is-mobile .page-header h1 {
     margin-bottom: 1.5rem;
 }
 
-.friends-detail-title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
 .friends-detail-section {
     margin-bottom: 2rem;
 }
@@ -1383,105 +1375,6 @@ body.is-mobile .page-header h1 {
     flex-direction: column;
     gap: 1rem;
     margin-top: 1rem;
-}
-
-.friends-mealplan-calendar {
-    margin-top: 1rem;
-    background: var(--surface);
-    padding: 1rem;
-    border-radius: 12px;
-    border: 2px solid var(--border);
-}
-
-.friends-calendar-modal {
-    position: fixed;
-    inset: 0;
-    background: var(--background);
-    z-index: 2000;
-    display: none;
-}
-
-.friends-calendar-modal.active {
-    display: block;
-}
-
-.friends-calendar-content {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    gap: 1rem;
-}
-
-.friends-calendar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.friends-calendar-title h2 {
-    margin: 0;
-}
-
-.friends-calendar-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.friends-calendar-view {
-    position: relative;
-}
-
-.friends-calendar-menu {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 10px;
-    padding: 0.5rem;
-    display: none;
-    flex-direction: column;
-    gap: 0.35rem;
-    min-width: 140px;
-    box-shadow: 6px 6px 0 var(--border);
-    z-index: 5;
-}
-
-.friends-calendar-menu.active {
-    display: flex;
-}
-
-.friends-calendar-menu button {
-    background: none;
-    border: none;
-    text-align: left;
-    padding: 0.4rem 0.6rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.friends-calendar-menu button:hover {
-    background: var(--light-cream);
-}
-
-.friends-calendar-nav {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.friends-calendar-full {
-    flex: 1;
-    background: var(--surface);
-    border-radius: 16px;
-    border: 2px solid var(--border);
-    padding: 0.5rem;
-    min-height: 0;
 }
 
 .friends-mealplan-day {
@@ -1569,14 +1462,6 @@ body.is-mobile .page-header h1 {
         grid-template-columns: 1fr;
     }
 
-    .friends-detail-title {
-        align-items: stretch;
-    }
-
-    .friends-detail-title .btn {
-        width: 100%;
-    }
-
     .calendar-controls {
         flex-direction: column;
         align-items: stretch;
@@ -1661,66 +1546,6 @@ body.is-mobile .page-header h1 {
 
     .meal-day-list {
         padding: 0.75rem 1rem 1rem;
-    }
-
-    .friends-panel-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .friends-panel-header .btn {
-        width: 100%;
-    }
-
-    .friends-calendar-content {
-        padding: 0.75rem;
-    }
-
-    .friends-calendar-header {
-        align-items: stretch;
-    }
-
-    .friends-calendar-header .btn {
-        width: 100%;
-    }
-
-    .friends-calendar-controls {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .friends-calendar-nav .btn {
-        flex: 1;
-    }
-
-    #mealPlanCalendar .fc-toolbar-title {
-        font-size: 1.1rem;
-    }
-
-    #mealPlanCalendar .fc-daygrid-day-number {
-        font-size: 0.75rem;
-        padding: 2px;
-    }
-
-    #mealPlanCalendar .fc-daygrid-event {
-        font-size: 0.7rem;
-    }
-
-    #mealPlanCalendar .fc-daygrid-day-frame {
-        padding: 2px;
-    }
-
-    .friends-calendar-full .fc-toolbar-title {
-        font-size: 1.1rem;
-    }
-
-    .friends-calendar-full .fc-daygrid-day-number {
-        font-size: 0.75rem;
-        padding: 2px;
-    }
-
-    .friends-calendar-full .fc-daygrid-event {
-        font-size: 0.7rem;
     }
 }
 
