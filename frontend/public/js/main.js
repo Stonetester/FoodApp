@@ -110,6 +110,34 @@ function setupEventListeners() {
         });
     });
 
+    document.querySelectorAll('.page-link[data-page]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = e.currentTarget.dataset.page;
+            if (page) {
+                navigateToPage(page);
+            }
+        });
+    });
+
+    document.querySelectorAll('.bottom-nav__link[data-page]').forEach(link => {
+        link.addEventListener('click', () => {
+            const page = link.dataset.page;
+            if (page) {
+                navigateToPage(page);
+            }
+        });
+    });
+
+    document.querySelectorAll('.sheet-link[data-page]').forEach(link => {
+        link.addEventListener('click', () => {
+            const page = link.dataset.page;
+            if (page) {
+                navigateToPage(page);
+            }
+        });
+    });
+
     // Mobile menu toggle
     const navToggle = document.getElementById('navToggle');
     const navMenu = document.getElementById('navMenu');
@@ -118,6 +146,41 @@ function setupEventListeners() {
             navMenu.classList.toggle('active');
         });
     }
+
+    const moreTabBtn = document.getElementById('moreTabBtn');
+    const moreSheetClose = document.getElementById('moreSheetClose');
+    const moreSheetBackdrop = document.getElementById('moreSheetBackdrop');
+
+    if (moreTabBtn) {
+        moreTabBtn.addEventListener('click', () => {
+            toggleMoreSheet();
+        });
+    }
+
+    if (moreSheetClose) {
+        moreSheetClose.addEventListener('click', () => {
+            toggleMoreSheet(false);
+        });
+    }
+
+    if (moreSheetBackdrop) {
+        moreSheetBackdrop.addEventListener('click', () => {
+            toggleMoreSheet(false);
+        });
+    }
+
+    const logoutBtnSheet = document.getElementById('logoutBtnSheet');
+    if (logoutBtnSheet) {
+        logoutBtnSheet.addEventListener('click', async () => {
+            await handleLogout();
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            toggleMoreSheet(false);
+        }
+    });
 
     // Modal close buttons
     document.querySelectorAll('.close').forEach(closeBtn => {
@@ -212,11 +275,12 @@ function showLogin() {
     document.getElementById('loginPage').classList.add('active');
     document.getElementById('navbar').style.display = 'none';
     document.body.classList.remove('app-authenticated');
+    toggleMoreSheet(false);
 }
 
 function showApp() {
     document.getElementById('loginPage').classList.remove('active');
-    document.getElementById('navbar').style.display = 'block';
+    document.getElementById('navbar').style.display = '';
     document.body.classList.add('app-authenticated');
     navigateToPage('dashboard');
     loadDashboard();
@@ -298,6 +362,8 @@ function navigateToPage(pageName) {
 
     // Close mobile menu
     document.getElementById('navMenu').classList.remove('active');
+    toggleMoreSheet(false);
+    updateActiveNav(pageName);
 }
 
 async function loadDashboard() {
@@ -426,6 +492,31 @@ function setupResponsiveClass() {
     };
     apply();
     window.addEventListener('resize', apply);
+}
+
+function toggleMoreSheet(shouldOpen) {
+    const sheet = document.getElementById('moreSheet');
+    const backdrop = document.getElementById('moreSheetBackdrop');
+    const moreTabBtn = document.getElementById('moreTabBtn');
+    if (!sheet || !backdrop || !moreTabBtn) return;
+    const isOpen = shouldOpen ?? !sheet.classList.contains('is-open');
+    sheet.classList.toggle('is-open', isOpen);
+    backdrop.classList.toggle('is-open', isOpen);
+    sheet.setAttribute('aria-hidden', String(!isOpen));
+    backdrop.setAttribute('aria-hidden', String(!isOpen));
+    moreTabBtn.setAttribute('aria-expanded', String(isOpen));
+}
+
+function updateActiveNav(pageName) {
+    const navLinks = document.querySelectorAll('.nav-link[data-page], .nav-link-inline[data-page]');
+    const bottomLinks = document.querySelectorAll('.bottom-nav__link[data-page]');
+    const moreTabBtn = document.getElementById('moreTabBtn');
+    navLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
+    bottomLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
+    const morePages = ['history', 'friends', 'userSearch'];
+    if (moreTabBtn) {
+        moreTabBtn.classList.toggle('is-active', morePages.includes(pageName));
+    }
 }
 
 function applyMaintenanceBanners() {
