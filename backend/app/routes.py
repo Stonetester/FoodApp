@@ -72,14 +72,6 @@ def save_data_url_image(data_url):
         file_handle.write(image_data)
     return f"/uploads/recipes/{filename}"
 
-def ensure_recipe_image_url(recipe):
-    if not recipe or not recipe.image_url:
-        return False
-    if isinstance(recipe.image_url, str) and recipe.image_url.startswith('data:image'):
-        recipe.image_url = normalize_image_url(recipe.image_url)
-        return True
-    return False
-
 # Catch-all route for frontend routing (SPA)
 @main_bp.route('/<path:path>')
 def serve_frontend(path):
