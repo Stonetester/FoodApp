@@ -1,36 +1,24 @@
 /* Cosy Cottage Theme - Warm, Rustic, Homey */
 
 :root {
-    --bg: #f6efe4;
-    --surface: #efe2cf;
-    --text: #2f2218;
-    --muted: #7a6a5b;
-    --text-secondary: #7a6a5b;
-    --primary: #DD4111;
-    --primary-dark: #8C0027;
-    --accent-teal: #2BAF90;
-    --accent-mint: #A1DAB1;
-    --accent-gold: #F1A512;
-    --secondary: var(--accent-gold);
-    --accent: var(--accent-teal);
-    --border: #c9b6a1;
-    --success: #2BAF90;
-    --danger: #8C0027;
-    --highlight: #F1A512;
+    --bg: #f7f0e2;
+    --surface: #fbf4e6;
+    --text: #3b2416;
+    --muted: #8a6b52;
+    --text-secondary: #8a6b52;
+    --primary: #c0672d;
+    --secondary: #d2a34b;
+    --accent: #b6532c;
+    --border: #c9a481;
+    --success: #6f7d52;
+    --danger: #b35a3a;
+    --highlight: #f1b66b;
     --background: var(--bg);
-    --shadow: rgba(47, 34, 24, 0.18);
-    --white: #fbf6ee;
-    --light-cream: #f1e1cd;
+    --shadow: rgba(59, 36, 22, 0.18);
+    --white: #fff7ea;
+    --light-cream: #f3e3c7;
     --maintenance-banner-height: 64px;
     --bottom-nav-height: 72px;
-    --stripe-80s: linear-gradient(
-      90deg,
-      #DD4111 0%,
-      #F1A512 25%,
-      #2BAF90 50%,
-      #A1DAB1 75%,
-      #8C0027 100%
-    );
 }
 
 * {
@@ -42,8 +30,8 @@
 body {
     font-family: "Trebuchet MS", "Georgia", "Times New Roman", serif;
     background-color: var(--bg);
-    background-image: linear-gradient(135deg, rgba(221, 65, 17, 0.06) 0%, rgba(221, 65, 17, 0.06) 6%, transparent 6%, transparent 100%);
-    background-size: 28px 28px;
+    background-image: linear-gradient(135deg, rgba(201, 164, 129, 0.12) 0%, rgba(201, 164, 129, 0.12) 6%, transparent 6%, transparent 100%);
+    background-size: 24px 24px;
     color: var(--text);
     line-height: 1.6;
     min-height: 100vh;
@@ -218,9 +206,9 @@ body::before {
 
 .nav-link.is-active,
 .nav-link-inline.is-active {
-    background-color: var(--primary);
-    color: var(--white);
-    border-color: var(--primary-dark);
+    background-color: var(--secondary);
+    color: var(--text);
+    border-color: var(--border);
 }
 
 /* Bottom Navigation */
@@ -259,7 +247,6 @@ body::before {
     min-height: 44px;
     border-radius: 14px;
     transition: background-color 0.2s ease, color 0.2s ease;
-    position: relative;
 }
 
 .bottom-nav__icon {
@@ -267,19 +254,8 @@ body::before {
 }
 
 .bottom-nav__link.is-active {
-    background: rgba(221, 65, 17, 0.15);
-    color: var(--primary);
-}
-
-.bottom-nav__link.is-active::after {
-    content: "";
-    position: absolute;
-    top: 4px;
-    left: 12%;
-    right: 12%;
-    height: 4px;
-    border-radius: 999px;
-    background: var(--stripe-80s);
+    background: rgba(192, 103, 45, 0.15);
+    color: var(--text);
 }
 
 .bottom-nav__more {
@@ -439,9 +415,8 @@ body.is-mobile .page-header h1 {
 .page-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    flex-direction: row;
-    flex-wrap: wrap;
+    align-items: flex-start;
+    flex-direction: column;
     gap: 1rem;
     position: sticky;
     top: 0.75rem;
@@ -450,15 +425,6 @@ body.is-mobile .page-header h1 {
     padding-bottom: 1rem;
     margin-bottom: 1.5rem;
     border-bottom: 1px solid rgba(59, 36, 22, 0.08);
-}
-
-.page-header::after {
-    content: "";
-    width: 100%;
-    height: 5px;
-    border-radius: 999px;
-    background: var(--stripe-80s);
-    margin-top: 0.25rem;
 }
 
 .page-header h1 {
@@ -475,7 +441,6 @@ body.has-maintenance-banner .page-header {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
-    margin-left: auto;
 }
 
 /* Buttons */
@@ -504,7 +469,7 @@ body.has-maintenance-banner .page-header {
 }
 
 .btn-primary:hover {
-    background-color: var(--primary-dark);
+    background-color: var(--accent);
     transform: translate(-2px, -2px);
     box-shadow: 6px 6px 0 var(--border);
 }
@@ -533,6 +498,22 @@ body.has-maintenance-banner .page-header {
 
 .btn-destructive {
     background-color: var(--primary-dark);
+    color: var(--white);
+}
+
+.btn-ghost {
+    background-color: transparent;
+    color: var(--text);
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.btn-ghost:hover {
+    background-color: rgba(201, 164, 129, 0.2);
+}
+
+.btn-destructive {
+    background-color: var(--danger);
     color: var(--white);
 }
 
@@ -637,8 +618,8 @@ body.has-maintenance-banner .page-header {
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(221, 65, 17, 0.2);
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 3px rgba(192, 103, 45, 0.2);
 }
 
 .form-group input::placeholder,
@@ -743,19 +724,6 @@ body.has-maintenance-banner .page-header {
     border-radius: 12px;
     box-shadow: 6px 6px 0 var(--border);
     border: 2px solid var(--border);
-    position: relative;
-    overflow: hidden;
-}
-
-.upcoming-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 12px;
-    right: 12px;
-    height: 5px;
-    border-radius: 999px;
-    background: var(--stripe-80s);
 }
 
 .upcoming-card-header {
@@ -1549,19 +1517,6 @@ body.has-maintenance-banner .page-header {
     border-radius: 12px;
     box-shadow: 6px 6px 0 var(--border);
     border: 2px solid var(--border);
-    position: relative;
-    overflow: hidden;
-}
-
-.social-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 12px;
-    right: 12px;
-    height: 5px;
-    border-radius: 999px;
-    background: var(--stripe-80s);
 }
 
 .friend-search-results {
@@ -1989,8 +1944,8 @@ body.has-maintenance-banner .page-header {
 
 .search-input-group .search-input:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(221, 65, 17, 0.2);
+    border-color: var(--highlight);
+    box-shadow: 0 0 0 3px rgba(192, 103, 45, 0.2);
 }
 
 .search-hint {
