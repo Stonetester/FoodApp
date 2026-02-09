@@ -51,6 +51,25 @@ def serve_images(filename):
 def serve_uploads(filename):
     return send_from_directory(os.path.join(FRONTEND_DIR, 'uploads'), filename)
 
+def ensure_recipe_image_url(recipe):
+    """
+    Ensure recipe.image_url is a valid URL/path.
+    Returns True if it changed anything, otherwise False.
+    """
+    if not getattr(recipe, "image_url", None):
+        return False
+
+    url = recipe.image_url.strip()
+
+    # If already absolute or already a root path, leave it alone
+    if url.startswith(("http://", "https://", "/")):
+        return False
+
+    # Otherwise normalize to a root-relative path
+    recipe.image_url = f"/{url.lstrip('/')}"
+    return True
+
+
 def normalize_image_url(image_url):
     if not image_url:
         return None
