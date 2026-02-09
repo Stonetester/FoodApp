@@ -342,6 +342,10 @@ function openRecipeModal(recipe = null) {
             }
         }
 
+        // Load nutrition data if present
+        const nutrition = recipe.nutrition || getNutritionFromIngredients(recipe.ingredients || []);
+        setNutritionFields(nutrition);
+
         // Load ingredients
         console.log('Loading ingredients...');
         const ingredientsList = document.getElementById('ingredientsList');
@@ -349,7 +353,7 @@ function openRecipeModal(recipe = null) {
             ingredientsList.innerHTML = '';
             if (recipe.ingredients && recipe.ingredients.length > 0) {
                 console.log(`Adding ${recipe.ingredients.length} ingredients...`);
-                recipe.ingredients.forEach((ing, index) => {
+                recipe.ingredients.filter(ing => !isNutritionIngredient(ing)).forEach((ing, index) => {
                     console.log(`Adding ingredient ${index + 1}:`, ing);
                     addIngredientField(ing);
                 });
@@ -385,6 +389,7 @@ function openRecipeModal(recipe = null) {
         document.getElementById('recipeCookTime').placeholder = '';
         document.getElementById('recipeServings').placeholder = '';
         document.getElementById('recipeInstructions').placeholder = '';
+        setNutritionFields({});
         document.querySelectorAll('.tag-inputs input[type="checkbox"]').forEach(cb => {
             cb.checked = false;
         });
@@ -423,6 +428,43 @@ function addIngredientField(ingredient = null) {
     container.appendChild(div);
 }
 
+function isNutritionIngredient(ingredient) {
+    return ingredient?.ingredient_name === '__nutrition__';
+}
+
+function getNutritionFromIngredients(ingredients = []) {
+    const nutritionItem = ingredients.find(ing => isNutritionIngredient(ing));
+    return nutritionItem?.nutritional_info || {};
+}
+
+function setNutritionFields(nutrition = {}) {
+    document.getElementById('recipeCalories').value = nutrition.energy_kcal ?? '';
+    document.getElementById('recipeProtein').value = nutrition.proteins ?? '';
+    document.getElementById('recipeCarbs').value = nutrition.carbohydrates ?? '';
+    document.getElementById('recipeFat').value = nutrition.fat ?? '';
+}
+
+function buildRecipeNutrition() {
+    const calories = document.getElementById('recipeCalories').value;
+    const protein = document.getElementById('recipeProtein').value;
+    const carbs = document.getElementById('recipeCarbs').value;
+    const fat = document.getElementById('recipeFat').value;
+
+    const parsed = {
+        energy_kcal: calories ? parseFloat(calories) : null,
+        proteins: protein ? parseFloat(protein) : null,
+        carbohydrates: carbs ? parseFloat(carbs) : null,
+        fat: fat ? parseFloat(fat) : null
+    };
+
+    const hasValue = Object.values(parsed).some(value => value !== null && !Number.isNaN(value));
+    if (!hasValue) {
+        return null;
+    }
+
+    return parsed;
+}
+
 async function saveRecipe() {
     const form = document.getElementById('recipeForm');
     const recipeId = document.getElementById('recipeId').value;
@@ -450,6 +492,14 @@ async function saveRecipe() {
             });
         }
     });
+
+    const nutrition = buildRecipeNutrition();
+    if (nutrition) {
+        ingredients.push({
+            ingredient_name: '__nutrition__',
+            nutritional_info: nutrition
+        });
+    }
 
     // Collect tags
     const tags = Array.from(document.querySelectorAll('.tag-inputs input[type="checkbox"]:checked'))
@@ -615,6 +665,7 @@ async function importRecipeFromUrl() {
                     prep_time: recipeData.prep_time,
                     cook_time: recipeData.cook_time,
                     servings: recipeData.servings,
+                    nutrition: recipeData.nutrition,
                     ingredients: ingredients
                 });
                 
@@ -627,6 +678,7 @@ async function importRecipeFromUrl() {
                     prep_time: recipeData.prep_time || null,
                     cook_time: recipeData.cook_time || null,
                     servings: recipeData.servings || null,
+                    nutrition: recipeData.nutrition || null,
                     ingredients: ingredients,
                     tags: []
                 });
