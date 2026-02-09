@@ -9,6 +9,31 @@ document.addEventListener('DOMContentLoaded', () => {
     setupUserSearchListeners();
 });
 
+function renderStarRating(rating, count = 0) {
+    if (!rating) {
+        return `
+            <div class="rating-summary rating-summary--empty">
+                <span class="rating-text">No ratings yet</span>
+            </div>
+        `;
+    }
+
+    const rounded = Math.round(rating);
+    const stars = Array.from({ length: 5 }).map((_, index) => {
+        const filled = index < rounded ? 'star--filled' : 'star--empty';
+        return `<span class="star ${filled}">★</span>`;
+    }).join('');
+
+    return `
+        <div class="rating-summary">
+            <div class="rating-stars" aria-label="Rated ${rating} out of 5">
+                ${stars}
+            </div>
+            <span class="rating-text">${rating.toFixed(1)} / 5 ${count ? `(${count})` : ''}</span>
+        </div>
+    `;
+}
+
 function setupUserSearchListeners() {
     // Search button
     const searchBtn = document.getElementById('searchUsersBtn');
@@ -109,6 +134,7 @@ function createDiscoverRecipeCard(recipe) {
             <h3 class="recipe-card-title">${recipe.title}</h3>
             ${recipe.owner ? `<p class="recipe-owner">By ${recipe.owner.username}</p>` : ''}
             ${recipe.description ? `<p class="recipe-card-description">${recipe.description}</p>` : ''}
+            ${renderStarRating(recipe.rating_average, recipe.rating_count)}
             ${tagsHtml}
             <div class="recipe-card-actions">
                 <button class="btn btn-secondary" onclick="viewDiscoverRecipeDetail(${recipe.id})">View Details</button>
@@ -242,23 +268,7 @@ function createUserRecipeCard(recipe) {
     const card = document.createElement('div');
     card.className = 'recipe-card user-recipe-card';
     
-    // Rating display
-    let ratingDisplay = '';
-    if (recipe.average_rating) {
-        const stars = '⭐'.repeat(Math.round(recipe.average_rating));
-        ratingDisplay = `
-            <div class="recipe-rating">
-                <span class="stars">${stars}</span>
-                <span class="rating-text">${recipe.average_rating} (${recipe.rating_count} rating${recipe.rating_count !== 1 ? 's' : ''})</span>
-            </div>
-        `;
-    } else {
-        ratingDisplay = `
-            <div class="recipe-rating">
-                <span class="rating-text" style="opacity: 0.6;">No ratings yet</span>
-            </div>
-        `;
-    }
+    const ratingDisplay = renderStarRating(recipe.rating_average, recipe.rating_count);
     
     // Servings display
     const servingsDisplay = recipe.servings 
@@ -295,7 +305,7 @@ function createUserRecipeCard(recipe) {
                 ${timeHtml}
             </div>
             <div class="recipe-card-actions">
-                <button class="btn btn-secondary" onclick="viewRecipeDetail(${recipe.id}, true)">
+                <button class="btn btn-secondary" onclick="viewSharedRecipeDetail(${recipe.id}, true)">
                     📖 View Details
                 </button>
                 <button class="btn btn-primary" onclick="copyRecipeToMyCollection(${recipe.id})">
@@ -308,24 +318,17 @@ function createUserRecipeCard(recipe) {
     return card;
 }
 
-async function viewRecipeDetail(recipeId, isOtherUser = false) {
+async function viewSharedRecipeDetail(recipeId, isOtherUser = false) {
     // Close user recipes modal if open
     if (isOtherUser) {
         document.getElementById('userRecipesModal').classList.remove('active');
     }
     
     try {
-        const response = await fetch(`/api/recipes/${recipeId}`, {
-            credentials: 'include'
-        });
+        const recipe = isOtherUser
+            ? await api.getDiscoverRecipe(recipeId)
+            : await api.getRecipe(recipeId);
         
-        if (!response.ok) {
-            throw new Error(`Failed to load recipe: ${response.status}`);
-        }
-        
-        const recipe = await response.json();
-        
-        // Show recipe detail modal
         showRecipeDetailModal(recipe, isOtherUser);
     } catch (error) {
         console.error('Error loading recipe details:', error);
@@ -333,16 +336,16 @@ async function viewRecipeDetail(recipeId, isOtherUser = false) {
     }
 }
 
-function showRecipeDetailModal(recipe, isOtherUser) {
+function showRecipeDetailModal(recipe, isOtherUser, options = {}) {
     const modal = document.getElementById('recipeDetailModal');
     const content = document.getElementById('recipeDetailContent');
     
     // Rating display
     let ratingSection = '';
-    if (recipe.average_rating) {
+    if (recipe.rating_average) {
         ratingSection = `
             <div class="detail-rating">
-                <h3>⭐ Rating: ${recipe.average_rating} / 5</h3>
+                ${renderStarRating(recipe.rating_average, recipe.rating_count)}
                 <p>${recipe.rating_count} people have tried this recipe</p>
             </div>
         `;
@@ -358,7 +361,8 @@ function showRecipeDetailModal(recipe, isOtherUser) {
                 } else if (ing.quantity) {
                     line = `${ing.quantity} ${ing.ingredient_name}`;
                 }
-                return `<li>${line}</li>`;
+                const nutrition = ing.nutritional_info ? renderNutritionHighlights(ing.nutritional_info) : '';
+                return `<li>${line}${nutrition}</li>`;
             }).join('')}
            </ul>`
         : '<p>No ingredients listed</p>';
@@ -402,6 +406,25 @@ function showRecipeDetailModal(recipe, isOtherUser) {
                 <h3>👩‍🍳 Instructions</h3>
                 ${instructionsHtml}
             </div>
+
+            <div class="recipe-section">
+                <h3>⭐ Reviews</h3>
+                <div class="reviews-list" data-review-list>
+                    <p class="empty-state">Loading reviews...</p>
+                </div>
+                <form class="review-form" data-review-form>
+                    <div class="review-rating" role="radiogroup" aria-label="Rate this recipe">
+                        ${[5,4,3,2,1].map(value => `
+                            <label>
+                                <input type="radio" name="reviewRating" value="${value}">
+                                <span class="star">★</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <textarea name="reviewText" rows="3" placeholder="Share what you loved (or how to improve it)..."></textarea>
+                    <button type="submit" class="btn btn-primary">Post Review</button>
+                </form>
+            </div>
             
             <div class="recipe-actions">
                 <button class="btn btn-secondary" onclick="shareRecipeLink(${recipe.id}, '${recipe.title.replace(/'/g, "\\'")}')">
@@ -410,6 +433,11 @@ function showRecipeDetailModal(recipe, isOtherUser) {
                 <button class="btn btn-secondary" onclick="shareRecipeQR(${recipe.id})">
                     📱 QR Code
                 </button>
+                ${options.allowEdit ? `
+                    <button class="btn btn-primary" onclick="editRecipe(${recipe.id})">
+                        ✏️ Edit Recipe
+                    </button>
+                ` : ''}
                 ${isOtherUser ? `
                     <button class="btn btn-primary" onclick="copyRecipeFromDetail(${recipe.id})">
                         📥 Copy to My Recipes
@@ -420,6 +448,85 @@ function showRecipeDetailModal(recipe, isOtherUser) {
     `;
     
     modal.classList.add('active');
+
+    const reviewForm = content.querySelector('[data-review-form]');
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const ratingInput = reviewForm.querySelector('input[name="reviewRating"]:checked');
+            const rating = ratingInput ? parseInt(ratingInput.value, 10) : null;
+            const reviewText = reviewForm.querySelector('textarea[name="reviewText"]').value.trim();
+
+            if (!rating) {
+                alert('Please select a star rating.');
+                return;
+            }
+
+            try {
+                await api.submitRecipeReview(recipe.id, {
+                    rating,
+                    review_text: reviewText
+                });
+                await loadRecipeReviews(recipe.id);
+            } catch (error) {
+                console.error('Error submitting review:', error);
+                alert('Failed to submit review. Please try again.');
+            }
+        });
+    }
+
+    loadRecipeReviews(recipe.id);
+}
+
+function renderNutritionHighlights(nutrition) {
+    if (!nutrition) return '';
+    const parts = [];
+    if (nutrition.energy_kcal) parts.push(`🔥 ${nutrition.energy_kcal} kcal`);
+    if (nutrition.proteins) parts.push(`💪 ${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates) parts.push(`🍞 ${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat) parts.push(`🥑 ${nutrition.fat}g fat`);
+    if (!parts.length) return '';
+    return `<div class="nutrition-inline">${parts.join(' • ')}</div>`;
+}
+
+async function loadRecipeReviews(recipeId) {
+    const list = document.querySelector('[data-review-list]');
+    if (!list) return;
+
+    try {
+        const reviews = await api.getRecipeReviews(recipeId);
+
+        if (!reviews.length) {
+            list.innerHTML = '<p class="empty-state">No reviews yet. Be the first to share!</p>';
+        } else {
+            list.innerHTML = reviews.map(review => `
+                <div class="review-card">
+                    <div class="review-header">
+                        <span class="review-author">${review.user.username}</span>
+                        ${renderStarRating(review.rating)}
+                    </div>
+                    ${review.review_text ? `<p class="review-text">${review.review_text}</p>` : ''}
+                    ${review.created_at ? `<p class="review-date">${new Date(review.created_at).toLocaleDateString()}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        const currentUser = window.currentUser ? window.currentUser() : null;
+        const existingReview = reviews.find(review => currentUser && review.user.id === currentUser.id);
+        const form = document.querySelector('[data-review-form]');
+        if (form) {
+            if (existingReview) {
+                const ratingInput = form.querySelector(`input[name="reviewRating"][value="${existingReview.rating}"]`);
+                if (ratingInput) ratingInput.checked = true;
+                form.querySelector('textarea[name="reviewText"]').value = existingReview.review_text || '';
+            } else {
+                form.reset();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading reviews:', error);
+        list.innerHTML = '<p class="error-message">Failed to load reviews.</p>';
+    }
 }
 
 async function shareRecipeLink(recipeId, title) {
@@ -492,9 +599,10 @@ async function copyRecipeFromDetail(recipeId) {
 // Export functions for global access
 window.searchUsers = searchUsers;
 window.viewUserRecipes = viewUserRecipes;
-window.viewRecipeDetail = viewRecipeDetail;
+    window.viewSharedRecipeDetail = viewSharedRecipeDetail;
 window.copyRecipeToMyCollection = copyRecipeToMyCollection;
 window.copyRecipeFromDetail = copyRecipeFromDetail;
 window.loadDiscoverRecipes = loadDiscoverRecipes;
 window.viewDiscoverRecipeDetail = viewDiscoverRecipeDetail;
 window.shareRecipeLink = shareRecipeLink;
+window.showRecipeDetailModal = showRecipeDetailModal;

@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
+from sqlalchemy import func
 import json
 
 db = SQLAlchemy()
@@ -40,6 +41,7 @@ class User(UserMixin, db.Model):
         lazy=True,
         cascade='all, delete-orphan'
     )
+    reviews = db.relationship('RecipeReview', backref='user', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
         return f'<User {self.username}>'
@@ -62,10 +64,17 @@ class Recipe(db.Model):
     # Relationships
     ingredients = db.relationship('RecipeIngredient', backref='recipe', lazy=True, cascade='all, delete-orphan')
     tags = db.relationship('RecipeTag', backref='recipe', lazy=True, cascade='all, delete-orphan')
+    reviews = db.relationship('RecipeReview', backref='recipe', lazy=True, cascade='all, delete-orphan')
     meal_plans = db.relationship('MealPlan', backref='recipe', lazy=True)
     meal_history = db.relationship('MealHistory', backref='recipe', lazy=True)
     
     def to_dict(self):
+        rating_stats = db.session.query(
+            func.avg(RecipeReview.rating),
+            func.count(RecipeReview.id)
+        ).filter(RecipeReview.recipe_id == self.id).first()
+        rating_average = round(rating_stats[0], 1) if rating_stats and rating_stats[0] is not None else None
+        rating_count = rating_stats[1] if rating_stats else 0
         return {
             'id': self.id,
             'user_id': self.user_id,
@@ -79,7 +88,9 @@ class Recipe(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'ingredients': [ing.to_dict() for ing in self.ingredients],
-            'tags': [tag.tag for tag in self.tags]
+            'tags': [tag.tag for tag in self.tags],
+            'rating_average': rating_average,
+            'rating_count': rating_count
         }
     
     def __repr__(self):
@@ -265,3 +276,21 @@ class MealHistory(db.Model):
     
     def __repr__(self):
         return f'<MealHistory {self.consumed_date}>'
+
+class RecipeReview(db.Model):
+    __tablename__ = 'recipe_reviews'
+
+    id = db.Column(db.Integer, primary_key=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    rating = db.Column(db.Integer, nullable=False)
+    review_text = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('recipe_id', 'user_id', name='unique_recipe_review'),
+        db.CheckConstraint('rating >= 1 AND rating <= 5', name='check_review_rating'),
+    )
+
+    def __repr__(self):
+        return f'<RecipeReview {self.recipe_id} {self.user_id}>'

@@ -1,8 +1,8 @@
 from flask import Blueprint, request, jsonify, send_from_directory, send_file, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
-from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship
-from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image
+from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship, RecipeReview
+from app.utils import generate_qr_code, lookup_barcode, lookup_nutrition_by_name, extract_recipe_from_url, extract_text_from_image
 from datetime import datetime, date
 from collections import Counter
 import json
@@ -89,6 +89,87 @@ def get_recipe(recipe_id):
     
     return jsonify(recipe.to_dict()), 200
 
+@api_bp.route('/recipes/<int:recipe_id>/reviews', methods=['GET'])
+@login_required
+def get_recipe_reviews(recipe_id):
+    """Get reviews for a recipe from all users"""
+    recipe = Recipe.query.get(recipe_id)
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    reviews = (
+        RecipeReview.query.filter_by(recipe_id=recipe_id)
+        .join(User, RecipeReview.user_id == User.id)
+        .order_by(RecipeReview.created_at.desc())
+        .all()
+    )
+
+    return jsonify([
+        {
+            'id': review.id,
+            'recipe_id': review.recipe_id,
+            'rating': review.rating,
+            'review_text': review.review_text,
+            'created_at': review.created_at.isoformat() if review.created_at else None,
+            'user': {
+                'id': review.user_id,
+                'username': review.user.username
+            },
+            'is_owner': review.user_id == current_user.id
+        }
+        for review in reviews
+    ]), 200
+
+@api_bp.route('/recipes/<int:recipe_id>/reviews', methods=['POST'])
+@login_required
+def add_recipe_review(recipe_id):
+    """Add or update a recipe review"""
+    recipe = Recipe.query.get(recipe_id)
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    data = request.get_json() or {}
+    rating = data.get('rating')
+    review_text = data.get('review_text')
+
+    if rating is None:
+        return jsonify({'error': 'Rating is required'}), 400
+
+    try:
+        rating = int(rating)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Rating must be a number between 1 and 5'}), 400
+
+    if rating < 1 or rating > 5:
+        return jsonify({'error': 'Rating must be between 1 and 5'}), 400
+
+    review = RecipeReview.query.filter_by(recipe_id=recipe_id, user_id=current_user.id).first()
+    if review:
+        review.rating = rating
+        review.review_text = review_text
+    else:
+        review = RecipeReview(
+            recipe_id=recipe_id,
+            user_id=current_user.id,
+            rating=rating,
+            review_text=review_text
+        )
+        db.session.add(review)
+
+    db.session.commit()
+
+    return jsonify({
+        'id': review.id,
+        'recipe_id': review.recipe_id,
+        'rating': review.rating,
+        'review_text': review.review_text,
+        'created_at': review.created_at.isoformat() if review.created_at else None,
+        'user': {
+            'id': review.user_id,
+            'username': current_user.username
+        }
+    }), 201
+
 @api_bp.route('/recipes', methods=['POST'])
 @login_required
 def create_recipe():
@@ -121,12 +202,15 @@ def create_recipe():
         # Add ingredients
         for ing_data in data.get('ingredients', []):
             if ing_data and ing_data.get('ingredient_name'):
+                nutritional_info = ing_data.get('nutritional_info')
+                if not nutritional_info:
+                    nutritional_info = lookup_nutrition_by_name(ing_data.get('ingredient_name'))
                 ingredient = RecipeIngredient(
                     recipe_id=recipe.id,
                     ingredient_name=ing_data.get('ingredient_name', '').strip(),
                     quantity=float(ing_data.get('quantity')) if ing_data.get('quantity') else None,
                     unit=ing_data.get('unit') if ing_data.get('unit') else None,
-                    nutritional_info=json.dumps(ing_data.get('nutritional_info', {})) if ing_data.get('nutritional_info') else None
+                    nutritional_info=json.dumps(nutritional_info) if nutritional_info else None
                 )
                 db.session.add(ingredient)
         
@@ -181,12 +265,15 @@ def update_recipe(recipe_id):
             # Add new ingredients
             for ing_data in data.get('ingredients', []):
                 if ing_data and ing_data.get('ingredient_name'):
+                    nutritional_info = ing_data.get('nutritional_info')
+                    if not nutritional_info:
+                        nutritional_info = lookup_nutrition_by_name(ing_data.get('ingredient_name'))
                     ingredient = RecipeIngredient(
                         recipe_id=recipe.id,
                         ingredient_name=ing_data.get('ingredient_name', '').strip(),
                         quantity=float(ing_data.get('quantity')) if ing_data.get('quantity') else None,
                         unit=ing_data.get('unit') if ing_data.get('unit') else None,
-                        nutritional_info=json.dumps(ing_data.get('nutritional_info', {})) if ing_data.get('nutritional_info') else None
+                        nutritional_info=json.dumps(nutritional_info) if nutritional_info else None
                     )
                     db.session.add(ingredient)
         
@@ -369,6 +456,15 @@ def add_pantry_item():
     expiry_date = None
     if data.get('expiry_date'):
         expiry_date = datetime.strptime(data.get('expiry_date'), '%Y-%m-%d').date()
+
+    nutritional_info = data.get('nutritional_info')
+    if not nutritional_info:
+        if data.get('barcode'):
+            product_info = lookup_barcode(data.get('barcode'))
+            if product_info:
+                nutritional_info = product_info.get('nutritional_info')
+        if not nutritional_info and data.get('item_name'):
+            nutritional_info = lookup_nutrition_by_name(data.get('item_name'))
     
     item = PantryItem(
         user_id=current_user.id,
@@ -377,7 +473,7 @@ def add_pantry_item():
         quantity=data.get('quantity'),
         unit=data.get('unit'),
         expiry_date=expiry_date,
-        nutritional_info=json.dumps(data.get('nutritional_info', {})) if data.get('nutritional_info') else None
+        nutritional_info=json.dumps(nutritional_info) if nutritional_info else None
     )
     
     db.session.add(item)
@@ -404,8 +500,17 @@ def update_pantry_item(item_id):
     if data.get('expiry_date'):
         item.expiry_date = datetime.strptime(data.get('expiry_date'), '%Y-%m-%d').date()
     
-    if data.get('nutritional_info'):
-        item.nutritional_info = json.dumps(data.get('nutritional_info'))
+    nutritional_info = data.get('nutritional_info')
+    if not nutritional_info:
+        if data.get('barcode'):
+            product_info = lookup_barcode(data.get('barcode'))
+            if product_info:
+                nutritional_info = product_info.get('nutritional_info')
+        if not nutritional_info and data.get('item_name'):
+            nutritional_info = lookup_nutrition_by_name(data.get('item_name'))
+
+    if nutritional_info:
+        item.nutritional_info = json.dumps(nutritional_info)
     
     db.session.commit()
     
@@ -659,10 +764,9 @@ def get_user_recipes(user_id):
     for recipe in recipes:
         recipe_dict = recipe.to_dict()
         
-        # Calculate average rating from meal history
-        ratings = db.session.query(MealHistory.rating).filter(
-            MealHistory.recipe_id == recipe.id,
-            MealHistory.rating.isnot(None)
+        ratings = db.session.query(RecipeReview.rating).filter(
+            RecipeReview.recipe_id == recipe.id,
+            RecipeReview.rating.isnot(None)
         ).all()
         
         if ratings:

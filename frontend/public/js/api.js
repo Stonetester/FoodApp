@@ -101,6 +101,17 @@ class ApiService {
         return this.request(`/api/recipes/${id}`);
     }
 
+    async getRecipeReviews(id) {
+        return this.request(`/api/recipes/${id}/reviews`);
+    }
+
+    async submitRecipeReview(id, review) {
+        return this.request(`/api/recipes/${id}/reviews`, {
+            method: 'POST',
+            body: JSON.stringify(review),
+        });
+    }
+
     async createRecipe(recipe) {
         return this.request('/api/recipes', {
             method: 'POST',

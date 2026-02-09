@@ -1,6 +1,7 @@
 // Pantry Management
 
 let pantryItems = [];
+let pendingPantryNutrition = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     setupPantryListeners();
@@ -26,6 +27,10 @@ function setupPantryListeners() {
     // Cancel button
     document.getElementById('cancelPantryBtn')?.addEventListener('click', () => {
         closePantryModal();
+    });
+
+    document.getElementById('pantryFetchNutritionBtn')?.addEventListener('click', async () => {
+        await fetchPantryNutrition();
     });
 }
 
@@ -61,12 +66,14 @@ function createPantryCard(item) {
 
     const expiryInfo = item.expiry_date ? 
         `<p class="pantry-card-info">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : '';
+    const nutritionHtml = item.nutritional_info ? renderNutritionHighlights(item.nutritional_info) : '';
 
     card.innerHTML = `
         <h3 class="pantry-card-title">${item.item_name}</h3>
         ${item.quantity ? `<p class="pantry-card-info">Quantity: ${item.quantity} ${item.unit || ''}</p>` : ''}
         ${item.barcode ? `<p class="pantry-card-info">Barcode: ${item.barcode}</p>` : ''}
         ${expiryInfo}
+        ${nutritionHtml}
         <div class="pantry-card-actions">
             <button class="btn btn-secondary" onclick="editPantryItem(${item.id})">Edit</button>
             <button class="btn btn-secondary" onclick="deletePantryItem(${item.id})">Delete</button>
@@ -80,6 +87,7 @@ function openPantryModal(item = null) {
     const modal = document.getElementById('pantryModal');
     const form = document.getElementById('pantryForm');
     const title = document.getElementById('pantryModalTitle');
+    const nutritionPreview = document.getElementById('pantryNutritionPreview');
 
     if (item) {
         title.textContent = 'Edit Pantry Item';
@@ -89,10 +97,18 @@ function openPantryModal(item = null) {
         document.getElementById('pantryQuantity').value = item.quantity || '';
         document.getElementById('pantryUnit').value = item.unit || '';
         document.getElementById('pantryExpiryDate').value = item.expiry_date || '';
+        pendingPantryNutrition = item.nutritional_info || null;
     } else {
         title.textContent = 'Add Pantry Item';
         form.reset();
         document.getElementById('pantryItemId').value = '';
+        pendingPantryNutrition = null;
+    }
+
+    if (nutritionPreview) {
+        nutritionPreview.innerHTML = pendingPantryNutrition
+            ? renderNutritionHighlights(pendingPantryNutrition)
+            : '<p class="empty-state">No nutrition data yet.</p>';
     }
 
     modal.classList.add('active');
@@ -111,7 +127,8 @@ async function savePantryItem() {
         barcode: document.getElementById('pantryBarcode').value || null,
         quantity: document.getElementById('pantryQuantity').value ? parseFloat(document.getElementById('pantryQuantity').value) : null,
         unit: document.getElementById('pantryUnit').value || null,
-        expiry_date: document.getElementById('pantryExpiryDate').value || null
+        expiry_date: document.getElementById('pantryExpiryDate').value || null,
+        nutritional_info: pendingPantryNutrition
     };
 
     try {
@@ -165,8 +182,64 @@ function openScanner() {
     }
 }
 
+function renderNutritionHighlights(nutrition) {
+    if (!nutrition) return '';
+    const parts = [];
+    if (nutrition.energy_kcal) parts.push(`🔥 ${nutrition.energy_kcal} kcal`);
+    if (nutrition.proteins) parts.push(`💪 ${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates) parts.push(`🍞 ${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat) parts.push(`🥑 ${nutrition.fat}g fat`);
+    if (!parts.length) return '';
+    return `<div class="nutrition-inline">${parts.join(' • ')}</div>`;
+}
+
+async function fetchPantryNutrition() {
+    const barcode = document.getElementById('pantryBarcode').value.trim();
+    const name = document.getElementById('pantryItemName').value.trim();
+    const preview = document.getElementById('pantryNutritionPreview');
+
+    if (!barcode && !name) {
+        if (preview) {
+            preview.innerHTML = '<p class="error-message">Add a barcode or item name first.</p>';
+        }
+        return;
+    }
+
+    if (preview) {
+        preview.innerHTML = '<p class="empty-state">Looking up nutrition...</p>';
+    }
+
+    try {
+        if (barcode) {
+            const data = await api.scanBarcode(barcode);
+            if (data && data.nutritional_info) {
+                pendingPantryNutrition = data.nutritional_info;
+                if (data.name && !name) {
+                    document.getElementById('pantryItemName').value = data.name;
+                }
+            }
+        }
+
+        if (!pendingPantryNutrition && preview) {
+            preview.innerHTML = '<p class="empty-state">Nutrition data will be pulled when you save.</p>';
+            return;
+        }
+    } catch (error) {
+        console.error('Error fetching nutrition:', error);
+        if (preview) {
+            preview.innerHTML = '<p class="error-message">Unable to fetch nutrition data.</p>';
+        }
+        return;
+    }
+
+    if (preview) {
+        preview.innerHTML = pendingPantryNutrition
+            ? renderNutritionHighlights(pendingPantryNutrition)
+            : '<p class="empty-state">Nutrition data will be pulled when you save.</p>';
+    }
+}
+
 // Export functions
 window.editPantryItem = editPantryItem;
 window.deletePantryItem = deletePantryItem;
 window.loadPantry = loadPantry;
-

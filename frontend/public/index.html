@@ -56,6 +56,29 @@
             </div>
         </nav>
 
+        <div class="mobile-nav" aria-label="Quick navigation">
+            <button class="mobile-nav__item nav-link" type="button" data-page="dashboard">
+                <span aria-hidden="true">🏠</span>
+                <span>Home</span>
+            </button>
+            <button class="mobile-nav__item nav-link" type="button" data-page="recipes">
+                <span aria-hidden="true">🍲</span>
+                <span>Recipes</span>
+            </button>
+            <button class="mobile-nav__item nav-link" type="button" data-page="mealplan">
+                <span aria-hidden="true">🗓️</span>
+                <span>Plan</span>
+            </button>
+            <button class="mobile-nav__item nav-link" type="button" data-page="pantry">
+                <span aria-hidden="true">🧺</span>
+                <span>Pantry</span>
+            </button>
+            <button class="mobile-nav__item nav-link" type="button" data-page="userSearch">
+                <span aria-hidden="true">🔍</span>
+                <span>Discover</span>
+            </button>
+        </div>
+
         <!-- Login/Register Page -->
         <div id="loginPage" class="page active">
             <div class="login-container">
@@ -296,6 +319,7 @@
                     <div class="form-group">
                         <label for="pantryBarcode">Barcode</label>
                         <input type="text" id="pantryBarcode">
+                        <button type="button" class="btn btn-secondary btn-inline" id="pantryFetchNutritionBtn">🔎 Fetch Nutrition</button>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -310,6 +334,12 @@
                     <div class="form-group">
                         <label for="pantryExpiryDate">Expiry Date</label>
                         <input type="date" id="pantryExpiryDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Nutrition Highlights</label>
+                        <div id="pantryNutritionPreview" class="nutrition-preview">
+                            <p class="empty-state">No nutrition data yet.</p>
+                        </div>
                     </div>
                     <div class="modal-actions">
                         <button type="submit" class="btn btn-primary">Save Item</button>

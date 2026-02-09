@@ -8,6 +8,31 @@ document.addEventListener('DOMContentLoaded', () => {
     setupRecipeListeners();
 });
 
+function renderStarRating(rating, count = 0) {
+    if (!rating) {
+        return `
+            <div class="rating-summary rating-summary--empty">
+                <span class="rating-text">No ratings yet</span>
+            </div>
+        `;
+    }
+
+    const rounded = Math.round(rating);
+    const stars = Array.from({ length: 5 }).map((_, index) => {
+        const filled = index < rounded ? 'star--filled' : 'star--empty';
+        return `<span class="star ${filled}">★</span>`;
+    }).join('');
+
+    return `
+        <div class="rating-summary">
+            <div class="rating-stars" aria-label="Rated ${rating} out of 5">
+                ${stars}
+            </div>
+            <span class="rating-text">${rating.toFixed(1)} / 5 ${count ? `(${count})` : ''}</span>
+        </div>
+    `;
+}
+
 function setupRecipeListeners() {
     // Add recipe button
     document.getElementById('addRecipeBtn')?.addEventListener('click', () => {
@@ -155,6 +180,7 @@ function createRecipeCard(recipe) {
         <div class="recipe-card-content">
             <h3 class="recipe-card-title">${recipe.title}</h3>
             <p class="recipe-card-description">${recipe.description || ''}</p>
+            ${renderStarRating(recipe.rating_average, recipe.rating_count)}
             <div class="recipe-card-tags">${tagsHtml}</div>
             <div class="recipe-card-actions">
                 <button class="btn-icon" type="button" data-action="view" title="View recipe">
@@ -500,7 +526,11 @@ async function saveRecipe() {
 async function viewRecipeDetail(id) {
     try {
         const recipe = await api.getRecipe(id);
-        openRecipeModal(recipe);
+        if (window.showRecipeDetailModal) {
+            window.showRecipeDetailModal(recipe, false, { allowEdit: true });
+        } else {
+            openRecipeModal(recipe);
+        }
     } catch (error) {
         console.error('Error loading recipe:', error);
         alert('Failed to load recipe');
@@ -628,7 +658,7 @@ async function importRecipeFromUrl() {
                     cook_time: recipeData.cook_time || null,
                     servings: recipeData.servings || null,
                     ingredients: ingredients,
-                    tags: []
+                    tags: Array.isArray(recipeData.tags) ? recipeData.tags : []
                 });
             } else {
                 resultDiv.innerHTML = '<p class="error-message">Could not extract recipe from URL. The page may not contain recipe data, or it may be in an unsupported format. Please try another URL or add manually.</p>';

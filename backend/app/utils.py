@@ -74,6 +74,47 @@ def lookup_barcode(barcode):
         print(f"Error looking up barcode: {e}")
         return None
 
+def lookup_nutrition_by_name(name):
+    """Lookup nutritional information using OpenFoodFacts search API by product name"""
+    if not name:
+        return None
+
+    try:
+        url = "https://world.openfoodfacts.org/cgi/search.pl"
+        params = {
+            "search_terms": name,
+            "search_simple": 1,
+            "action": "process",
+            "json": 1,
+            "page_size": 1
+        }
+        response = requests.get(url, params=params, timeout=5)
+
+        if response.status_code != 200:
+            return None
+
+        data = response.json()
+        products = data.get('products', [])
+        if not products:
+            return None
+
+        product = products[0]
+        nutriments = product.get('nutriments', {})
+
+        return {
+            'energy_kcal': nutriments.get('energy-kcal_100g'),
+            'fat': nutriments.get('fat_100g'),
+            'saturated_fat': nutriments.get('saturated-fat_100g'),
+            'carbohydrates': nutriments.get('carbohydrates_100g'),
+            'sugars': nutriments.get('sugars_100g'),
+            'fiber': nutriments.get('fiber_100g'),
+            'proteins': nutriments.get('proteins_100g'),
+            'salt': nutriments.get('salt_100g'),
+        }
+    except Exception as e:
+        print(f"Error looking up nutrition by name: {e}")
+        return None
+
 def extract_recipe_from_url(url):
     """Extract recipe information from a URL with improved precision"""
     try:
@@ -237,6 +278,18 @@ def extract_recipe_from_url(url):
                     formatted_instructions.append(f"{i}. {instruction}")
                 recipe_data['recipeInstructions'] = '\n'.join(formatted_instructions)
         
+        # Detect dietary tags like gluten-free based on page text and URL
+        page_text = soup.get_text(separator=' ', strip=True).lower()
+        gluten_positive = (
+            re.search(r'\bgluten[-\s]?free\b', page_text) or
+            re.search(r'\bgf\b', page_text) or
+            re.search(r'\bgluten[-\s]?free\b', url.lower())
+        )
+        gluten_negative = re.search(r'\b(not|contains|with)\s+gluten\b', page_text) or re.search(r'\bnot\s+gluten[-\s]?free\b', page_text)
+        dietary_tags = []
+        if gluten_positive and not gluten_negative:
+            dietary_tags.append('gluten-free')
+
         # Convert to our format
         result = {
             'title': recipe_data.get('name') or recipe_data.get('headline') or 'Imported Recipe',
@@ -245,7 +298,8 @@ def extract_recipe_from_url(url):
             'instructions': '',
             'prep_time': None,
             'cook_time': None,
-            'servings': None
+            'servings': None,
+            'tags': dietary_tags
         }
         
         # Extract ingredients

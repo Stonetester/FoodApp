@@ -210,6 +210,7 @@ async function lookupAndAddProduct(barcode) {
         };
 
         // Show product info
+        const nutritionHtml = renderNutritionSummary(data.nutritional_info);
         resultDiv.innerHTML = `
             <div style="text-align: center;">
                 <p style="font-size: 1.2em; font-weight: bold; color: var(--success);">✅ Product Found!</p>
@@ -217,6 +218,7 @@ async function lookupAndAddProduct(barcode) {
                 <h3 style="color: var(--primary); margin: 1rem 0;">${data.name}</h3>
                 ${data.brand ? `<p style="color: var(--text-secondary);">${data.brand}</p>` : ''}
                 ${data.quantity ? `<p style="color: var(--text-secondary);">${data.quantity}</p>` : ''}
+                ${nutritionHtml}
                 
                 <div style="margin-top: 1.5rem; text-align: left; background: var(--surface); padding: 1rem; border-radius: 8px;">
                     <h4>Add to Pantry:</h4>
@@ -341,6 +343,22 @@ function closeScanner() {
     if (modal) {
         modal.classList.remove('active');
     }
+}
+
+function renderNutritionSummary(nutrition) {
+    if (!nutrition) return '';
+    const parts = [];
+    if (nutrition.energy_kcal) parts.push(`🔥 ${nutrition.energy_kcal} kcal`);
+    if (nutrition.proteins) parts.push(`💪 ${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates) parts.push(`🍞 ${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat) parts.push(`🥑 ${nutrition.fat}g fat`);
+    if (!parts.length) return '';
+    return `
+        <div style="margin: 0.75rem auto 0; background: var(--surface); padding: 0.75rem; border-radius: 8px; text-align: center;">
+            <strong>Nutrition (per 100g)</strong>
+            <p style="margin-top: 0.35rem;">${parts.join(' • ')}</p>
+        </div>
+    `;
 }
 
 // Export functions for use in other scripts
