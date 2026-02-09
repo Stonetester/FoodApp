@@ -1,4 +1,31 @@
-# 🏡 Cosy Cottage Food App - Windows Edition
+START UP: 
+-Go to backend folder:
+
+cd C:\Projects\FoodApp\backend
+
+
+-Create venv:
+
+python -m venv venv
+
+
+-Activate venv:
+
+venv\Scripts\activate
+
+
+-Install requirements:
+
+pip install -r requirements.txt
+
+
+-Run backend (example):
+
+python server.py
+
+========================================
+
+# 🏡 Modo Gusto - Windows Edition
 
 A complete food management application for Windows with recipe tracking, pantry management, meal planning, and user recipe sharing.
 
