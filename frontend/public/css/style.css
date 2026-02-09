@@ -150,7 +150,7 @@ body::before {
 }
 
 .nav-link:hover {
-    background-color: var(--accent);
+    background-color: var(--accent-gold);
     color: var(--text);
     transform: translateX(-4px);
     box-shadow: 4px 4px 0 var(--border);
@@ -475,12 +475,29 @@ body.has-maintenance-banner .page-header {
 }
 
 .btn-secondary {
-    background-color: var(--surface);
-    color: var(--text);
+    background-color: var(--accent-teal);
+    color: var(--white);
+    border-color: var(--primary-dark);
 }
 
 .btn-secondary:hover {
-    background-color: var(--secondary);
+    background-color: var(--accent-mint);
+    color: var(--text);
+}
+
+.btn-ghost {
+    background-color: transparent;
+    color: var(--text);
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.btn-ghost:hover {
+    background-color: rgba(201, 164, 129, 0.2);
+}
+
+.btn-destructive {
+    background-color: var(--primary-dark);
     color: var(--white);
 }
 
@@ -646,6 +663,19 @@ body.has-maintenance-banner .page-header {
     box-shadow: 6px 6px 0 var(--border);
     text-align: center;
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12px;
+    right: 12px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--stripe-80s);
 }
 
 .stat-card h3 {
@@ -668,6 +698,18 @@ body.has-maintenance-banner .page-header {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    position: relative;
+}
+
+.section-header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -0.5rem;
+    width: 140px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--stripe-80s);
 }
 
 .upcoming-grid {
@@ -763,6 +805,18 @@ body.has-maintenance-banner .page-header {
     box-shadow: 8px 8px 0 var(--border);
     transition: transform 0.3s, box-shadow 0.3s;
     cursor: pointer;
+    position: relative;
+}
+
+.recipe-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12px;
+    right: 12px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--stripe-80s);
 }
 
 .recipe-card:hover {
@@ -892,7 +946,8 @@ body.has-maintenance-banner .page-header {
 }
 
 .filter-tag:hover {
-    background-color: var(--accent);
+    background-color: var(--primary);
+    color: var(--white);
     border-color: var(--border);
 }
 
@@ -1036,6 +1091,19 @@ body.has-maintenance-banner .page-header {
     border: 2px solid var(--border);
     box-shadow: 6px 6px 0 var(--border);
     transition: transform 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.pantry-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12px;
+    right: 12px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--stripe-80s);
 }
 
 .pantry-card:hover {
@@ -1505,6 +1573,9 @@ body.has-maintenance-banner .page-header {
 .empty-state {
     color: var(--muted);
     font-size: 0.9rem;
+    padding-top: 0.75rem;
+    border-top: 4px solid transparent;
+    border-image: var(--stripe-80s) 1;
 }
 
 /* Friends Page */
@@ -1521,6 +1592,20 @@ body.has-maintenance-banner .page-header {
     border: 2px solid var(--border);
     box-shadow: 6px 6px 0 var(--border);
     padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.friends-panel::before,
+.friends-detail::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12px;
+    right: 12px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--stripe-80s);
 }
 
 .friends-panel-header {
