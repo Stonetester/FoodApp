@@ -6,25 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let friendsCache = [];
 let selectedFriendId = null;
-let friendCalendarFull = null;
-let friendCalendarInline = null;
-let selectedFriendName = '';
-let selectedFriendMealPlans = [];
 
 function setupFriendsListeners() {
     const refreshBtn = document.getElementById('refreshFriendsBtn');
-    const mealPlansBtn = document.getElementById('friendMealPlansBtn');
-    const calendarModal = document.getElementById('friendCalendarModal');
-    const calendarCloseBtn = document.getElementById('friendCalendarCloseBtn');
-    const viewToggle = document.getElementById('friendCalendarViewToggle');
-    const viewMenu = document.getElementById('friendCalendarViewMenu');
-    const prevBtn = document.getElementById('friendCalendarPrevBtn');
-    const nextBtn = document.getElementById('friendCalendarNextBtn');
-    const inlineViewToggle = document.getElementById('friendInlineViewToggle');
-    const inlineViewMenu = document.getElementById('friendInlineViewMenu');
-    const inlinePrevBtn = document.getElementById('friendInlinePrevBtn');
-    const inlineNextBtn = document.getElementById('friendInlineNextBtn');
-
     if (refreshBtn) {
         refreshBtn.addEventListener('click', async () => {
             refreshBtn.setAttribute('disabled', 'disabled');
@@ -34,89 +18,6 @@ function setupFriendsListeners() {
             } finally {
                 refreshBtn.removeAttribute('disabled');
                 refreshBtn.classList.remove('is-loading');
-            }
-        });
-    }
-
-    if (mealPlansBtn) {
-        mealPlansBtn.addEventListener('click', () => {
-            openFriendCalendar();
-        });
-    }
-
-    if (calendarCloseBtn && calendarModal) {
-        calendarCloseBtn.addEventListener('click', () => {
-            calendarModal.classList.remove('active');
-            calendarModal.setAttribute('aria-hidden', 'true');
-        });
-    }
-
-    if (viewToggle && viewMenu) {
-        viewToggle.addEventListener('click', () => {
-            const isOpen = viewMenu.classList.toggle('active');
-            viewToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        });
-        viewMenu.querySelectorAll('[data-view]').forEach(button => {
-            button.addEventListener('click', () => {
-                const view = button.dataset.view;
-                if (friendCalendarFull) {
-                    friendCalendarFull.changeView(view);
-                    friendCalendarFull.updateSize();
-                }
-                updateFriendCalendarViewLabel(view);
-                viewMenu.classList.remove('active');
-                viewToggle.setAttribute('aria-expanded', 'false');
-            });
-        });
-    }
-
-    if (prevBtn) {
-        prevBtn.addEventListener('click', () => {
-            if (friendCalendarFull) {
-                friendCalendarFull.prev();
-            }
-        });
-    }
-
-    if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            if (friendCalendarFull) {
-                friendCalendarFull.next();
-            }
-        });
-    }
-
-    if (inlineViewToggle && inlineViewMenu) {
-        inlineViewToggle.addEventListener('click', () => {
-            const isOpen = inlineViewMenu.classList.toggle('active');
-            inlineViewToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        });
-        inlineViewMenu.querySelectorAll('[data-view]').forEach(button => {
-            button.addEventListener('click', () => {
-                const view = button.dataset.view;
-                if (friendCalendarInline) {
-                    friendCalendarInline.changeView(view);
-                    friendCalendarInline.updateSize();
-                }
-                updateFriendInlineViewLabel(view);
-                inlineViewMenu.classList.remove('active');
-                inlineViewToggle.setAttribute('aria-expanded', 'false');
-            });
-        });
-    }
-
-    if (inlinePrevBtn) {
-        inlinePrevBtn.addEventListener('click', () => {
-            if (friendCalendarInline) {
-                friendCalendarInline.prev();
-            }
-        });
-    }
-
-    if (inlineNextBtn) {
-        inlineNextBtn.addEventListener('click', () => {
-            if (friendCalendarInline) {
-                friendCalendarInline.next();
             }
         });
     }
@@ -131,12 +32,6 @@ async function loadFriendsPage() {
     try {
         friendsCache = await api.getFriends();
         renderFriendsList(friendsCache);
-        if (!friendsCache.length) {
-            const mealPlansBtn = document.getElementById('friendMealPlansBtn');
-            if (mealPlansBtn) {
-                mealPlansBtn.setAttribute('disabled', 'disabled');
-            }
-        }
     } catch (error) {
         console.error('Error loading friends:', error);
         listPanel.innerHTML = '<p class="error-message">Failed to load friends. Please try again.</p>';
@@ -180,20 +75,15 @@ function renderFriendsList(friends) {
 
 async function selectFriend(friend) {
     selectedFriendId = friend.id;
-    selectedFriendName = friend.username;
     renderFriendsList(friendsCache);
 
     const titleEl = document.getElementById('friendDetailTitle');
     const subtitleEl = document.getElementById('friendDetailSubtitle');
-    const mealPlansBtn = document.getElementById('friendMealPlansBtn');
     const recipesEl = document.getElementById('friendRecipes');
     const mealPlanEl = document.getElementById('friendMealPlan');
 
     if (titleEl) titleEl.textContent = `@${friend.username}`;
     if (subtitleEl) subtitleEl.textContent = 'Loading recipes and meal plan...';
-    if (mealPlansBtn) {
-        mealPlansBtn.removeAttribute('disabled');
-    }
 
     if (recipesEl) {
         recipesEl.innerHTML = '<p class="empty-state">Loading recipes...</p>';
@@ -213,7 +103,6 @@ async function selectFriend(friend) {
             api.getUserRecipes(friend.id),
             api.getUserMealPlan(friend.id, startDate, endDate)
         ]);
-        selectedFriendMealPlans = mealPlans;
 
         renderFriendRecipes(recipes, friend.username);
         renderFriendMealPlan(mealPlans);
@@ -228,9 +117,6 @@ async function selectFriend(friend) {
         }
         if (mealPlanEl) {
             mealPlanEl.innerHTML = '<p class="error-message">Failed to load meal plan.</p>';
-        }
-        if (mealPlansBtn) {
-            mealPlansBtn.setAttribute('disabled', 'disabled');
         }
     }
 }
@@ -272,7 +158,6 @@ function renderFriendMealPlan(mealPlans) {
 
     if (!mealPlans || mealPlans.length === 0) {
         mealPlanEl.innerHTML = '<p class="empty-state">No upcoming meals shared yet.</p>';
-        renderFriendMealPlanCalendar([]);
         return;
     }
 
@@ -303,123 +188,6 @@ function renderFriendMealPlan(mealPlans) {
         });
         mealPlanEl.appendChild(dateBlock);
     });
-
-    renderFriendMealPlanCalendar(mealPlans);
 }
 
 window.loadFriendsPage = loadFriendsPage;
-
-function renderFriendMealPlanCalendar(mealPlans) {
-    const calendarEl = document.getElementById('friendMealPlanCalendar');
-    if (!calendarEl) return;
-
-    const events = (mealPlans || []).map(plan => ({
-        id: plan.id,
-        title: plan.recipe ? plan.recipe.title : 'Meal',
-        start: plan.planned_date,
-        backgroundColor: getMealTypeColor(plan.meal_type),
-        borderColor: getMealTypeColor(plan.meal_type)
-    }));
-
-    if (!friendCalendarInline) {
-        friendCalendarInline = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: false,
-            height: 'auto',
-            events
-        });
-        friendCalendarInline.render();
-    } else {
-        friendCalendarInline.removeAllEvents();
-        friendCalendarInline.addEventSource(events);
-        friendCalendarInline.updateSize();
-    }
-
-    updateFriendInlineViewLabel(friendCalendarInline.view.type);
-}
-
-function getMealTypeColor(mealType) {
-    const colors = {
-        breakfast: '#E6A556',
-        lunch: '#D78B3A',
-        dinner: '#6E7A44',
-        snack: '#C96A2B'
-    };
-    return colors[mealType] || '#7A8471';
-}
-
-function openFriendCalendar() {
-    const calendarModal = document.getElementById('friendCalendarModal');
-    const calendarTitle = document.getElementById('friendCalendarTitle');
-    if (!calendarModal) return;
-
-    calendarModal.classList.add('active');
-    calendarModal.setAttribute('aria-hidden', 'false');
-    if (calendarTitle) {
-        calendarTitle.textContent = selectedFriendName
-            ? `@${selectedFriendName}'s Meal Plans`
-            : 'Meal plans';
-    }
-
-    renderFriendFullCalendar(selectedFriendMealPlans);
-    updateFriendCalendarViewLabel(friendCalendarFull ? friendCalendarFull.view.type : 'dayGridMonth');
-    const viewMenu = document.getElementById('friendCalendarViewMenu');
-    const viewToggle = document.getElementById('friendCalendarViewToggle');
-    if (viewMenu) {
-        viewMenu.classList.remove('active');
-    }
-    if (viewToggle) {
-        viewToggle.setAttribute('aria-expanded', 'false');
-    }
-}
-
-function renderFriendFullCalendar(mealPlans) {
-    const calendarEl = document.getElementById('friendCalendarFull');
-    if (!calendarEl) return;
-
-    const events = (mealPlans || []).map(plan => ({
-        id: plan.id,
-        title: plan.recipe ? plan.recipe.title : 'Meal',
-        start: plan.planned_date,
-        backgroundColor: getMealTypeColor(plan.meal_type),
-        borderColor: getMealTypeColor(plan.meal_type)
-    }));
-
-    if (!friendCalendarFull) {
-        friendCalendarFull = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: false,
-            height: '100%',
-            events
-        });
-        friendCalendarFull.render();
-    } else {
-        friendCalendarFull.removeAllEvents();
-        friendCalendarFull.addEventSource(events);
-        friendCalendarFull.updateSize();
-    }
-}
-
-function updateFriendCalendarViewLabel(viewType) {
-    const viewToggle = document.getElementById('friendCalendarViewToggle');
-    if (!viewToggle) return;
-    const labelMap = {
-        dayGridMonth: 'Month',
-        dayGridWeek: 'Week',
-        dayGridDay: 'Day'
-    };
-    const label = labelMap[viewType] || 'View';
-    viewToggle.textContent = `${label} ▾`;
-}
-
-function updateFriendInlineViewLabel(viewType) {
-    const viewToggle = document.getElementById('friendInlineViewToggle');
-    if (!viewToggle) return;
-    const labelMap = {
-        dayGridMonth: 'Month',
-        dayGridWeek: 'Week',
-        dayGridDay: 'Day'
-    };
-    const label = labelMap[viewType] || 'Month';
-    viewToggle.textContent = `${label} ▾`;
-}

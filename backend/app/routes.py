@@ -56,35 +56,21 @@ def normalize_image_url(image_url):
         return None
     if isinstance(image_url, str) and image_url.startswith('data:image'):
         return save_data_url_image(image_url)
-    if isinstance(image_url, str) and len(image_url) > 500:
-        print("Image URL too long, dropping to prevent DB error.")
-        return None
     return image_url
 
 def save_data_url_image(data_url):
-    if ',' not in data_url:
-        raise ValueError('Invalid image data')
-    header, encoded = data_url.split(',', 1)
-    match = re.match(r'^data:image/([a-zA-Z0-9.+-]+)', header)
+    match = re.match(r'^data:image/([a-zA-Z0-9.+-]+);base64,(.+)$', data_url)
     if not match:
         raise ValueError('Invalid image data')
     extension = match.group(1).lower()
     if extension == 'jpeg':
         extension = 'jpg'
-    image_data = base64.b64decode(encoded)
+    image_data = base64.b64decode(match.group(2))
     filename = f"{uuid.uuid4().hex}.{extension}"
     file_path = os.path.join(UPLOADS_DIR, filename)
     with open(file_path, 'wb') as file_handle:
         file_handle.write(image_data)
     return f"/uploads/recipes/{filename}"
-
-def ensure_recipe_image_url(recipe):
-    if not recipe or not recipe.image_url:
-        return False
-    if isinstance(recipe.image_url, str) and recipe.image_url.startswith('data:image'):
-        recipe.image_url = normalize_image_url(recipe.image_url)
-        return True
-    return False
 
 # Catch-all route for frontend routing (SPA)
 @main_bp.route('/<path:path>')
@@ -120,13 +106,11 @@ def get_recipes():
     
     recipes = query.all()
     updated = False
-    image_normalizer = globals().get('ensure_recipe_image_url')
-    if image_normalizer:
-        for recipe in recipes:
-            if image_normalizer(recipe):
-                updated = True
-        if updated:
-            db.session.commit()
+    for recipe in recipes:
+        if ensure_recipe_image_url(recipe):
+            updated = True
+    if updated:
+        db.session.commit()
 
     return jsonify([recipe.to_dict() for recipe in recipes]), 200
 
@@ -139,8 +123,7 @@ def get_recipe(recipe_id):
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
     
-    image_normalizer = globals().get('ensure_recipe_image_url')
-    if image_normalizer and image_normalizer(recipe):
+    if ensure_recipe_image_url(recipe):
         db.session.commit()
     return jsonify(recipe.to_dict()), 200
 
@@ -520,13 +503,11 @@ def get_meal_plan():
     
     plans = query.all()
     updated = False
-    image_normalizer = globals().get('ensure_recipe_image_url')
-    if image_normalizer:
-        for plan in plans:
-            if image_normalizer(plan.recipe):
-                updated = True
-        if updated:
-            db.session.commit()
+    for plan in plans:
+        if ensure_recipe_image_url(plan.recipe):
+            updated = True
+    if updated:
+        db.session.commit()
     return jsonify([plan.to_dict() for plan in plans]), 200
 
 @api_bp.route('/mealplan', methods=['POST'])
