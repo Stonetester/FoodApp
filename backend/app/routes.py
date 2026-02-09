@@ -72,14 +72,6 @@ def save_data_url_image(data_url):
         file_handle.write(image_data)
     return f"/uploads/recipes/{filename}"
 
-def ensure_recipe_image_url(recipe):
-    if not recipe or not recipe.image_url:
-        return False
-    if isinstance(recipe.image_url, str) and recipe.image_url.startswith('data:image'):
-        recipe.image_url = normalize_image_url(recipe.image_url)
-        return True
-    return False
-
 # Catch-all route for frontend routing (SPA)
 @main_bp.route('/<path:path>')
 def serve_frontend(path):
@@ -114,13 +106,11 @@ def get_recipes():
     
     recipes = query.all()
     updated = False
-    image_normalizer = globals().get('ensure_recipe_image_url')
-    if image_normalizer:
-        for recipe in recipes:
-            if image_normalizer(recipe):
-                updated = True
-        if updated:
-            db.session.commit()
+    for recipe in recipes:
+        if ensure_recipe_image_url(recipe):
+            updated = True
+    if updated:
+        db.session.commit()
 
     return jsonify([recipe.to_dict() for recipe in recipes]), 200
 
@@ -133,8 +123,7 @@ def get_recipe(recipe_id):
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
     
-    image_normalizer = globals().get('ensure_recipe_image_url')
-    if image_normalizer and image_normalizer(recipe):
+    if ensure_recipe_image_url(recipe):
         db.session.commit()
     return jsonify(recipe.to_dict()), 200
 
@@ -514,13 +503,11 @@ def get_meal_plan():
     
     plans = query.all()
     updated = False
-    image_normalizer = globals().get('ensure_recipe_image_url')
-    if image_normalizer:
-        for plan in plans:
-            if image_normalizer(plan.recipe):
-                updated = True
-        if updated:
-            db.session.commit()
+    for plan in plans:
+        if ensure_recipe_image_url(plan.recipe):
+            updated = True
+    if updated:
+        db.session.commit()
     return jsonify([plan.to_dict() for plan in plans]), 200
 
 @api_bp.route('/mealplan', methods=['POST'])
