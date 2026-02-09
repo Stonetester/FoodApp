@@ -105,7 +105,13 @@ def get_recipes():
         query = query.join(RecipeTag).filter(RecipeTag.tag.in_(tags))
     
     recipes = query.all()
-    
+    updated = False
+    for recipe in recipes:
+        if ensure_recipe_image_url(recipe):
+            updated = True
+    if updated:
+        db.session.commit()
+
     return jsonify([recipe.to_dict() for recipe in recipes]), 200
 
 @api_bp.route('/recipes/<int:recipe_id>', methods=['GET'])
@@ -117,6 +123,8 @@ def get_recipe(recipe_id):
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
     
+    if ensure_recipe_image_url(recipe):
+        db.session.commit()
     return jsonify(recipe.to_dict()), 200
 
 @api_bp.route('/recipes', methods=['POST'])
@@ -494,6 +502,12 @@ def get_meal_plan():
         query = query.filter(MealPlan.planned_date <= end)
     
     plans = query.all()
+    updated = False
+    for plan in plans:
+        if ensure_recipe_image_url(plan.recipe):
+            updated = True
+    if updated:
+        db.session.commit()
     return jsonify([plan.to_dict() for plan in plans]), 200
 
 @api_bp.route('/mealplan', methods=['POST'])
