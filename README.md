@@ -25,6 +25,12 @@ python server.py
 
 ========================================
 
+
+BACK END:
+Backend runs: waitress-serve --host 127.0.0.1 --port 5000 run:app
+
+=======================================
+
 # 🏡 Modo Gusto - Windows Edition
 
 A complete food management application for Windows with recipe tracking, pantry management, meal planning, and user recipe sharing.
