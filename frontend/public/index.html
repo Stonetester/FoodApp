@@ -47,6 +47,7 @@
                     <a href="#" class="nav-link" data-page="recipes" id="recipesMenuBtn">Your Recipes</a>
                     <a href="#" class="nav-link" data-page="userSearch">🔍 Find Recipes</a>
                     <a href="#" class="nav-link" data-page="social">🤝 Social</a>
+                    <a href="#" class="nav-link" data-page="friends">👥 Friends</a>
                     <a href="#" class="nav-link" data-page="pantry">Pantry</a>
                     <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link" data-page="history">History</a>
@@ -260,6 +261,29 @@
                             <img id="recipePhotoPreview" alt="Recipe preview" hidden>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label>Nutrition (per serving)</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipeCalories">Calories</label>
+                                <input type="number" step="0.1" id="recipeCalories" placeholder="kcal">
+                            </div>
+                            <div class="form-group">
+                                <label for="recipeProtein">Protein</label>
+                                <input type="number" step="0.1" id="recipeProtein" placeholder="g">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipeCarbs">Carbs</label>
+                                <input type="number" step="0.1" id="recipeCarbs" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="recipeFat">Fat</label>
+                                <input type="number" step="0.1" id="recipeFat" placeholder="g">
+                            </div>
+                        </div>
+                    </div>
                     <div class="modal-actions">
                         <button type="submit" class="btn btn-primary">Save Recipe</button>
                         <button type="button" class="btn btn-secondary" id="cancelRecipeBtn">Cancel</button>
@@ -310,6 +334,29 @@
                     <div class="form-group">
                         <label for="pantryExpiryDate">Expiry Date</label>
                         <input type="date" id="pantryExpiryDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Nutrition (per serving)</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pantryCalories">Calories</label>
+                                <input type="number" step="0.1" id="pantryCalories" placeholder="kcal">
+                            </div>
+                            <div class="form-group">
+                                <label for="pantryProtein">Protein</label>
+                                <input type="number" step="0.1" id="pantryProtein" placeholder="g">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pantryCarbs">Carbs</label>
+                                <input type="number" step="0.1" id="pantryCarbs" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="pantryFat">Fat</label>
+                                <input type="number" step="0.1" id="pantryFat" placeholder="g">
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-actions">
                         <button type="submit" class="btn btn-primary">Save Item</button>
@@ -487,8 +534,13 @@
         <div id="socialPage" class="page">
             <div class="container">
                 <div class="page-header">
-                    <h1>🤝 Social</h1>
-                    <p>Connect with friends and share recipes.</p>
+                    <div>
+                        <h1>🤝 Social</h1>
+                        <p>Connect with friends and share recipes.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" id="refreshSocialBtn" type="button">🔄 Refresh</button>
+                    </div>
                 </div>
 
                 <div class="social-grid">
@@ -521,6 +573,95 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Friends Page -->
+        <div id="friendsPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <div>
+                        <h1>👥 Friends</h1>
+                        <p>Browse your friends, their recipes, and upcoming meal plans.</p>
+                    </div>
+                </div>
+                <div class="friends-layout">
+                    <div class="friends-panel">
+                        <div class="friends-panel-header">
+                            <h2>Your friends</h2>
+                            <button class="btn btn-secondary" id="refreshFriendsBtn" type="button">🔄 Refresh</button>
+                        </div>
+                        <div id="friendsListPanel" class="friends-list-panel">
+                            <p class="empty-state">Loading friends...</p>
+                        </div>
+                    </div>
+                    <div class="friends-detail">
+                        <div class="friends-detail-header">
+                            <div class="friends-detail-title">
+                                <h2 id="friendDetailTitle">Select a friend</h2>
+                                <button class="btn btn-secondary" id="friendMealPlansBtn" type="button" disabled>
+                                    📅 Meal plans
+                                </button>
+                            </div>
+                            <p id="friendDetailSubtitle">Choose a friend to view their recipes and meal prep plans.</p>
+                        </div>
+                        <div class="friends-detail-section">
+                            <h3>Recipes</h3>
+                            <div id="friendRecipes" class="recipe-grid friends-recipe-grid">
+                                <p class="empty-state">No friend selected.</p>
+                            </div>
+                        </div>
+                        <div class="friends-detail-section">
+                            <h3>User's meal plan</h3>
+                            <div id="friendMealPlan" class="friends-mealplan-list">
+                                <p class="empty-state">No friend selected.</p>
+                            </div>
+                            <div class="friends-inline-calendar-header">
+                                <button class="btn btn-secondary" id="friendInlineViewToggle" type="button" aria-expanded="false">
+                                    Month ▾
+                                </button>
+                                <div class="friends-calendar-menu" id="friendInlineViewMenu">
+                                    <button type="button" data-view="dayGridMonth">Month</button>
+                                    <button type="button" data-view="dayGridWeek">Week</button>
+                                    <button type="button" data-view="dayGridDay">Day</button>
+                                </div>
+                                <div class="friends-calendar-nav">
+                                    <button class="btn btn-secondary" id="friendInlinePrevBtn" type="button">←</button>
+                                    <button class="btn btn-secondary" id="friendInlineNextBtn" type="button">→</button>
+                                </div>
+                            </div>
+                            <div id="friendMealPlanCalendar" class="friends-calendar-full friends-calendar-inline"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="friendCalendarModal" class="friends-calendar-modal" aria-hidden="true">
+            <div class="friends-calendar-content">
+                <div class="friends-calendar-header">
+                    <button class="btn btn-secondary" id="friendCalendarCloseBtn" type="button">Close</button>
+                    <div class="friends-calendar-title">
+                        <h2 id="friendCalendarTitle">Meal plans</h2>
+                    </div>
+                    <div class="friends-calendar-controls">
+                        <div class="friends-calendar-view">
+                            <button class="btn btn-secondary" id="friendCalendarViewToggle" type="button" aria-expanded="false">
+                                View ▾
+                            </button>
+                            <div class="friends-calendar-menu" id="friendCalendarViewMenu">
+                                <button type="button" data-view="dayGridMonth">Month</button>
+                                <button type="button" data-view="dayGridWeek">Week</button>
+                                <button type="button" data-view="dayGridDay">Day</button>
+                            </div>
+                        </div>
+                        <div class="friends-calendar-nav">
+                            <button class="btn btn-secondary" id="friendCalendarPrevBtn" type="button">←</button>
+                            <button class="btn btn-secondary" id="friendCalendarNextBtn" type="button">→</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="friendCalendarFull" class="friends-calendar-full"></div>
             </div>
         </div>
 
@@ -666,6 +807,7 @@
     <script src="/js/mealplan.js"></script>
     <script src="/js/history.js"></script>
     <script src="/js/social.js"></script>
+    <script src="/js/friends.js"></script>
     
     <!-- Fallback: Ensure login page is visible if JS fails -->
     <script>        

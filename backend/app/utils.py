@@ -6,6 +6,20 @@ import json
 import re
 from bs4 import BeautifulSoup
 
+def parse_nutrition_value(value):
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, str):
+        match = re.search(r'[\d.]+', value)
+        if match:
+            try:
+                return float(match.group(0))
+            except ValueError:
+                return None
+    return None
+
 def generate_qr_code(data):
     """Generate QR code image from data string"""
     qr = qrcode.QRCode(
@@ -247,6 +261,14 @@ def extract_recipe_from_url(url):
             'cook_time': None,
             'servings': None
         }
+        nutrition_data = recipe_data.get('nutrition')
+        if isinstance(nutrition_data, dict):
+            result['nutrition'] = {
+                'energy_kcal': parse_nutrition_value(nutrition_data.get('calories')),
+                'fat': parse_nutrition_value(nutrition_data.get('fatContent')),
+                'carbohydrates': parse_nutrition_value(nutrition_data.get('carbohydrateContent')),
+                'proteins': parse_nutrition_value(nutrition_data.get('proteinContent'))
+            }
         
         # Extract ingredients
         if 'recipeIngredient' in recipe_data:

@@ -349,9 +349,10 @@ function showRecipeDetailModal(recipe, isOtherUser) {
     }
     
     // Format ingredients
-    const ingredientsHtml = recipe.ingredients && recipe.ingredients.length > 0
+    const filteredIngredients = (recipe.ingredients || []).filter(ing => ing.ingredient_name !== '__nutrition__');
+    const ingredientsHtml = filteredIngredients.length > 0
         ? `<ul class="ingredients-list">
-            ${recipe.ingredients.map(ing => {
+            ${filteredIngredients.map(ing => {
                 let line = ing.ingredient_name;
                 if (ing.quantity && ing.unit) {
                     line = `${ing.quantity} ${ing.unit} ${ing.ingredient_name}`;
@@ -362,6 +363,19 @@ function showRecipeDetailModal(recipe, isOtherUser) {
             }).join('')}
            </ul>`
         : '<p>No ingredients listed</p>';
+
+    const nutrition = (recipe.ingredients || []).find(ing => ing.ingredient_name === '__nutrition__')?.nutritional_info;
+    const nutritionHtml = nutrition ? `
+        <div class="recipe-section">
+            <h3>🍎 Nutrition (per serving)</h3>
+            <p>
+                ${nutrition.energy_kcal ? `${nutrition.energy_kcal} kcal` : ''}
+                ${nutrition.proteins ? `${nutrition.proteins}g protein` : ''}
+                ${nutrition.carbohydrates ? `${nutrition.carbohydrates}g carbs` : ''}
+                ${nutrition.fat ? `${nutrition.fat}g fat` : ''}
+            </p>
+        </div>
+    ` : '';
     
     // Format instructions
     const instructionsHtml = recipe.instructions
@@ -402,6 +416,8 @@ function showRecipeDetailModal(recipe, isOtherUser) {
                 <h3>👩‍🍳 Instructions</h3>
                 ${instructionsHtml}
             </div>
+            
+            ${nutritionHtml}
             
             <div class="recipe-actions">
                 <button class="btn btn-secondary" onclick="shareRecipeLink(${recipe.id}, '${recipe.title.replace(/'/g, "\\'")}')">
@@ -498,3 +514,4 @@ window.copyRecipeFromDetail = copyRecipeFromDetail;
 window.loadDiscoverRecipes = loadDiscoverRecipes;
 window.viewDiscoverRecipeDetail = viewDiscoverRecipeDetail;
 window.shareRecipeLink = shareRecipeLink;
+window.createUserRecipeCard = createUserRecipeCard;
