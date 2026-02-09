@@ -7,6 +7,9 @@ from datetime import datetime, date
 from collections import Counter
 import json
 import os
+import base64
+import re
+import uuid
 
 main_bp = Blueprint('main', __name__)
 api_bp = Blueprint('api', __name__)
@@ -16,6 +19,8 @@ api_bp = Blueprint('api', __name__)
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Go up one level to FoodApp root, then into frontend/public
 FRONTEND_DIR = os.path.join(os.path.dirname(BACKEND_DIR), 'frontend', 'public')
+UPLOADS_DIR = os.path.join(FRONTEND_DIR, 'uploads', 'recipes')
+os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 # Debug: Verify path exists
 if not os.path.exists(FRONTEND_DIR):
@@ -41,6 +46,45 @@ def serve_js(filename):
 @main_bp.route('/images/<path:filename>')
 def serve_images(filename):
     return send_from_directory(os.path.join(FRONTEND_DIR, 'images'), filename)
+
+@main_bp.route('/uploads/<path:filename>')
+def serve_uploads(filename):
+    return send_from_directory(os.path.join(FRONTEND_DIR, 'uploads'), filename)
+
+def normalize_image_url(image_url):
+    if not image_url:
+        return None
+    if isinstance(image_url, str) and image_url.startswith('data:image'):
+        return save_data_url_image(image_url)
+    if isinstance(image_url, str) and len(image_url) > 500:
+        print("Image URL too long, dropping to prevent DB error.")
+        return None
+    return image_url
+
+def save_data_url_image(data_url):
+    if ',' not in data_url:
+        raise ValueError('Invalid image data')
+    header, encoded = data_url.split(',', 1)
+    match = re.match(r'^data:image/([a-zA-Z0-9.+-]+)', header)
+    if not match:
+        raise ValueError('Invalid image data')
+    extension = match.group(1).lower()
+    if extension == 'jpeg':
+        extension = 'jpg'
+    image_data = base64.b64decode(encoded)
+    filename = f"{uuid.uuid4().hex}.{extension}"
+    file_path = os.path.join(UPLOADS_DIR, filename)
+    with open(file_path, 'wb') as file_handle:
+        file_handle.write(image_data)
+    return f"/uploads/recipes/{filename}"
+
+def ensure_recipe_image_url(recipe):
+    if not recipe or not recipe.image_url:
+        return False
+    if isinstance(recipe.image_url, str) and recipe.image_url.startswith('data:image'):
+        recipe.image_url = normalize_image_url(recipe.image_url)
+        return True
+    return False
 
 # Catch-all route for frontend routing (SPA)
 @main_bp.route('/<path:path>')
@@ -75,7 +119,15 @@ def get_recipes():
         query = query.join(RecipeTag).filter(RecipeTag.tag.in_(tags))
     
     recipes = query.all()
-    
+    updated = False
+    image_normalizer = globals().get('ensure_recipe_image_url')
+    if image_normalizer:
+        for recipe in recipes:
+            if image_normalizer(recipe):
+                updated = True
+        if updated:
+            db.session.commit()
+
     return jsonify([recipe.to_dict() for recipe in recipes]), 200
 
 @api_bp.route('/recipes/<int:recipe_id>', methods=['GET'])
@@ -87,6 +139,9 @@ def get_recipe(recipe_id):
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
     
+    image_normalizer = globals().get('ensure_recipe_image_url')
+    if image_normalizer and image_normalizer(recipe):
+        db.session.commit()
     return jsonify(recipe.to_dict()), 200
 
 @api_bp.route('/recipes', methods=['POST'])
@@ -104,6 +159,8 @@ def create_recipe():
         if not data.get('title'):
             return jsonify({'error': 'Title is required'}), 400
         
+        image_url = normalize_image_url(data.get('image_url'))
+
         recipe = Recipe(
             user_id=current_user.id,
             title=data.get('title', '').strip(),
@@ -112,7 +169,7 @@ def create_recipe():
             prep_time=int(data.get('prep_time')) if data.get('prep_time') else None,
             cook_time=int(data.get('cook_time')) if data.get('cook_time') else None,
             servings=int(data.get('servings')) if data.get('servings') else None,
-            image_url=data.get('image_url') if data.get('image_url') else None
+            image_url=image_url
         )
         
         db.session.add(recipe)
@@ -170,7 +227,8 @@ def update_recipe(recipe_id):
         recipe.prep_time = int(data.get('prep_time')) if data.get('prep_time') else recipe.prep_time
         recipe.cook_time = int(data.get('cook_time')) if data.get('cook_time') else recipe.cook_time
         recipe.servings = int(data.get('servings')) if data.get('servings') else recipe.servings
-        recipe.image_url = data.get('image_url') if data.get('image_url') else recipe.image_url
+        if 'image_url' in data:
+            recipe.image_url = normalize_image_url(data.get('image_url'))
         recipe.updated_at = datetime.utcnow()
         
         # Update ingredients
@@ -461,6 +519,14 @@ def get_meal_plan():
         query = query.filter(MealPlan.planned_date <= end)
     
     plans = query.all()
+    updated = False
+    image_normalizer = globals().get('ensure_recipe_image_url')
+    if image_normalizer:
+        for plan in plans:
+            if image_normalizer(plan.recipe):
+                updated = True
+        if updated:
+            db.session.commit()
     return jsonify([plan.to_dict() for plan in plans]), 200
 
 @api_bp.route('/mealplan', methods=['POST'])
@@ -694,6 +760,35 @@ def get_user_recipes(user_id):
         result.append(recipe_dict)
     
     return jsonify(result), 200
+
+@api_bp.route('/users/<int:user_id>/mealplan', methods=['GET'])
+@login_required
+def get_user_meal_plan(user_id):
+    """Get meal plan for a specific user (friends only)"""
+    if user_id != current_user.id:
+        is_friend = Friendship.query.filter_by(user_id=current_user.id, friend_id=user_id).first()
+        if not is_friend:
+            return jsonify({'error': 'You do not have access to this meal plan'}), 403
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    query = MealPlan.query.filter_by(user_id=user_id)
+
+    if start_date:
+        start = datetime.strptime(start_date, '%Y-%m-%d').date()
+        query = query.filter(MealPlan.planned_date >= start)
+
+    if end_date:
+        end = datetime.strptime(end_date, '%Y-%m-%d').date()
+        query = query.filter(MealPlan.planned_date <= end)
+
+    plans = query.order_by(MealPlan.planned_date.asc()).all()
+    return jsonify([plan.to_dict() for plan in plans]), 200
 
 # ==================== FRIENDS & SOCIAL ====================
 @api_bp.route('/friends', methods=['GET'])

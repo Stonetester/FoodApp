@@ -61,12 +61,14 @@ function createPantryCard(item) {
 
     const expiryInfo = item.expiry_date ? 
         `<p class="pantry-card-info">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : '';
+    const nutrition = formatNutritionInfo(item.nutritional_info);
 
     card.innerHTML = `
         <h3 class="pantry-card-title">${item.item_name}</h3>
         ${item.quantity ? `<p class="pantry-card-info">Quantity: ${item.quantity} ${item.unit || ''}</p>` : ''}
         ${item.barcode ? `<p class="pantry-card-info">Barcode: ${item.barcode}</p>` : ''}
         ${expiryInfo}
+        ${nutrition ? `<p class="pantry-card-info">${nutrition}</p>` : ''}
         <div class="pantry-card-actions">
             <button class="btn btn-secondary" onclick="editPantryItem(${item.id})">Edit</button>
             <button class="btn btn-secondary" onclick="deletePantryItem(${item.id})">Delete</button>
@@ -89,6 +91,11 @@ function openPantryModal(item = null) {
         document.getElementById('pantryQuantity').value = item.quantity || '';
         document.getElementById('pantryUnit').value = item.unit || '';
         document.getElementById('pantryExpiryDate').value = item.expiry_date || '';
+        const nutrition = item.nutritional_info || {};
+        document.getElementById('pantryCalories').value = nutrition.energy_kcal ?? '';
+        document.getElementById('pantryProtein').value = nutrition.proteins ?? '';
+        document.getElementById('pantryCarbs').value = nutrition.carbohydrates ?? '';
+        document.getElementById('pantryFat').value = nutrition.fat ?? '';
     } else {
         title.textContent = 'Add Pantry Item';
         form.reset();
@@ -111,7 +118,13 @@ async function savePantryItem() {
         barcode: document.getElementById('pantryBarcode').value || null,
         quantity: document.getElementById('pantryQuantity').value ? parseFloat(document.getElementById('pantryQuantity').value) : null,
         unit: document.getElementById('pantryUnit').value || null,
-        expiry_date: document.getElementById('pantryExpiryDate').value || null
+        expiry_date: document.getElementById('pantryExpiryDate').value || null,
+        nutritional_info: buildNutritionPayload({
+            calories: document.getElementById('pantryCalories').value,
+            protein: document.getElementById('pantryProtein').value,
+            carbs: document.getElementById('pantryCarbs').value,
+            fat: document.getElementById('pantryFat').value
+        })
     };
 
     try {
@@ -129,6 +142,34 @@ async function savePantryItem() {
         console.error('Error saving pantry item:', error);
         alert('Failed to save pantry item: ' + error.message);
     }
+}
+
+function buildNutritionPayload(values) {
+    const calories = values.calories ? parseFloat(values.calories) : null;
+    const protein = values.protein ? parseFloat(values.protein) : null;
+    const carbs = values.carbs ? parseFloat(values.carbs) : null;
+    const fat = values.fat ? parseFloat(values.fat) : null;
+
+    if ([calories, protein, carbs, fat].every(value => value === null || Number.isNaN(value))) {
+        return null;
+    }
+
+    return {
+        energy_kcal: Number.isNaN(calories) ? null : calories,
+        proteins: Number.isNaN(protein) ? null : protein,
+        carbohydrates: Number.isNaN(carbs) ? null : carbs,
+        fat: Number.isNaN(fat) ? null : fat
+    };
+}
+
+function formatNutritionInfo(nutrition) {
+    if (!nutrition) return '';
+    const parts = [];
+    if (nutrition.energy_kcal) parts.push(`${nutrition.energy_kcal} kcal`);
+    if (nutrition.proteins) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat) parts.push(`${nutrition.fat}g fat`);
+    return parts.length ? `Nutrition: ${parts.join(' • ')}` : '';
 }
 
 async function editPantryItem(id) {
@@ -169,4 +210,3 @@ function openScanner() {
 window.editPantryItem = editPantryItem;
 window.deletePantryItem = deletePantryItem;
 window.loadPantry = loadPantry;
-
