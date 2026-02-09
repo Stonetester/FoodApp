@@ -479,6 +479,11 @@ function handleViewChange(viewName) {
         if (sectionsEl) {
             sectionsEl.style.display = 'none';
         }
+        if (calendar) {
+            requestAnimationFrame(() => {
+                calendar.updateSize();
+            });
+        }
     }
 
     updateViewButtons(viewName);
@@ -521,7 +526,8 @@ function renderMealSections(viewName) {
     const sectionsEl = document.getElementById('mealPlanSections');
     if (!sectionsEl) return;
 
-    const dates = viewName === 'mealDay' ? [new Date(sectionFocusDate)] : getWeekDates(sectionFocusDate);
+    const isDayView = viewName === 'mealDay';
+    const dates = isDayView ? [new Date(sectionFocusDate)] : getWeekDates(sectionFocusDate);
     sectionsEl.innerHTML = '';
 
     dates.forEach(date => {
@@ -534,11 +540,14 @@ function renderMealSections(viewName) {
             snacks: dayMeals.filter(m => m.meal_type === 'snack')
         };
 
-        const card = document.createElement('div');
+        const card = document.createElement('details');
         card.className = 'meal-day-card';
+        if (isDayView) {
+            card.setAttribute('open', '');
+        }
 
-        const header = document.createElement('div');
-        header.className = 'meal-day-header';
+        const header = document.createElement('summary');
+        header.className = 'meal-day-summary';
         header.innerHTML = `
             <div>
                 <h3>${date.toLocaleDateString('en-US', { weekday: 'long' })}</h3>
@@ -566,52 +575,62 @@ function renderMealSections(viewName) {
         orderedBlocks.forEach(block => {
             if (block.type === 'meal') {
                 const type = block.meal;
-                const mealSlot = document.createElement('div');
+                const mealSlot = document.createElement('details');
                 mealSlot.className = 'meal-section';
                 const plannedMeal = mealsByType[type];
+                if (isDayView || plannedMeal) {
+                    mealSlot.setAttribute('open', '');
+                }
 
                 mealSlot.innerHTML = `
-                    <div class="meal-section-header">
+                    <summary class="meal-section-header">
                         <h4>${type.charAt(0).toUpperCase() + type.slice(1)}</h4>
                         <button class="btn-icon" type="button" data-date="${dateStr}" data-meal="${type}" title="Add ${type}">
                             +
                         </button>
+                    </summary>
+                    <div class="meal-section-body">
+                        ${plannedMeal && plannedMeal.recipe ? `
+                            <div class="meal-section-item">
+                                <div>
+                                    <strong>${plannedMeal.recipe.title}</strong>
+                                    ${plannedMeal.recipe.description ? `<p>${plannedMeal.recipe.description}</p>` : ''}
+                                </div>
+                                <div class="meal-section-actions">
+                                    <button class="btn-icon" type="button" data-edit="${plannedMeal.id}" title="Edit">✏️</button>
+                                    <button class="btn-icon" type="button" data-delete="${plannedMeal.id}" title="Delete">🗑️</button>
+                                </div>
+                            </div>
+                        ` : '<p class="meal-empty">No meal planned</p>'}
                     </div>
-                    ${plannedMeal && plannedMeal.recipe ? `
-                        <div class="meal-section-item">
-                            <div>
-                                <strong>${plannedMeal.recipe.title}</strong>
-                                ${plannedMeal.recipe.description ? `<p>${plannedMeal.recipe.description}</p>` : ''}
-                            </div>
-                            <div class="meal-section-actions">
-                                <button class="btn-icon" type="button" data-edit="${plannedMeal.id}" title="Edit">✏️</button>
-                                <button class="btn-icon" type="button" data-delete="${plannedMeal.id}" title="Delete">🗑️</button>
-                            </div>
-                        </div>
-                    ` : '<p class="meal-empty">No meal planned</p>'}
                 `;
                 mealList.appendChild(mealSlot);
             } else if (block.type === 'snack') {
                 const slot = block.slot;
-                const snackContainer = document.createElement('div');
+                const snackContainer = document.createElement('details');
                 snackContainer.className = 'snack-section';
                 const snacks = mealsByType.snacks.filter(snack => normalizeNote(snack.notes) === normalizeNote(slot.note));
+                if (isDayView || snacks.length) {
+                    snackContainer.setAttribute('open', '');
+                }
                 snackContainer.innerHTML = `
-                    <div class="snack-section-header">
+                    <summary class="snack-section-header">
                         <span>${slot.label}</span>
                         <button class="btn-icon" type="button" data-date="${dateStr}" data-snack-note="${slot.note}" title="Add snack">
                             +
                         </button>
-                    </div>
-                    ${snacks.length ? snacks.map(snack => `
-                        <div class="snack-item">
-                            <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
-                            <div class="meal-section-actions">
-                                <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
-                                <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>
+                    </summary>
+                    <div class="snack-section-body">
+                        ${snacks.length ? snacks.map(snack => `
+                            <div class="snack-item">
+                                <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
+                                <div class="meal-section-actions">
+                                    <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
+                                    <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>
+                                </div>
                             </div>
-                        </div>
-                    `).join('') : '<p class="meal-empty">Add a snack</p>'}
+                        `).join('') : '<p class="meal-empty">Add a snack</p>'}
+                    </div>
                 `;
                 mealList.appendChild(snackContainer);
             }
@@ -621,24 +640,27 @@ function renderMealSections(viewName) {
             return !snackSlots.some(slot => normalizeNote(snack.notes) === normalizeNote(slot.note));
         });
         if (anytimeSnacks.length) {
-            const snackContainer = document.createElement('div');
+            const snackContainer = document.createElement('details');
             snackContainer.className = 'snack-section';
+            snackContainer.setAttribute('open', '');
             snackContainer.innerHTML = `
-                <div class="snack-section-header">
+                <summary class="snack-section-header">
                     <span>Anytime snacks</span>
                     <button class="btn-icon" type="button" data-date="${dateStr}" data-snack-note="" title="Add snack">
                         +
                     </button>
-                </div>
-                ${anytimeSnacks.map(snack => `
-                    <div class="snack-item">
-                        <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
-                        <div class="meal-section-actions">
-                            <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
-                            <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>
+                </summary>
+                <div class="snack-section-body">
+                    ${anytimeSnacks.map(snack => `
+                        <div class="snack-item">
+                            <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
+                            <div class="meal-section-actions">
+                                <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
+                                <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>
+                            </div>
                         </div>
-                    </div>
-                `).join('')}
+                    `).join('')}
+                </div>
             `;
             mealList.appendChild(snackContainer);
         }
@@ -648,19 +670,25 @@ function renderMealSections(viewName) {
     });
 
     sectionsEl.querySelectorAll('[data-meal]').forEach(button => {
-        button.addEventListener('click', async () => {
+        button.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
             await openMealPlanModal(null, button.dataset.date, button.dataset.meal);
         });
     });
 
     sectionsEl.querySelectorAll('[data-action="add-main"]').forEach(button => {
-        button.addEventListener('click', async () => {
+        button.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
             await openMealPlanModal(null, button.dataset.date, 'breakfast');
         });
     });
 
     sectionsEl.querySelectorAll('[data-snack-note]').forEach(button => {
-        button.addEventListener('click', async () => {
+        button.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
             const note = button.dataset.snackNote || null;
             await openMealPlanModal(null, button.dataset.date, 'snack', note);
         });
