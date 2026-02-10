@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modo Gusto</title>
     <meta name="description" content="Manage recipes, pantry, and meal planning with a retro vibe">
-    <meta name="theme-color" content="#D85B2A">
+    <meta name="theme-color" content="#c0672d">
     <!-- Favicon and app icons for mobile home screen -->
     <link rel="icon" type="image/svg+xml" href="/images/app-icon.svg">
     <link rel="apple-touch-icon" href="/images/app-icon.svg">
@@ -52,7 +52,6 @@
                     <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link" data-page="history">History</a>
                     <a href="#" class="nav-link" data-page="settings">Settings</a>
-                    <a href="#" class="nav-link" data-page="account">Account</a>
                     <a href="#" class="nav-link" id="logoutBtn">Logout</a>
                 </div>
                 <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
@@ -94,12 +93,10 @@
                 <button class="btn btn-ghost" type="button" id="moreSheetClose" aria-label="Close menu">✕</button>
             </div>
             <div class="bottom-sheet__content">
-                <button class="sheet-link" type="button" data-page="history" aria-label="Open history page">History</button>
-                <button class="sheet-link" type="button" data-page="friends" aria-label="Open friends page">Friends</button>
-                <button class="sheet-link" type="button" data-page="userSearch" aria-label="Open discover recipes page">Discover</button>
-                <button class="sheet-link" type="button" data-page="settings" aria-label="Open settings page">Settings</button>
-                <button class="sheet-link" type="button" data-page="account" aria-label="Open account page">Account</button>
-                <button class="sheet-link sheet-link--danger" type="button" id="logoutBtnSheet" aria-label="Log out">Logout</button>
+                <button class="sheet-link" type="button" data-page="history" aria-label="Open history page">🕒 History</button>
+                <button class="sheet-link" type="button" data-page="friends" aria-label="Open friends page">👥 Friends</button>
+                <button class="sheet-link" type="button" data-page="userSearch" aria-label="Open discover recipes page">🔍 Discover</button>
+                <button class="sheet-link sheet-link--danger" type="button" id="logoutBtnSheet" aria-label="Log out">🚪 Logout</button>
             </div>
         </div>
 
@@ -683,7 +680,7 @@
             <div class="container">
                 <div class="page-header">
                     <div>
-                        <h1>Settings</h1>
+                        <h1>⚙️ Settings</h1>
                         <p>Manage your account and security preferences.</p>
                     </div>
                 </div>
@@ -737,71 +734,6 @@
                 </div>
 
                 <div id="settingsStatus" class="status-message" aria-live="polite"></div>
-            </div>
-        </div>
-
-
-
-        <!-- Account Page -->
-        <div id="accountPage" class="page">
-            <div class="container">
-                <div class="page-header">
-                    <div>
-                        <h1>Account</h1>
-                        <p>Your public profile for friends.</p>
-                    </div>
-                </div>
-
-                <div class="social-grid">
-                    <div class="social-card">
-                        <h2>Public profile</h2>
-                        <form id="accountProfileForm">
-                            <div class="form-group">
-                                <label for="accountAvatarUrl">Profile picture URL</label>
-                                <input type="url" id="accountAvatarUrl" placeholder="https://...">
-                            </div>
-                            <div class="form-group">
-                                <label for="accountBio">Bio</label>
-                                <textarea id="accountBio" rows="4" maxlength="300" placeholder="Tell your friends about your cooking style..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Save profile</button>
-                        </form>
-                    </div>
-
-                    <div class="social-card">
-                        <h2>Top 3 meals</h2>
-                        <p>Pick your favorite meals to display on your friend profile.</p>
-                        <form id="accountTopMealsForm">
-                            <div class="form-group">
-                                <label for="topMeal1">Top meal #1</label>
-                                <select id="topMeal1"><option value="">Choose a meal</option></select>
-                            </div>
-                            <div class="form-group">
-                                <label for="topMeal2">Top meal #2</label>
-                                <select id="topMeal2"><option value="">Choose a meal</option></select>
-                            </div>
-                            <div class="form-group">
-                                <label for="topMeal3">Top meal #3</label>
-                                <select id="topMeal3"><option value="">Choose a meal</option></select>
-                            </div>
-                            <button type="submit" class="btn btn-secondary">Save top meals</button>
-                        </form>
-                    </div>
-
-                    <div class="social-card">
-                        <h2>Profile preview</h2>
-                        <div class="account-preview">
-                            <img id="accountPreviewAvatar" alt="Profile preview" class="account-preview-avatar" src="/images/app-icon.svg">
-                            <h3 id="accountPreviewUsername">Your username</h3>
-                            <p id="accountPreviewBio" class="empty-state">No bio yet.</p>
-                            <ol id="accountPreviewMeals" class="account-preview-meals">
-                                <li class="empty-state">No top meals selected.</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="accountStatus" class="status-message" aria-live="polite"></div>
             </div>
         </div>
 
@@ -948,7 +880,6 @@
     <script src="/js/history.js"></script>
     <script src="/js/social.js"></script>
     <script src="/js/settings.js"></script>
-    <script src="/js/account.js"></script>
     <script src="/js/friends.js"></script>
     
     <!-- Fallback: Ensure login page is visible if JS fails -->

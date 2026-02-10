@@ -93,18 +93,6 @@ class ApiService {
         });
     }
 
-
-    async getAccountProfile() {
-        return this.request('/api/auth/settings/account-profile');
-    }
-
-    async updateAccountProfile(profileData) {
-        return this.request('/api/auth/settings/account-profile', {
-            method: 'PUT',
-            body: JSON.stringify(profileData),
-        });
-    }
-
     // Recipes
     async getRecipes(filters = {}) {
         const params = new URLSearchParams();
