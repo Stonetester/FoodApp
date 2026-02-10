@@ -173,10 +173,10 @@ def update_my_account_profile():
     top_meals = data.get('top_meals') or []
 
     try:
-        save_account_profile(current_user.id, avatar_url, bio, top_meals)
+        profile = save_account_profile(current_user.id, avatar_url, bio, top_meals)
         return jsonify({
             'message': 'Account profile updated successfully',
-            'profile': get_account_profile(current_user.id),
+            'profile': profile,
         }), 200
     except Exception:
         return jsonify({'error': 'Failed to update account profile'}), 500
