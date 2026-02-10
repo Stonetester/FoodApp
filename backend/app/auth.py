@@ -2,16 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from app.models import (
-    db,
-    User,
-    FriendRequest,
-    Friendship,
-    Recipe,
-    PantryItem,
-    MealPlan,
-    MealHistory
-)
+from app.models import db, User
 from app.email_service import send_email
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
