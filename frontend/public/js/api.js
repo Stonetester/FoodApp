@@ -72,6 +72,23 @@ class ApiService {
         return this.request('/api/auth/me');
     }
 
+
+    async getMyAccountProfile() {
+        return this.request('/api/auth/account-profile');
+    }
+
+    async getAccountProfile() {
+        const data = await this.getMyAccountProfile();
+        return data.account_profile || {};
+    }
+
+    async updateAccountProfile(profileData) {
+        return this.request('/api/auth/account-profile', {
+            method: 'PUT',
+            body: JSON.stringify(profileData),
+        });
+    }
+
     async updateProfile(profileData) {
         return this.request('/api/auth/settings/profile', {
             method: 'PUT',
