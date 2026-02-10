@@ -3,6 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.models import db, User
+from app.email_service import send_email
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 
@@ -79,7 +80,14 @@ def register():
         
         db.session.add(user)
         db.session.commit()
-        
+
+        # Trigger welcome email only after successful database commit.
+        send_email(
+            user.email,
+            'Welcome to Modo Gusto',
+            'Welcome to Modo Gusto.\nCook smarter. Share better. Eat well.'
+        )
+
         return jsonify({
             'message': 'User created successfully',
             'user_id': user.id,

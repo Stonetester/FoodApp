@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
 from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship
 from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image
+from app.email_service import send_email
 from datetime import datetime, date
 from collections import Counter
 import json
@@ -908,6 +909,13 @@ def send_friend_request():
            "FRIEND REQUEST COMMITTED: id=%s sender=%s receiver=%s",
            friend_request.id, current_user.id, receiver_id
         )
+
+        # Trigger friend request received email only after successful commit.
+        send_email(
+            recipient.email,
+            'You have a new friend request',
+            f"{current_user.username} sent you a friend request on Modo Gusto.\nLog in to accept or decline."
+        )
     except IntegrityError:
         db.session.rollback()
         current_app.logger.warning(
@@ -964,7 +972,18 @@ def respond_to_friend_request():
             db.session.add(friendship)
     
     db.session.commit()
-    
+
+    sender_user = User.query.get(friend_request.sender_id)
+    receiver_user = User.query.get(friend_request.receiver_id)
+
+    # Trigger friend request approved email only after pending -> accepted commit.
+    if sender_user and receiver_user:
+        send_email(
+            sender_user.email,
+            'Your friend request was accepted',
+            f"{receiver_user.username} accepted your friend request on Modo Gusto."
+        )
+
     return jsonify({'message': 'Friend request accepted'}), 200
 
 @api_bp.route('/friends/<int:friend_id>', methods=['DELETE'])

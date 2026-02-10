@@ -41,6 +41,9 @@ opencv-python==4.8.1.78
 # Barcode scanning (Open Food Facts API)
 # requests is already listed above
 
+# Transactional Email
+sendgrid==6.11.0
+
 # Production Server (optional, for deployment)
 gunicorn==21.2.0
 
