@@ -72,6 +72,27 @@ class ApiService {
         return this.request('/api/auth/me');
     }
 
+    async updateProfile(profileData) {
+        return this.request('/api/auth/settings/profile', {
+            method: 'PUT',
+            body: JSON.stringify(profileData),
+        });
+    }
+
+    async changePassword(passwordData) {
+        return this.request('/api/auth/settings/password', {
+            method: 'PUT',
+            body: JSON.stringify(passwordData),
+        });
+    }
+
+    async deleteAccount(password) {
+        return this.request('/api/auth/settings/account', {
+            method: 'DELETE',
+            body: JSON.stringify({ password, confirm: 'DELETE' }),
+        });
+    }
+
     // Recipes
     async getRecipes(filters = {}) {
         const params = new URLSearchParams();

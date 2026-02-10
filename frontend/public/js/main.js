@@ -332,7 +332,8 @@ function navigateToPage(pageName) {
         'history': 'historyPage',
         'userSearch': 'userSearchPage',
         'social': 'socialPage',
-        'friends': 'friendsPage'
+        'friends': 'friendsPage',
+        'settings': 'settingsPage'
     };
 
     const pageId = pageMap[pageName];
@@ -357,6 +358,8 @@ function navigateToPage(pageName) {
             loadMealPlan();
         } else if (pageName === 'history') {
             loadHistory();
+        } else if (pageName === 'settings') {
+            if (window.loadSettingsPage) window.loadSettingsPage();
         }
     }
 
@@ -529,7 +532,7 @@ function updateActiveNav(pageName) {
     const moreTabBtn = document.getElementById('moreTabBtn');
     navLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
     bottomLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
-    const morePages = ['history', 'friends', 'userSearch'];
+    const morePages = ['history', 'friends', 'userSearch', 'settings'];
     if (moreTabBtn) {
         moreTabBtn.classList.toggle('is-active', morePages.includes(pageName));
     }

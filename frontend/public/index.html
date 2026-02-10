@@ -51,6 +51,7 @@
                     <a href="#" class="nav-link" data-page="pantry">Pantry</a>
                     <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link" data-page="history">History</a>
+                    <a href="#" class="nav-link" data-page="settings">Settings</a>
                     <a href="#" class="nav-link" id="logoutBtn">Logout</a>
                 </div>
                 <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
@@ -672,6 +673,70 @@
             </div>
         </div>
 
+
+
+        <!-- Settings Page -->
+        <div id="settingsPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <div>
+                        <h1>⚙️ Settings</h1>
+                        <p>Manage your account and security preferences.</p>
+                    </div>
+                </div>
+
+                <div class="social-grid">
+                    <div class="social-card">
+                        <h2>General profile</h2>
+                        <form id="settingsProfileForm">
+                            <div class="form-group">
+                                <label for="settingsUsername">Username</label>
+                                <input type="text" id="settingsUsername" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="settingsEmail">Email</label>
+                                <input type="email" id="settingsEmail" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save profile</button>
+                        </form>
+                    </div>
+
+                    <div class="social-card">
+                        <h2>Change password</h2>
+                        <form id="settingsPasswordForm">
+                            <div class="form-group">
+                                <label for="settingsCurrentPassword">Current password</label>
+                                <input type="password" id="settingsCurrentPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="settingsNewPassword">New password</label>
+                                <input type="password" id="settingsNewPassword" required minlength="8">
+                            </div>
+                            <button type="submit" class="btn btn-secondary">Update password</button>
+                        </form>
+                    </div>
+
+                    <div class="social-card">
+                        <h2>Delete account</h2>
+                        <p>This action is permanent and will remove all your recipes, pantry items, and meal plans.</p>
+                        <form id="deleteAccountForm">
+                            <div class="form-group">
+                                <label for="deleteAccountPassword">Confirm with password</label>
+                                <input type="password" id="deleteAccountPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="deleteAccountConfirm">Type DELETE to confirm</label>
+                                <input type="text" id="deleteAccountConfirm" placeholder="DELETE" required>
+                            </div>
+                            <button type="submit" class="btn btn-destructive">Delete my account</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="settingsStatus" class="status-message" aria-live="polite"></div>
+            </div>
+        </div>
+
         <!-- User Recipes Modal -->
         <div id="userRecipesModal" class="modal">
             <div class="modal-content modal-large">
@@ -814,6 +879,7 @@
     <script src="/js/mealplan.js"></script>
     <script src="/js/history.js"></script>
     <script src="/js/social.js"></script>
+    <script src="/js/settings.js"></script>
     <script src="/js/friends.js"></script>
     
     <!-- Fallback: Ensure login page is visible if JS fails -->
