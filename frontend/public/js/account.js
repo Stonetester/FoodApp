@@ -28,11 +28,15 @@ function setAccountStatus(message, isError = false) {
     status.classList.toggle('status-error', isError);
 }
 
-function renderAccountPreview(user, profile) {
+function renderAccountPreview(user, profile, stats = {}) {
     const avatar = document.getElementById('accountPreviewAvatar');
     const usernameEl = document.getElementById('accountPreviewUsername');
     const bioEl = document.getElementById('accountPreviewBio');
+    const emailEl = document.getElementById('accountPreviewEmail');
+    const joinedEl = document.getElementById('accountPreviewJoined');
     const mealsEl = document.getElementById('accountPreviewMeals');
+    const friendCountEl = document.getElementById('accountFriendCount');
+    const recipeCountEl = document.getElementById('accountRecipeCount');
 
     if (!avatar || !usernameEl || !bioEl || !mealsEl) return;
 
@@ -44,6 +48,19 @@ function renderAccountPreview(user, profile) {
 
     bioEl.textContent = profile.bio || 'No bio yet.';
     bioEl.classList.toggle('empty-state', !profile.bio);
+
+    if (emailEl) {
+        emailEl.textContent = user?.email ? `Email: ${user.email}` : 'Email hidden';
+    }
+    if (joinedEl) {
+        joinedEl.textContent = user?.created_at ? `Joined: ${new Date(user.created_at).toLocaleDateString()}` : 'Joined: -';
+    }
+    if (friendCountEl) {
+        friendCountEl.textContent = Number(stats.friend_count || 0);
+    }
+    if (recipeCountEl) {
+        recipeCountEl.textContent = Number(stats.recipe_count || 0);
+    }
 
     const mealIds = profile.top_meals || [];
     mealsEl.innerHTML = '';
@@ -87,11 +104,13 @@ function readTopMealSelection() {
 
 async function loadAccountPage() {
     try {
-        const [user, profile, recipes] = await Promise.all([
-            api.getCurrentUser(),
-            api.getAccountProfile(),
+        const [accountData, recipes] = await Promise.all([
+            api.getMyAccountProfile(),
             api.getRecipes()
         ]);
+
+        const user = accountData.user || {};
+        const profile = accountData.account_profile || {};
 
         accountRecipesCache = recipes || [];
 
@@ -99,7 +118,7 @@ async function loadAccountPage() {
         document.getElementById('accountBio').value = profile.bio || '';
 
         populateTopMealOptions(accountRecipesCache, profile.top_meals || []);
-        renderAccountPreview(user, profile);
+        renderAccountPreview(user, profile, accountData.stats || {});
         setAccountStatus('');
     } catch (error) {
         setAccountStatus(error.message || 'Failed to load account profile.', true);
@@ -118,8 +137,8 @@ async function saveAccountProfile() {
             top_meals: topMeals,
         });
 
-        const user = await api.getCurrentUser();
-        renderAccountPreview(user, result.profile || { avatar_url: avatarUrl, bio, top_meals: topMeals });
+        const accountData = await api.getMyAccountProfile();
+        renderAccountPreview(accountData.user, result.profile || { avatar_url: avatarUrl, bio, top_meals: topMeals }, accountData.stats || {});
         setAccountStatus('Account profile saved. Friends can now see your updates.');
     } catch (error) {
         setAccountStatus(error.message || 'Failed to save account profile.', true);
