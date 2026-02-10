@@ -333,8 +333,7 @@ function navigateToPage(pageName) {
         'userSearch': 'userSearchPage',
         'social': 'socialPage',
         'friends': 'friendsPage',
-        'settings': 'settingsPage',
-        'account': 'accountPage'
+        'settings': 'settingsPage'
     };
 
     const pageId = pageMap[pageName];
@@ -361,8 +360,6 @@ function navigateToPage(pageName) {
             loadHistory();
         } else if (pageName === 'settings') {
             if (window.loadSettingsPage) window.loadSettingsPage();
-        } else if (pageName === 'account') {
-            if (window.loadAccountPage) window.loadAccountPage();
         }
     }
 
@@ -535,7 +532,7 @@ function updateActiveNav(pageName) {
     const moreTabBtn = document.getElementById('moreTabBtn');
     navLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
     bottomLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
-    const morePages = ['history', 'friends', 'userSearch', 'settings', 'account'];
+    const morePages = ['history', 'friends', 'userSearch', 'settings'];
     if (moreTabBtn) {
         moreTabBtn.classList.toggle('is-active', morePages.includes(pageName));
     }

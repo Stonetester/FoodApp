@@ -245,44 +245,12 @@ def delete_account():
             (Friendship.user_id == user_id) | (Friendship.friend_id == user_id)
         ).delete(synchronize_session=False)
 
-        ensure_account_profiles_table()
-        db.session.execute(text('DELETE FROM account_profiles WHERE user_id = :user_id'), {'user_id': user_id})
-
         db.session.delete(user)
         db.session.commit()
         return jsonify({'message': 'Account deleted successfully'}), 200
     except Exception:
         db.session.rollback()
         return jsonify({'error': 'Failed to delete account'}), 500
-
-
-
-@auth_bp.route('/settings/account-profile', methods=['GET'])
-@login_required
-def get_account_profile_settings():
-    """Get current user's account profile fields"""
-    ensure_account_profiles_table()
-    return jsonify(get_account_profile(current_user.id)), 200
-
-
-@auth_bp.route('/settings/account-profile', methods=['PUT'])
-@login_required
-def update_account_profile_settings():
-    """Update current user's account profile fields"""
-    data = request.get_json() or {}
-    avatar_url = data.get('avatar_url', '')
-    bio = data.get('bio', '')
-    top_meals = data.get('top_meals', [])
-
-    try:
-        normalized = save_account_profile(current_user.id, avatar_url, bio, top_meals)
-        db.session.commit()
-        profile = get_account_profile(current_user.id)
-        profile['top_meals'] = normalized
-        return jsonify({'message': 'Account profile updated successfully', 'profile': profile}), 200
-    except Exception:
-        db.session.rollback()
-        return jsonify({'error': 'Failed to update account profile'}), 500
 
 @auth_bp.route('/check', methods=['GET'])
 def check_auth():
