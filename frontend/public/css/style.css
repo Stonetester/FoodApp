@@ -835,7 +835,7 @@ body.has-maintenance-banner .page-header {
     right: 12px;
     height: 5px;
     border-radius: 999px;
-    background: var(--stripe-80s);
+    background: var(--border);
 }
 
 .recipe-card:hover {
@@ -1122,7 +1122,7 @@ body.has-maintenance-banner .page-header {
     right: 12px;
     height: 5px;
     border-radius: 999px;
-    background: var(--stripe-80s);
+    background: var(--border);
 }
 
 .pantry-card:hover {
@@ -1200,7 +1200,7 @@ body.has-maintenance-banner .page-header {
     bottom: 4px;
     height: 4px;
     border-radius: 999px;
-    background: var(--stripe-80s);
+    background: var(--border);
     opacity: 0.9;
 }
 
@@ -1636,7 +1636,7 @@ body.has-maintenance-banner .page-header {
     right: 12px;
     height: 5px;
     border-radius: 999px;
-    background: var(--stripe-80s);
+    background: var(--border);
 }
 
 .friends-panel-header {
