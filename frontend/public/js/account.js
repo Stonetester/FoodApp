@@ -64,7 +64,7 @@ function renderAccountPreview(user, profile, stats = {}) {
         recipeCountEl.textContent = Number(stats.recipe_count || 0);
     }
 
-    const mealIds = Array.isArray(profile.top_meals) ? profile.top_meals : [];
+    const mealIds = profile.top_meals || [];
     mealsEl.innerHTML = '';
 
     if (!mealIds.length) {
@@ -169,10 +169,15 @@ function handleProfileImageSelected(file) {
 
 async function loadAccountPage() {
     try {
-        const accountData = await api.getMyAccountProfile();
+        const [accountData, recipes] = await Promise.all([
+            api.getMyAccountProfile(),
+            api.getRecipes()
+        ]);
 
         const user = accountData.user || {};
         const profile = accountData.account_profile || {};
+
+        accountRecipesCache = recipes || [];
 
         document.getElementById('accountAvatarUrl').value = profile.avatar_url || '';
         document.getElementById('accountBio').value = profile.bio || '';
@@ -188,9 +193,7 @@ async function loadAccountPage() {
 
         populateTopMealOptions(accountRecipesCache, profile.top_meals || []);
         renderAccountPreview(user, profile, accountData.stats || {});
-        if (accountRecipesCache.length > 0) {
-            setAccountStatus('');
-        }
+        setAccountStatus('');
     } catch (error) {
         setAccountStatus(error.message || 'Failed to load account profile.', true);
     }
@@ -209,10 +212,7 @@ async function saveAccountProfile() {
         });
 
         const accountData = await api.getMyAccountProfile();
-        const profile = result.profile || accountData.account_profile || { avatar_url: avatarUrl, bio, top_meals: topMeals };
-        renderAccountPreview(accountData.user, profile, accountData.stats || {});
-
-        populateTopMealOptions(accountRecipesCache, profile.top_meals || topMeals);
+        renderAccountPreview(accountData.user, result.profile || { avatar_url: avatarUrl, bio, top_meals: topMeals }, accountData.stats || {});
         setAccountStatus('Account profile saved. Friends can now see your updates.');
     } catch (error) {
         setAccountStatus(error.message || 'Failed to save account profile.', true);

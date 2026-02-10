@@ -146,12 +146,7 @@ def get_current_user():
 def get_my_account_profile():
     """Get extended account profile details for current user"""
     recipe_count = len(current_user.recipes)
-
-    # Use raw SQL count so this works with legacy friendships schemas that may not have an `id` column.
-    friend_count = db.session.execute(
-        text("SELECT COUNT(*) FROM friendships WHERE user_id = :user_id"),
-        {'user_id': current_user.id}
-    ).scalar() or 0
+    friend_count = Friendship.query.filter_by(user_id=current_user.id).count()
 
     return jsonify({
         'user': {
@@ -178,10 +173,10 @@ def update_my_account_profile():
     top_meals = data.get('top_meals') or []
 
     try:
-        save_account_profile(current_user.id, avatar_url, bio, top_meals)
+        profile = save_account_profile(current_user.id, avatar_url, bio, top_meals)
         return jsonify({
             'message': 'Account profile updated successfully',
-            'profile': get_account_profile(current_user.id),
+            'profile': profile,
         }), 200
     except Exception:
         return jsonify({'error': 'Failed to update account profile'}), 500
