@@ -332,7 +332,9 @@ function navigateToPage(pageName) {
         'history': 'historyPage',
         'userSearch': 'userSearchPage',
         'social': 'socialPage',
-        'friends': 'friendsPage'
+        'friends': 'friendsPage',
+        'settings': 'settingsPage',
+        'account': 'accountPage'
     };
 
     const pageId = pageMap[pageName];
@@ -357,13 +359,26 @@ function navigateToPage(pageName) {
             loadMealPlan();
         } else if (pageName === 'history') {
             loadHistory();
+        } else if (pageName === 'settings') {
+            if (window.loadSettingsPage) window.loadSettingsPage();
+        } else if (pageName === 'account') {
+            if (window.loadAccountPage) window.loadAccountPage();
         }
     }
 
     // Close mobile menu
     document.getElementById('navMenu').classList.remove('active');
-    toggleMoreSheet(false);
+    closeAllSheetsAndModals();
     updateActiveNav(pageName);
+
+    if (pageName === 'mealplan' && window.innerWidth < 768) {
+        setTimeout(() => {
+            const activeView = document.querySelector('.view-switcher .view-btn.active')?.dataset.view;
+            if (activeView === 'dayGridMonth') {
+                document.querySelector('.view-switcher .view-btn[data-view="mealWeek"]')?.click();
+            }
+        }, 120);
+    }
 }
 
 async function loadDashboard() {
@@ -494,6 +509,13 @@ function setupResponsiveClass() {
     window.addEventListener('resize', apply);
 }
 
+function closeAllSheetsAndModals() {
+    toggleMoreSheet(false);
+    document.querySelectorAll('.modal.active').forEach((modal) => {
+        modal.classList.remove('active');
+    });
+}
+
 function toggleMoreSheet(shouldOpen) {
     const sheet = document.getElementById('moreSheet');
     const backdrop = document.getElementById('moreSheetBackdrop');
@@ -513,10 +535,14 @@ function updateActiveNav(pageName) {
     const moreTabBtn = document.getElementById('moreTabBtn');
     navLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
     bottomLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
-    const morePages = ['history', 'friends', 'userSearch'];
+    const morePages = ['history', 'friends', 'userSearch', 'settings', 'account'];
     if (moreTabBtn) {
         moreTabBtn.classList.toggle('is-active', morePages.includes(pageName));
     }
+
+    document.querySelectorAll('.sheet-link[data-page]').forEach((sheetLink) => {
+        sheetLink.classList.toggle('is-active', sheetLink.dataset.page === pageName);
+    });
 }
 
 function applyMaintenanceBanners() {
