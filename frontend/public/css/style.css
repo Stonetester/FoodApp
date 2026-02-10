@@ -16,7 +16,6 @@
     --accent-red: #DD4111;
     --accent-wine: #8C0027;
     --focus-ring: #2BAF90;
-    --stripe-80s: linear-gradient(90deg, rgba(43, 175, 144, 0.75) 0%, rgba(161, 218, 177, 0.75) 25%, rgba(241, 165, 18, 0.75) 50%, rgba(221, 65, 17, 0.7) 75%, rgba(140, 0, 39, 0.72) 100%);
     --border: #c9a481;
     --success: #6f7d52;
     --danger: #b35a3a;
@@ -2348,7 +2347,6 @@ body.has-maintenance-banner .page-header {
     bottom: 0;
     height: 5px;
     border-radius: 999px;
-    background: var(--stripe-80s);
     opacity: 0.7;
 }
 
