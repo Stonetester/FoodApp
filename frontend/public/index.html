@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modo Gusto</title>
     <meta name="description" content="Manage recipes, pantry, and meal planning with a retro vibe">
-    <meta name="theme-color" content="#8B5A2B">
+    <meta name="theme-color" content="#c0672d">
     <!-- Favicon and app icons for mobile home screen -->
     <link rel="icon" type="image/svg+xml" href="/images/app-icon.svg">
     <link rel="apple-touch-icon" href="/images/app-icon.svg">
@@ -57,7 +57,7 @@
             </div>
         </nav>
 
-        <nav class="bottom-nav" id="bottomNav" aria-label="Primary">
+        <nav class="bottom-nav" id="bottomNav" aria-label="Primary mobile navigation">
             <button class="bottom-nav__link" type="button" data-page="dashboard" aria-label="Dashboard">
                 <span class="bottom-nav__icon" aria-hidden="true">🏠</span>
                 <span class="bottom-nav__label">Dashboard</span>
@@ -84,7 +84,7 @@
             </button>
         </nav>
 
-        <div class="sheet-backdrop" id="moreSheetBackdrop" aria-hidden="true"></div>
+        <div class="sheet-backdrop" id="moreSheetBackdrop" aria-hidden="true" role="button" tabindex="-1" aria-label="Close more menu"></div>
         <div class="bottom-sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreSheetTitle" aria-hidden="true">
             <div class="bottom-sheet__handle" aria-hidden="true"></div>
             <div class="bottom-sheet__header">
@@ -92,10 +92,10 @@
                 <button class="btn btn-ghost" type="button" id="moreSheetClose" aria-label="Close menu">✕</button>
             </div>
             <div class="bottom-sheet__content">
-                <button class="sheet-link" type="button" data-page="history">🕒 History</button>
-                <button class="sheet-link" type="button" data-page="friends">👥 Friends</button>
-                <button class="sheet-link" type="button" data-page="userSearch">🔍 Discover</button>
-                <button class="sheet-link sheet-link--danger" type="button" id="logoutBtnSheet">🚪 Logout</button>
+                <button class="sheet-link" type="button" data-page="history" aria-label="Open history page">🕒 History</button>
+                <button class="sheet-link" type="button" data-page="friends" aria-label="Open friends page">👥 Friends</button>
+                <button class="sheet-link" type="button" data-page="userSearch" aria-label="Open discover recipes page">🔍 Discover</button>
+                <button class="sheet-link sheet-link--danger" type="button" id="logoutBtnSheet" aria-label="Log out">🚪 Logout</button>
             </div>
         </div>
 
