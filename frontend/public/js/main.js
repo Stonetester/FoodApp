@@ -332,7 +332,8 @@ function navigateToPage(pageName) {
         'history': 'historyPage',
         'userSearch': 'userSearchPage',
         'social': 'socialPage',
-        'friends': 'friendsPage'
+        'friends': 'friendsPage',
+        'settings': 'settingsPage'
     };
 
     const pageId = pageMap[pageName];
@@ -513,7 +514,7 @@ function updateActiveNav(pageName) {
     const moreTabBtn = document.getElementById('moreTabBtn');
     navLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
     bottomLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
-    const morePages = ['history', 'friends', 'userSearch'];
+    const morePages = ['history', 'friends', 'userSearch', 'settings'];
     if (moreTabBtn) {
         moreTabBtn.classList.toggle('is-active', morePages.includes(pageName));
     }
@@ -533,6 +534,12 @@ function applyMaintenanceBanners() {
 }
 
 
+function setCurrentUser(user) {
+    currentUser = user;
+    updateRecipesTitle();
+}
+
 // Export for use in other modules
 window.navigateToPage = navigateToPage;
 window.currentUser = () => currentUser;
+window.setCurrentUser = setCurrentUser;
