@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from app.models import db, User
+from app.models import db, User, Friendship, FriendRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 import re
 
@@ -137,6 +137,118 @@ def get_current_user():
         'email': current_user.email,
         'created_at': current_user.created_at.isoformat() if current_user.created_at else None
     }), 200
+
+
+
+@auth_bp.route('/settings/profile', methods=['PUT'])
+@login_required
+def update_profile():
+    """Update current user's basic profile fields"""
+    data = request.get_json() or {}
+
+    username = data.get('username', '').strip()
+    email = data.get('email', '').strip()
+
+    if not username or not email:
+        return jsonify({'error': 'Username and email are required'}), 400
+
+    valid, message = validate_username(username)
+    if not valid:
+        return jsonify({'error': message}), 400
+
+    if not validate_email(email):
+        return jsonify({'error': 'Invalid email format'}), 400
+
+    username_taken = User.query.filter(User.username == username, User.id != current_user.id).first()
+    if username_taken:
+        return jsonify({'error': 'Username already exists'}), 400
+
+    email_taken = User.query.filter(User.email == email, User.id != current_user.id).first()
+    if email_taken:
+        return jsonify({'error': 'Email already exists'}), 400
+
+    try:
+        current_user.username = username
+        current_user.email = email
+        db.session.commit()
+        return jsonify({
+            'message': 'Profile updated successfully',
+            'user': {
+                'id': current_user.id,
+                'username': current_user.username,
+                'email': current_user.email,
+            }
+        }), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update profile'}), 500
+
+
+@auth_bp.route('/settings/password', methods=['PUT'])
+@login_required
+def change_password():
+    """Change current user's password"""
+    data = request.get_json() or {}
+
+    current_password = data.get('current_password', '')
+    new_password = data.get('new_password', '')
+
+    if not current_password or not new_password:
+        return jsonify({'error': 'Current and new passwords are required'}), 400
+
+    if not check_password_hash(current_user.password_hash, current_password):
+        return jsonify({'error': 'Current password is incorrect'}), 400
+
+    valid, message = validate_password(new_password)
+    if not valid:
+        return jsonify({'error': message}), 400
+
+    if check_password_hash(current_user.password_hash, new_password):
+        return jsonify({'error': 'New password must be different from current password'}), 400
+
+    try:
+        current_user.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+        return jsonify({'message': 'Password updated successfully'}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update password'}), 500
+
+
+@auth_bp.route('/settings/account', methods=['DELETE'])
+@login_required
+def delete_account():
+    """Delete current user account permanently"""
+    data = request.get_json() or {}
+    password = data.get('password', '')
+    confirm = data.get('confirm', '')
+
+    if confirm != 'DELETE':
+        return jsonify({'error': 'Confirmation token missing'}), 400
+
+    if not check_password_hash(current_user.password_hash, password):
+        return jsonify({'error': 'Password is incorrect'}), 400
+
+    try:
+        user_id = current_user.id
+        logout_user()
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        FriendRequest.query.filter(
+            (FriendRequest.sender_id == user_id) | (FriendRequest.receiver_id == user_id)
+        ).delete(synchronize_session=False)
+        Friendship.query.filter(
+            (Friendship.user_id == user_id) | (Friendship.friend_id == user_id)
+        ).delete(synchronize_session=False)
+
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'message': 'Account deleted successfully'}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to delete account'}), 500
 
 @auth_bp.route('/check', methods=['GET'])
 def check_auth():
