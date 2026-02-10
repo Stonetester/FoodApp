@@ -53,9 +53,51 @@
                     <a href="#" class="nav-link" data-page="history">History</a>
                     <a href="#" class="nav-link" id="logoutBtn">Logout</a>
                 </div>
-                <button class="nav-toggle" id="navToggle">☰</button>
+                <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
             </div>
         </nav>
+
+        <nav class="bottom-nav" id="bottomNav" aria-label="Primary">
+            <button class="bottom-nav__link" type="button" data-page="dashboard" aria-label="Dashboard">
+                <span class="bottom-nav__icon" aria-hidden="true">🏠</span>
+                <span class="bottom-nav__label">Dashboard</span>
+            </button>
+            <button class="bottom-nav__link" type="button" data-page="recipes" aria-label="Recipes">
+                <span class="bottom-nav__icon" aria-hidden="true">📒</span>
+                <span class="bottom-nav__label">Recipes</span>
+            </button>
+            <button class="bottom-nav__link" type="button" data-page="mealplan" aria-label="Meal Plan">
+                <span class="bottom-nav__icon" aria-hidden="true">🗓️</span>
+                <span class="bottom-nav__label">Meal Plan</span>
+            </button>
+            <button class="bottom-nav__link" type="button" data-page="pantry" aria-label="Pantry">
+                <span class="bottom-nav__icon" aria-hidden="true">🧺</span>
+                <span class="bottom-nav__label">Pantry</span>
+            </button>
+            <button class="bottom-nav__link" type="button" data-page="social" aria-label="Social">
+                <span class="bottom-nav__icon" aria-hidden="true">🤝</span>
+                <span class="bottom-nav__label">Social</span>
+            </button>
+            <button class="bottom-nav__link bottom-nav__more" type="button" id="moreTabBtn" aria-label="More" aria-controls="moreSheet" aria-expanded="false">
+                <span class="bottom-nav__icon" aria-hidden="true">⋯</span>
+                <span class="bottom-nav__label">More</span>
+            </button>
+        </nav>
+
+        <div class="sheet-backdrop" id="moreSheetBackdrop" aria-hidden="true"></div>
+        <div class="bottom-sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreSheetTitle" aria-hidden="true">
+            <div class="bottom-sheet__handle" aria-hidden="true"></div>
+            <div class="bottom-sheet__header">
+                <h2 id="moreSheetTitle">More</h2>
+                <button class="btn btn-ghost" type="button" id="moreSheetClose" aria-label="Close menu">✕</button>
+            </div>
+            <div class="bottom-sheet__content">
+                <button class="sheet-link" type="button" data-page="history">🕒 History</button>
+                <button class="sheet-link" type="button" data-page="friends">👥 Friends</button>
+                <button class="sheet-link" type="button" data-page="userSearch">🔍 Discover</button>
+                <button class="sheet-link sheet-link--danger" type="button" id="logoutBtnSheet">🚪 Logout</button>
+            </div>
+        </div>
 
         <!-- Login/Register Page -->
         <div id="loginPage" class="page active">
@@ -104,7 +146,12 @@
         <!-- Dashboard Page -->
         <div id="dashboardPage" class="page">
             <div class="container">
-                <h1>Dashboard</h1>
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary page-link" type="button" data-page="recipes">+ Add Recipe</button>
+                    </div>
+                </div>
                 <div class="dashboard-stats">
                     <div class="stat-card" data-page="recipes">
                         <h3 id="recipeCount">0</h3>
@@ -466,8 +513,13 @@
         <div id="userSearchPage" class="page">
             <div class="container">
                 <div class="page-header">
-                    <h1>🔍 Discover Recipes</h1>
-                    <p>Search all recipes and find other users to follow.</p>
+                    <div>
+                        <h1>🔍 Discover Recipes</h1>
+                        <p>Search all recipes and find other users to follow.</p>
+                    </div>
+                    <div class="header-actions">
+                        <a class="btn btn-primary" href="#discoverSearchInput">Search Meals</a>
+                    </div>
                 </div>
 
                 <div class="discover-section">
@@ -583,6 +635,9 @@
                     <div>
                         <h1>👥 Friends</h1>
                         <p>Browse your friends, their recipes, and upcoming meal plans.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary page-link" type="button" data-page="social">Find Friends</button>
                     </div>
                 </div>
                 <div class="friends-layout">
