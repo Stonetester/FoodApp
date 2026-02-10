@@ -6,18 +6,17 @@
     --text: #3b2416;
     --muted: #8a6b52;
     --text-secondary: #8a6b52;
-    --primary: #D85B2A;
-    --secondary: #E8B567;
-    --accent: #C84B1F;
-    --primary-dark: #9B3C19;
+    --primary: #c0672d;
+    --secondary: #d2a34b;
+    --accent: #b6532c;
+    --primary-dark: #8f4319;
     --accent-teal: #2BAF90;
     --accent-mint: #A1DAB1;
     --accent-gold: #F1A512;
     --accent-red: #DD4111;
     --accent-wine: #8C0027;
     --focus-ring: #2BAF90;
-    --stripe-80s: var(--border);
-    --border: #B88D66;
+    --border: #c9a481;
     --success: #6f7d52;
     --danger: #b35a3a;
     --highlight: #E8B567;
@@ -2348,7 +2347,6 @@ body.has-maintenance-banner .page-header {
     bottom: 0;
     height: 5px;
     border-radius: 999px;
-    background: var(--border);
     opacity: 0.7;
 }
 
@@ -2370,7 +2368,7 @@ body.has-maintenance-banner .page-header {
 }
 
 .btn-primary:hover {
-    background: #C84B1F;
+    background: #af5924;
 }
 
 .btn-primary:active {
@@ -2565,160 +2563,4 @@ button {
 @keyframes sheetUp {
     from { transform: translateY(24px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
-}
-
-
-/* Palette hints (solid colors only) */
-.page-header::after {
-    background: var(--border);
-}
-
-.page-header {
-    border-bottom: 2px solid var(--accent-mint);
-}
-
-.bottom-nav__link:nth-child(1):not(.is-active) .bottom-nav__icon {
-    color: var(--accent-teal);
-}
-
-.bottom-nav__link:nth-child(2):not(.is-active) .bottom-nav__icon {
-    color: #3b2416;
-}
-
-.bottom-nav__link:nth-child(3):not(.is-active) .bottom-nav__icon {
-    color: var(--accent-gold);
-}
-
-.bottom-nav__link:nth-child(4):not(.is-active) .bottom-nav__icon {
-    color: var(--accent-red);
-}
-
-.bottom-nav__link:nth-child(5):not(.is-active) .bottom-nav__icon,
-.bottom-nav__link:nth-child(6):not(.is-active) .bottom-nav__icon {
-    color: var(--accent-wine);
-}
-
-.sheet-link {
-    border-left: 5px solid var(--accent-teal);
-}
-
-.sheet-link:nth-child(2) { border-left-color: var(--accent-mint); }
-.sheet-link:nth-child(3) { border-left-color: var(--accent-gold); }
-.sheet-link--danger { border-left-color: var(--accent-red); }
-
-.view-btn[data-view="dayGridMonth"].active {
-    background: var(--accent-mint);
-    color: var(--text);
-}
-
-.view-btn[data-view="mealWeek"].active {
-    background: var(--accent-teal);
-    color: #fff;
-}
-
-.view-btn[data-view="mealDay"].active {
-    background: var(--accent-wine);
-    color: #fff;
-}
-
-.tab-btn.active {
-    color: var(--accent-red);
-}
-
-
-.btn-secondary {
-    background: var(--accent-mint);
-    color: var(--text);
-    border-color: var(--accent-teal);
-}
-
-.btn-secondary:hover {
-    background: var(--accent-gold);
-}
-
-.btn-destructive {
-    background: var(--accent-red);
-}
-
-
-/* Remove scrolling horizontal line artifacts */
-.page-header::after,
-.section-header::after {
-    content: none;
-}
-
-.bottom-nav {
-    border-top: none;
-}
-
-.bottom-nav__link.is-active,
-.bottom-nav__more.is-active {
-    box-shadow: none;
-}
-
-
-/* Account + menu icon refinements */
-.bottom-nav__icon {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    border: 1px solid rgba(184, 141, 102, 0.55);
-    border-radius: 999px;
-    padding: 0.18rem 0.45rem;
-    min-width: 36px;
-    text-align: center;
-}
-
-.friends-list-main {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-}
-
-.friends-avatar,
-.account-preview-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--border);
-    background: var(--surface);
-}
-
-.account-preview-avatar {
-    width: 68px;
-    height: 68px;
-    margin-bottom: 0.75rem;
-}
-
-.account-preview {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    align-items: flex-start;
-}
-
-.account-preview-meals {
-    margin-left: 1rem;
-    display: grid;
-    gap: 0.25rem;
-}
-
-
-/* Make Account entry obvious in nav */
-.bottom-nav {
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.bottom-nav::-webkit-scrollbar {
-    display: none;
-}
-
-.bottom-nav__link {
-    min-width: 70px;
-}
-
-.bottom-nav__label {
-    font-size: 0.68rem;
 }
