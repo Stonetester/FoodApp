@@ -4,7 +4,9 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.models import db, User, Friendship, FriendRequest
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import text
 import re
+from app.account_profile import get_account_profile, save_account_profile, ensure_account_profiles_table
 
 auth_bp = Blueprint('auth', __name__)
 
