@@ -41,7 +41,6 @@
                     <a href="#" class="nav-link nav-link-inline" data-page="recipes" id="recipesNavBtn">Your Recipes</a>
                     <a href="#" class="nav-link nav-link-inline" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link nav-link-inline" data-page="pantry">Pantry</a>
-                    <a href="#" class="nav-link nav-link-inline" data-page="account">Account</a>
                 </div>
                 <div class="nav-menu" id="navMenu">
                     <a href="#" class="nav-link" data-page="dashboard">Dashboard</a>
@@ -52,6 +51,7 @@
                     <a href="#" class="nav-link" data-page="pantry">Pantry</a>
                     <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link" data-page="history">History</a>
+                    <a href="#" class="nav-link" data-page="account">Account</a>
                     <a href="#" class="nav-link" data-page="settings">Settings</a>
                     <a href="#" class="nav-link" id="logoutBtn">Logout</a>
                 </div>
@@ -679,6 +679,94 @@
         </div>
 
 
+        <!-- Account Page -->
+        <div id="accountPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <div>
+                        <h1>Account</h1>
+                        <p>Manage your public profile, stats, and favorite recipes.</p>
+                    </div>
+                </div>
+
+                <div class="social-grid">
+                    <div class="social-card">
+                        <h2>Profile details</h2>
+                        <div class="friends-list-item" style="padding: 0; border: 0;">
+                            <div class="friends-list-main">
+                                <img id="accountPreviewAvatar" src="/images/app-icon.svg" alt="Your profile photo" class="friends-avatar">
+                                <div>
+                                    <strong id="accountPreviewUsername">Your username</strong>
+                                    <div id="accountPreviewBio" class="friends-meta">No bio yet.</div>
+                                    <div id="accountPreviewEmail" class="friends-meta">Email hidden</div>
+                                    <div id="accountPreviewJoined" class="friends-meta">Joined -</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <p><strong>Friends:</strong> <span id="accountFriendCount">0</span></p>
+                            <p><strong>Recipes:</strong> <span id="accountRecipeCount">0</span></p>
+                        </div>
+                    </div>
+
+                    <div class="social-card">
+                        <h2>Edit profile</h2>
+                        <form id="accountProfileForm">
+                            <div class="form-group">
+                                <label for="accountAvatarUrl">Avatar URL</label>
+                                <input type="url" id="accountAvatarUrl" placeholder="https://...">
+                                <small>Or use your photo library/camera below.</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Profile photo</label>
+                                <div class="image-source-buttons">
+                                    <button type="button" class="btn btn-secondary" id="accountTakePhotoBtn">📷 Take Photo</button>
+                                    <button type="button" class="btn btn-secondary" id="accountChoosePhotoBtn">🖼️ Choose from Library</button>
+                                </div>
+                                <input type="file" id="accountPhotoCamera" accept="image/*" capture="environment" hidden>
+                                <input type="file" id="accountPhotoLibrary" accept="image/*" hidden>
+                                <small>Selected image will be used for your profile picture.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="accountBio">Bio</label>
+                                <textarea id="accountBio" rows="3" placeholder="Tell people about your cooking style"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save profile</button>
+                        </form>
+                    </div>
+
+                    <div class="social-card">
+                        <h2>Top 3 favorite recipes</h2>
+                        <p>Pick your favorites from your own recipe list.</p>
+                        <form id="accountTopMealsForm">
+                            <div class="form-group">
+                                <label for="topMeal1">Favorite recipe 1</label>
+                                <select id="topMeal1"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="topMeal2">Favorite recipe 2</label>
+                                <select id="topMeal2"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="topMeal3">Favorite recipe 3</label>
+                                <select id="topMeal3"></select>
+                            </div>
+                            <button type="submit" class="btn btn-secondary">Save favorites</button>
+                        </form>
+                        <div style="margin-top: 1rem;">
+                            <strong>Current favorites:</strong>
+                            <ul id="accountPreviewMeals" style="margin-top: 0.5rem; padding-left: 1.25rem;">
+                                <li class="empty-state">No top meals selected.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="accountStatus" class="status-message" aria-live="polite"></div>
+            </div>
+        </div>
+
+
 
         <!-- Settings Page -->
         <div id="settingsPage" class="page">
@@ -885,6 +973,7 @@
     <script src="/js/history.js"></script>
     <script src="/js/social.js"></script>
     <script src="/js/settings.js"></script>
+    <script src="/js/account.js"></script>
     <script src="/js/friends.js"></script>
     
     <!-- Fallback: Ensure login page is visible if JS fails -->
