@@ -333,6 +333,7 @@ function navigateToPage(pageName) {
         'userSearch': 'userSearchPage',
         'social': 'socialPage',
         'friends': 'friendsPage',
+        'account': 'accountPage',
         'settings': 'settingsPage'
     };
 
@@ -352,6 +353,8 @@ function navigateToPage(pageName) {
             if (window.startSocialPolling) window.startSocialPolling();
         } else if (pageName === 'friends') {
             if (window.loadFriendsPage) window.loadFriendsPage();
+        } else if (pageName === 'account') {
+            if (window.loadAccountPage) window.loadAccountPage();
         } else if (pageName === 'pantry') {
             loadPantry();
         } else if (pageName === 'mealplan') {

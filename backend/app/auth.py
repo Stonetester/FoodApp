@@ -141,6 +141,52 @@ def get_current_user():
     }), 200
 
 
+@auth_bp.route('/account-profile', methods=['GET'])
+@login_required
+def get_my_account_profile():
+    """Get extended account profile details for current user"""
+    recipe_count = len(current_user.recipes)
+
+    # Use raw SQL count so this works with legacy friendships schemas that may not have an `id` column.
+    friend_count = db.session.execute(
+        text("SELECT COUNT(*) FROM friendships WHERE user_id = :user_id"),
+        {'user_id': current_user.id}
+    ).scalar() or 0
+
+    return jsonify({
+        'user': {
+            'id': current_user.id,
+            'username': current_user.username,
+            'email': current_user.email,
+            'created_at': current_user.created_at.isoformat() if current_user.created_at else None,
+        },
+        'stats': {
+            'recipe_count': recipe_count,
+            'friend_count': friend_count,
+        },
+        'account_profile': get_account_profile(current_user.id),
+    }), 200
+
+
+@auth_bp.route('/account-profile', methods=['PUT'])
+@login_required
+def update_my_account_profile():
+    """Update account profile fields (avatar, bio, top meals)."""
+    data = request.get_json() or {}
+    avatar_url = (data.get('avatar_url') or '').strip()
+    bio = (data.get('bio') or '').strip()
+    top_meals = data.get('top_meals') or []
+
+    try:
+        save_account_profile(current_user.id, avatar_url, bio, top_meals)
+        return jsonify({
+            'message': 'Account profile updated successfully',
+            'profile': get_account_profile(current_user.id),
+        }), 200
+    except Exception:
+        return jsonify({'error': 'Failed to update account profile'}), 500
+
+
 
 @auth_bp.route('/settings/profile', methods=['PUT'])
 @login_required
