@@ -1,8 +1,8 @@
 /* Cosy Cottage Theme - Warm, Rustic, Homey */
 
 :root {
-    --bg: #f7f0e2;
-    --surface: #fbf4e6;
+    --bg: #A9D9D0;
+    --surface: #D7ECE6;
     --text: #3b2416;
     --muted: #8a6b52;
     --text-secondary: #8a6b52;
@@ -20,11 +20,11 @@
     --border: #c9a481;
     --success: #6f7d52;
     --danger: #b35a3a;
-    --highlight: #f1b66b;
+    --highlight: #E8B567;
     --background: var(--bg);
     --shadow: rgba(59, 36, 22, 0.18);
-    --white: #fff7ea;
-    --light-cream: #f3e3c7;
+    --white: #F4FFFC;
+    --light-cream: #CBE5DE;
     --maintenance-banner-height: 64px;
     --bottom-nav-height: 72px;
 }
@@ -57,7 +57,7 @@ body::before {
     background-color: var(--primary);
     padding: 0 1.5rem;
     height: 72px;
-    box-shadow: 0 6px 0 var(--border), 0 12px 24px rgba(43, 27, 16, 0.25);
+    box-shadow: 0 5px 0 var(--border), 0 12px 20px rgba(74, 50, 29, 0.2);
     position: fixed;
     top: 0;
     left: 0;
