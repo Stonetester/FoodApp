@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, send_from_directory, send_file, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
+from app.account_profile import get_account_profile
 from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship
 from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image
 from datetime import datetime, date
@@ -808,7 +809,8 @@ def get_friends():
             'id': friend.id,
             'username': friend.username,
             'email': friend.email,
-            'created_at': friend.created_at.isoformat() if friend.created_at else None
+            'created_at': friend.created_at.isoformat() if friend.created_at else None,
+            'account_profile': get_account_profile(friend.id)
         }
         for friend in friends
     ]), 200
@@ -1017,7 +1019,8 @@ def get_user_profile(user_id):
             'recipe_count': recipe_count,
             'total_ratings': total_ratings,
             'average_rating': avg_rating
-        }
+        },
+        'account_profile': get_account_profile(user.id)
     }), 200
 
 

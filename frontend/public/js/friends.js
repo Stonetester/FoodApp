@@ -57,10 +57,16 @@ function renderFriendsList(friends) {
         if (friend.id === selectedFriendId) {
             item.classList.add('active');
         }
+        const avatarUrl = friend.account_profile?.avatar_url || '/images/app-icon.svg';
+        const bio = friend.account_profile?.bio || '';
         item.innerHTML = `
-            <div>
-                <strong>@${friend.username}</strong>
-                ${friend.created_at ? `<span class="friends-meta">Joined ${new Date(friend.created_at).toLocaleDateString()}</span>` : ''}
+            <div class="friends-list-main">
+                <img src="${avatarUrl}" alt="${friend.username} profile photo" class="friends-avatar" onerror="this.src='/images/app-icon.svg'">
+                <div>
+                    <strong>@${friend.username}</strong>
+                    ${bio ? `<span class="friends-meta">${bio.slice(0, 70)}</span>` : ''}
+                    ${friend.created_at ? `<span class="friends-meta">Joined ${new Date(friend.created_at).toLocaleDateString()}</span>` : ''}
+                </div>
             </div>
             <span class="friends-list-chevron">›</span>
         `;
@@ -83,7 +89,11 @@ async function selectFriend(friend) {
     const mealPlanEl = document.getElementById('friendMealPlan');
 
     if (titleEl) titleEl.textContent = `@${friend.username}`;
-    if (subtitleEl) subtitleEl.textContent = 'Loading recipes and meal plan...';
+    if (subtitleEl) {
+        const topMeals = friend.account_profile?.top_meals || [];
+        const topMealHint = topMeals.length ? `Top meals selected: ${topMeals.length}.` : 'No top meals selected yet.';
+        subtitleEl.textContent = `${friend.account_profile?.bio || 'Loading recipes and meal plan...'} ${topMealHint}`;
+    }
 
     if (recipesEl) {
         recipesEl.innerHTML = '<p class="empty-state">Loading recipes...</p>';
@@ -107,7 +117,14 @@ async function selectFriend(friend) {
         renderFriendRecipes(recipes, friend.username);
         renderFriendMealPlan(mealPlans);
         if (subtitleEl) {
-            subtitleEl.textContent = 'Recipes and upcoming meals (next 14 days).';
+            const topIds = friend.account_profile?.top_meals || [];
+            const topTitles = topIds
+                .map((id) => recipes.find((recipe) => recipe.id === Number(id))?.title)
+                .filter(Boolean)
+                .slice(0, 3);
+            const topMealsText = topTitles.length ? `Top meals: ${topTitles.join(', ')}` : 'No top meals selected yet.';
+            const bioText = friend.account_profile?.bio || 'Recipes and upcoming meals (next 14 days).';
+            subtitleEl.textContent = `${bioText} ${topMealsText}`;
         }
     } catch (error) {
         console.error('Error loading friend details:', error);
