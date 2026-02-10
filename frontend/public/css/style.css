@@ -9,6 +9,14 @@
     --primary: #c0672d;
     --secondary: #d2a34b;
     --accent: #b6532c;
+    --primary-dark: #8f4319;
+    --accent-teal: #2BAF90;
+    --accent-mint: #A1DAB1;
+    --accent-gold: #F1A512;
+    --accent-red: #DD4111;
+    --accent-wine: #8C0027;
+    --focus-ring: #2BAF90;
+    --stripe-80s: linear-gradient(90deg, rgba(43, 175, 144, 0.75) 0%, rgba(161, 218, 177, 0.75) 25%, rgba(241, 165, 18, 0.75) 50%, rgba(221, 65, 17, 0.7) 75%, rgba(140, 0, 39, 0.72) 100%);
     --border: #c9a481;
     --success: #6f7d52;
     --danger: #b35a3a;
@@ -2324,4 +2332,239 @@ body.has-maintenance-banner .page-header {
 .recipe-copied {
     background-color: rgba(111, 125, 82, 0.15);
     border: 2px solid var(--success);
+}
+
+
+/* Mobile-first app polish overrides */
+.page-header {
+    border-bottom: none;
+    padding-bottom: 0.8rem;
+    margin-bottom: 1.25rem;
+}
+
+.page-header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--stripe-80s);
+    opacity: 0.7;
+}
+
+.btn {
+    min-height: 44px;
+}
+
+.btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary-dark);
+}
+
+.btn-primary:hover {
+    background: #af5924;
+}
+
+.btn-primary:active {
+    transform: translate(0, 1px);
+}
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.btn-secondary:hover {
+    background: var(--light-cream);
+    color: var(--text);
+}
+
+input,
+select,
+textarea,
+button {
+    font-size: 16px;
+}
+
+*:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.bottom-nav {
+    background: var(--surface);
+    border-top: 2px solid var(--border);
+}
+
+.bottom-nav__link {
+    color: var(--muted);
+    min-height: 48px;
+}
+
+.bottom-nav__link.is-active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: inset 0 -5px 0 var(--accent-gold);
+}
+
+.bottom-nav__more.is-active {
+    box-shadow: inset 0 -5px 0 var(--accent-teal);
+}
+
+.sheet-link {
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.sheet-link:hover {
+    transform: translateY(-1px);
+    background: rgba(192, 103, 45, 0.1);
+}
+
+
+.sheet-link.is-active {
+    background: rgba(192, 103, 45, 0.16);
+    border-color: var(--primary);
+}
+
+.view-btn.active {
+    background: var(--accent-teal);
+    color: #fff;
+}
+
+.tab-btn.active {
+    color: var(--accent-wine);
+}
+
+.tab-btn.active::after,
+.view-btn.active::after {
+    background: var(--accent-gold);
+}
+
+.recipe-tag,
+.meal-type-badge {
+    color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.recipe-tag:nth-child(5n+1),
+.meal-type-badge { background: var(--accent-teal); }
+.recipe-tag:nth-child(5n+2) { background: var(--accent-mint); color: var(--text); }
+.recipe-tag:nth-child(5n+3) { background: var(--accent-gold); color: var(--text); }
+.recipe-tag:nth-child(5n+4) { background: var(--accent-red); }
+.recipe-tag:nth-child(5n+5) { background: var(--accent-wine); }
+
+.fc .fc-daygrid-event {
+    background: var(--primary);
+    border-color: var(--primary-dark);
+}
+
+.fc .fc-daygrid-event .calendar-event-title {
+    color: #fff;
+}
+
+@media (max-width: 899px) {
+    .navbar {
+        display: none !important;
+    }
+
+    .page {
+        padding: 1rem 0.8rem calc(var(--bottom-nav-height) + 2.75rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    body.has-maintenance-banner .page {
+        padding-top: calc(var(--maintenance-banner-height) + 0.8rem);
+    }
+
+    .container {
+        padding: 1rem;
+        border-radius: 18px;
+    }
+
+    .header-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+    }
+
+    .page-header > .btn,
+    .page-header .header-actions .btn {
+        width: 100%;
+    }
+
+    .modal.active {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal-content {
+        border-radius: 18px 18px 0 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: 92vh;
+        padding: 1rem 1rem calc(1.2rem + env(safe-area-inset-bottom, 0px));
+        animation: sheetUp 0.22s ease;
+        box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-content h2 {
+        position: sticky;
+        top: 0;
+        background: var(--surface);
+        padding-top: 0.45rem;
+        padding-right: 2.5rem;
+    }
+
+    .close {
+        top: 0.45rem;
+        right: 0.45rem;
+        background: rgba(59, 36, 22, 0.08);
+    }
+
+    .calendar-controls {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .view-switcher {
+        width: 100%;
+        justify-content: space-between;
+        gap: 0.45rem;
+    }
+
+    .view-btn {
+        flex: 1;
+        min-height: 48px;
+    }
+
+    .calendar-nav {
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    .calendar-nav .btn,
+    #calendarTodayBtn {
+        flex: 1;
+        min-height: 48px;
+    }
+
+    #mealPlanCalendar {
+        padding: 0.75rem;
+    }
+}
+
+@keyframes sheetUp {
+    from { transform: translateY(24px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
