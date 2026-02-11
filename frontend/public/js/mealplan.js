@@ -200,6 +200,41 @@ function getMealTypeColor(mealType) {
     return colors[mealType] || '#7A8471';
 }
 
+function getRecipeNutrition(recipe) {
+    if (!recipe?.ingredients || !Array.isArray(recipe.ingredients)) {
+        return null;
+    }
+    const nutritionIngredient = recipe.ingredients.find((ingredient) => ingredient.ingredient_name === '__nutrition__');
+    return nutritionIngredient?.nutritional_info || null;
+}
+
+function formatNutritionPerServing(nutrition) {
+    if (!nutrition) return '';
+    const parts = [];
+    if (nutrition.energy_kcal) parts.push(`${nutrition.energy_kcal} kcal`);
+    if (nutrition.proteins) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat) parts.push(`${nutrition.fat}g fat`);
+    return parts.join(' • ');
+}
+
+function buildMealServingMeta(recipe) {
+    if (!recipe) return '';
+    const info = [];
+    if (recipe.servings) {
+        info.push(`🍽️ ${recipe.servings} servings`);
+    }
+    const nutrition = getRecipeNutrition(recipe);
+    if (nutrition?.serving_size) {
+        info.push(`Serving size: ${nutrition.serving_size}`);
+    }
+    const nutritionSummary = formatNutritionPerServing(nutrition);
+    if (nutritionSummary) {
+        info.push(`Per serving: ${nutritionSummary}`);
+    }
+    return info.map((text) => `<p style="margin: 0.25rem 0 0 0; font-size: 0.82rem; color: var(--text); opacity: 0.9;">${text}</p>`).join('');
+}
+
 async function openMealPlanModal(plan = null, date = null, mealType = null, defaultNotes = null) {
     const modal = document.getElementById('mealPlanModal');
     const form = document.getElementById('mealPlanForm');
@@ -389,6 +424,7 @@ async function showDayDetail(dateStr) {
                                             ${meal.recipe.cook_time ? `Cook: ${meal.recipe.cook_time}min` : ''}
                                         </p>
                                     ` : ''}
+                                    ${buildMealServingMeta(meal.recipe)}
                                 </div>
                                 <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
                                     <button class="btn-icon" onclick="editMealPlanFromDay(${meal.id})" title="Edit">✏️</button>
@@ -595,6 +631,7 @@ function renderMealSections(viewName) {
                                 <div>
                                     <strong>${plannedMeal.recipe.title}</strong>
                                     ${plannedMeal.recipe.description ? `<p>${plannedMeal.recipe.description}</p>` : ''}
+                                    ${buildMealServingMeta(plannedMeal.recipe)}
                                 </div>
                                 <div class="meal-section-actions">
                                     <button class="btn-icon" type="button" data-edit="${plannedMeal.id}" title="Edit">✏️</button>
@@ -623,7 +660,10 @@ function renderMealSections(viewName) {
                     <div class="snack-section-body">
                         ${snacks.length ? snacks.map(snack => `
                             <div class="snack-item">
-                                <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
+                                <div>
+                                    <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
+                                    ${snack.recipe ? buildMealServingMeta(snack.recipe) : ''}
+                                </div>
                                 <div class="meal-section-actions">
                                     <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
                                     <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>
@@ -653,7 +693,10 @@ function renderMealSections(viewName) {
                 <div class="snack-section-body">
                     ${anytimeSnacks.map(snack => `
                         <div class="snack-item">
-                            <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
+                            <div>
+                                <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
+                                ${snack.recipe ? buildMealServingMeta(snack.recipe) : ''}
+                            </div>
                             <div class="meal-section-actions">
                                 <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
                                 <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>

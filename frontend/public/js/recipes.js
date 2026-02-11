@@ -155,6 +155,7 @@ function createRecipeCard(recipe) {
         <div class="recipe-card-content">
             <h3 class="recipe-card-title">${recipe.title}</h3>
             <p class="recipe-card-description">${recipe.description || ''}</p>
+            <div class="recipe-card-meta">${buildRecipeServingAndNutritionMeta(recipe)}</div>
             <div class="recipe-card-tags">${tagsHtml}</div>
             <div class="recipe-card-actions">
                 <button class="btn-icon" type="button" data-action="view" title="View recipe">
@@ -215,6 +216,40 @@ function createRecipeCard(recipe) {
     });
 
     return card;
+}
+
+function getRecipeNutrition(recipe) {
+    if (!recipe) return null;
+    if (recipe.nutrition) return recipe.nutrition;
+    return getNutritionFromIngredients(recipe.ingredients || []);
+}
+
+function formatNutritionPerServing(nutrition) {
+    if (!nutrition) return '';
+    const parts = [];
+    if (nutrition.energy_kcal) parts.push(`${nutrition.energy_kcal} kcal`);
+    if (nutrition.proteins) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat) parts.push(`${nutrition.fat}g fat`);
+    return parts.join(' • ');
+}
+
+function buildRecipeServingAndNutritionMeta(recipe) {
+    const meta = [];
+    if (recipe.servings) {
+        meta.push(`🍽️ ${recipe.servings} servings`);
+    }
+
+    const nutrition = getRecipeNutrition(recipe);
+    if (nutrition?.serving_size) {
+        meta.push(`Serving size: ${nutrition.serving_size}`);
+    }
+    const nutritionSummary = formatNutritionPerServing(nutrition);
+    if (nutritionSummary) {
+        meta.push(`Per serving: ${nutritionSummary}`);
+    }
+
+    return meta.map(item => `<p class="recipe-card-info">${item}</p>`).join('');
 }
 
 function openRecipeModal(recipe = null) {
@@ -442,6 +477,7 @@ function setNutritionFields(nutrition = {}) {
     document.getElementById('recipeProtein').value = nutrition.proteins ?? '';
     document.getElementById('recipeCarbs').value = nutrition.carbohydrates ?? '';
     document.getElementById('recipeFat').value = nutrition.fat ?? '';
+    document.getElementById('recipeNutritionServingSize').value = nutrition.serving_size ?? '';
 }
 
 function buildRecipeNutrition() {
@@ -449,15 +485,18 @@ function buildRecipeNutrition() {
     const protein = document.getElementById('recipeProtein').value;
     const carbs = document.getElementById('recipeCarbs').value;
     const fat = document.getElementById('recipeFat').value;
+    const servingSize = document.getElementById('recipeNutritionServingSize').value.trim();
 
     const parsed = {
         energy_kcal: calories ? parseFloat(calories) : null,
         proteins: protein ? parseFloat(protein) : null,
         carbohydrates: carbs ? parseFloat(carbs) : null,
-        fat: fat ? parseFloat(fat) : null
+        fat: fat ? parseFloat(fat) : null,
+        serving_size: servingSize || null
     };
 
-    const hasValue = Object.values(parsed).some(value => value !== null && !Number.isNaN(value));
+    const hasMacroValue = [parsed.energy_kcal, parsed.proteins, parsed.carbohydrates, parsed.fat].some(value => value !== null && !Number.isNaN(value));
+    const hasValue = hasMacroValue || Boolean(parsed.serving_size);
     if (!hasValue) {
         return null;
     }

@@ -884,6 +884,19 @@ body.has-maintenance-banner .page-header {
     overflow: hidden;
 }
 
+.recipe-card-meta {
+    display: grid;
+    gap: 0.2rem;
+    margin-bottom: 0.75rem;
+}
+
+.recipe-card-info {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text);
+    opacity: 0.85;
+}
+
 .recipe-card-tags {
     display: flex;
     flex-wrap: wrap;
