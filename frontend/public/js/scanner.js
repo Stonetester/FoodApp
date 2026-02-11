@@ -151,7 +151,14 @@ function onScanSuccess(decodedText, decodedResult) {
     lookupAndAddProduct(decodedText);
 }
 
+function roundToTenth(value) {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) return null;
+    return Math.round(parsed * 10) / 10;
+}
+
 function onScanError(errorMessage) {
+
     // Silent - we expect many errors while scanning
     // Only log if it's not the common "No MultiFormat Readers" error
     if (!errorMessage.includes('No MultiFormat')) {
