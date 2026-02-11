@@ -130,10 +130,7 @@ function createPantryCard(item) {
     card.innerHTML = `
         <div class="pantry-card__content">
             <div class="pantry-card__left">
-                <div class="pantry-card-title-row">
-                    <h3 class="pantry-card-title">${item.item_name}</h3>
-                    <span class="pantry-category-pill">${normalizePantryCategory(item.category)}</span>
-                </div>
+                <h3 class="pantry-card-title">${item.item_name}</h3>
                 ${servingSize ? `<p class="pantry-card-meta">Serving size: ${servingSize}</p>` : ''}
                 ${addedDate ? `<p class="pantry-card-meta">Added: ${addedDate}</p>` : ''}
                 ${item.expiry_date ? `<p class="pantry-card-meta">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : ''}
@@ -302,6 +299,30 @@ function buildNutritionPayload(values) {
         serving_size: normalizedServingSize,
         servings_per_item: normalizedServingsPerItem
     };
+}
+
+function formatServingInfo(item) {
+    const parts = [];
+    if (item.quantity) {
+        parts.push(`${item.quantity} ${item.unit || ''}`.trim());
+    }
+    if (item.nutritional_info?.serving_size) {
+        parts.push(`Serving size: ${item.nutritional_info.serving_size}`);
+    }
+    if (item.nutritional_info?.servings_per_item !== undefined && item.nutritional_info?.servings_per_item !== null) {
+        parts.push(`Servings/item: ${item.nutritional_info.servings_per_item}`);
+    }
+    return parts.length ? parts.join(' • ') : '';
+}
+
+function formatNutritionInfo(nutrition) {
+    if (!nutrition) return '';
+    const parts = [];
+    if (nutrition.energy_kcal !== undefined && nutrition.energy_kcal !== null) parts.push(`${nutrition.energy_kcal} calories`);
+    if (nutrition.proteins !== undefined && nutrition.proteins !== null) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates !== undefined && nutrition.carbohydrates !== null) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat !== undefined && nutrition.fat !== null) parts.push(`${nutrition.fat}g fat`);
+    return parts.length ? `Nutrition (per serving): ${parts.join(' • ')}` : '';
 }
 
 async function editPantryItem(id) {

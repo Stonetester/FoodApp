@@ -1160,32 +1160,11 @@ body.has-maintenance-banner .page-header {
     align-items: start;
 }
 
-.pantry-card-title-row {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.35rem;
-}
-
 .pantry-card-title {
     font-size: 1.08rem;
     color: var(--primary);
-    margin: 0;
+    margin: 0 0 0.35rem;
     line-height: 1.2;
-}
-
-.pantry-category-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.18rem 0.55rem;
-    border-radius: 999px;
-    border: 1px solid rgba(42, 175, 144, 0.6);
-    background: rgba(42, 175, 144, 0.12);
-    color: #1f7d69;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
 }
 
 .pantry-card-meta {
@@ -1202,9 +1181,9 @@ body.has-maintenance-banner .page-header {
 }
 
 .nutrition-mini {
-    border: 1px solid #2BAF90;
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: rgba(161, 218, 177, 0.28);
+    background: color-mix(in srgb, var(--surface) 78%, var(--light-cream) 22%);
     padding: 0.45rem;
 }
 
@@ -1213,7 +1192,8 @@ body.has-maintenance-banner .page-header {
     letter-spacing: 0.02em;
     text-transform: uppercase;
     font-weight: 700;
-    color: #8C0027;
+    color: var(--text);
+    opacity: 0.75;
     margin-bottom: 0.4rem;
 }
 
@@ -1224,29 +1204,13 @@ body.has-maintenance-banner .page-header {
 }
 
 .nutrition-mini__cell {
-    border: 1px solid rgba(192, 103, 45, 0.3);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 0.35rem 0.4rem;
-    background: rgba(255, 255, 255, 0.7);
+    background: var(--surface);
     display: flex;
     flex-direction: column;
     gap: 0.1rem;
-}
-
-.nutrition-mini__cell:nth-child(1) {
-    background: rgba(241, 165, 18, 0.2);
-}
-
-.nutrition-mini__cell:nth-child(2) {
-    background: rgba(43, 175, 144, 0.2);
-}
-
-.nutrition-mini__cell:nth-child(3) {
-    background: rgba(161, 218, 177, 0.35);
-}
-
-.nutrition-mini__cell:nth-child(4) {
-    background: rgba(221, 65, 17, 0.18);
 }
 
 .nutrition-mini__label {
@@ -1260,7 +1224,6 @@ body.has-maintenance-banner .page-header {
     font-size: 0.9rem;
     font-weight: 700;
     line-height: 1.1;
-    color: #8C0027;
 }
 
 .pantry-card-actions {
@@ -1287,11 +1250,6 @@ body.has-maintenance-banner .page-header {
 }
 
 @media (max-width: 640px) {
-    #pantryCategoryFilter {
-        width: 100%;
-        min-width: 0;
-    }
-
     .pantry-card__content {
         grid-template-columns: 1fr;
         gap: 0.7rem;
