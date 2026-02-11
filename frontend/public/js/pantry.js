@@ -2,6 +2,25 @@
 
 let pantryItems = [];
 
+const PANTRY_CATEGORIES = [
+    'Fruit',
+    'Vegetables',
+    'Sauces',
+    'Baking',
+    'Meat',
+    'Seafood',
+    'Eggs',
+    'Milk/Dairy',
+    'Grains/Pasta/Rice',
+    'Canned Goods',
+    'Snacks',
+    'Beverages',
+    'Frozen',
+    'Other'
+];
+
+let selectedPantryCategoryFilter = 'All Categories';
+
 document.addEventListener('DOMContentLoaded', () => {
     setupPantryListeners();
 });
@@ -17,6 +36,13 @@ function setupPantryListeners() {
         openScanner();
     });
 
+    document.getElementById('pantryCategoryFilter')?.addEventListener('change', (event) => {
+        selectedPantryCategoryFilter = event.target.value || 'All Categories';
+        displayPantry();
+    });
+
+    initPantryCategorySelects();
+
     // Pantry form submission
     document.getElementById('pantryForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -31,6 +57,7 @@ function setupPantryListeners() {
 
 async function loadPantry() {
     try {
+        initPantryCategorySelects();
         pantryItems = await api.getPantryItems();
         displayPantry();
     } catch (error) {
@@ -50,10 +77,48 @@ function displayPantry() {
         return;
     }
 
-    pantryItems.forEach(item => {
+    const filteredItems = selectedPantryCategoryFilter === 'All Categories'
+        ? pantryItems
+        : pantryItems.filter(item => normalizePantryCategory(item.category) === selectedPantryCategoryFilter);
+
+    if (!filteredItems.length) {
+        container.innerHTML = '<p>No pantry items match this category.</p>';
+        return;
+    }
+
+    filteredItems.forEach(item => {
         container.appendChild(createPantryCard(item));
     });
 }
+
+function initPantryCategorySelects() {
+    const categorySelect = document.getElementById('pantryCategory');
+    const filterSelect = document.getElementById('pantryCategoryFilter');
+
+    if (categorySelect && !categorySelect.options.length) {
+        categorySelect.innerHTML = PANTRY_CATEGORIES
+            .map(category => `<option value="${category}">${category}</option>`)
+            .join('');
+    }
+
+    if (filterSelect && !filterSelect.options.length) {
+        filterSelect.innerHTML = ['All Categories', ...PANTRY_CATEGORIES]
+            .map(category => `<option value="${category}">${category}</option>`)
+            .join('');
+        filterSelect.value = selectedPantryCategoryFilter;
+    }
+}
+
+function normalizePantryCategory(category) {
+    if (!category || typeof category !== 'string') {
+        return 'Other';
+    }
+
+    const trimmed = category.trim();
+    const matched = PANTRY_CATEGORIES.find((option) => option.toLowerCase() === trimmed.toLowerCase());
+    return matched || 'Other';
+}
+
 
 function createPantryCard(item) {
     const card = document.createElement('div');
@@ -144,6 +209,7 @@ function openPantryModal(item = null) {
         title.textContent = 'Edit Pantry Item';
         document.getElementById('pantryItemId').value = item.id;
         document.getElementById('pantryItemName').value = item.item_name;
+        document.getElementById('pantryCategory').value = normalizePantryCategory(item.category);
         document.getElementById('pantryBarcode').value = item.barcode || '';
         document.getElementById('pantryQuantity').value = item.quantity || '';
         document.getElementById('pantryUnit').value = item.unit || '';
@@ -159,6 +225,7 @@ function openPantryModal(item = null) {
         title.textContent = 'Add Pantry Item';
         form.reset();
         document.getElementById('pantryItemId').value = '';
+        document.getElementById('pantryCategory').value = 'Other';
     }
 
     modal.classList.add('active');
@@ -174,6 +241,7 @@ async function savePantryItem() {
 
     const itemData = {
         item_name: document.getElementById('pantryItemName').value,
+        category: normalizePantryCategory(document.getElementById('pantryCategory').value),
         barcode: document.getElementById('pantryBarcode').value || null,
         quantity: document.getElementById('pantryQuantity').value ? parseFloat(document.getElementById('pantryQuantity').value) : null,
         unit: document.getElementById('pantryUnit').value || null,

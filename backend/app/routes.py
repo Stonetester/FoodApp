@@ -52,6 +52,68 @@ def serve_images(filename):
 def serve_uploads(filename):
     return send_from_directory(os.path.join(FRONTEND_DIR, 'uploads'), filename)
 
+
+PANTRY_CATEGORIES = [
+    'Fruit',
+    'Vegetables',
+    'Sauces',
+    'Baking',
+    'Meat',
+    'Seafood',
+    'Eggs',
+    'Milk/Dairy',
+    'Grains/Pasta/Rice',
+    'Canned Goods',
+    'Snacks',
+    'Beverages',
+    'Frozen',
+    'Other'
+]
+
+CATEGORY_KEYWORDS = {
+    'Fruit': ['apple', 'banana', 'berry', 'orange', 'grape', 'melon', 'pear', 'peach', 'mango', 'fruit'],
+    'Vegetables': ['lettuce', 'spinach', 'broccoli', 'carrot', 'onion', 'pepper', 'tomato', 'potato', 'cucumber', 'vegetable'],
+    'Sauces': ['sauce', 'ketchup', 'mustard', 'mayo', 'mayonnaise', 'soy', 'hot sauce', 'salsa', 'dressing', 'marinade'],
+    'Baking': ['flour', 'sugar', 'baking', 'yeast', 'vanilla', 'cocoa', 'powdered sugar', 'chocolate chips'],
+    'Meat': ['chicken', 'beef', 'pork', 'turkey', 'ham', 'sausage', 'bacon', 'lamb', 'meat'],
+    'Seafood': ['salmon', 'tuna', 'shrimp', 'fish', 'cod', 'crab', 'lobster', 'seafood'],
+    'Eggs': ['egg', 'eggs'],
+    'Milk/Dairy': ['milk', 'cheese', 'butter', 'yogurt', 'cream', 'dairy', 'half and half'],
+    'Grains/Pasta/Rice': ['rice', 'pasta', 'noodle', 'grain', 'oat', 'bread', 'quinoa', 'cereal'],
+    'Canned Goods': ['canned', 'can ', 'beans', 'chickpeas', 'lentils', 'broth', 'stock'],
+    'Snacks': ['chips', 'cracker', 'cookie', 'snack', 'nuts', 'popcorn', 'pretzel'],
+    'Beverages': ['juice', 'soda', 'tea', 'coffee', 'drink', 'water', 'beverage'],
+    'Frozen': ['frozen', 'ice cream']
+}
+
+
+def normalize_pantry_category(category):
+    if not category or not isinstance(category, str):
+        return None
+    normalized = category.strip()
+    for valid in PANTRY_CATEGORIES:
+        if normalized.lower() == valid.lower():
+            return valid
+    return None
+
+
+def auto_assign_pantry_category(item_name):
+    if not item_name:
+        return 'Other'
+    name = item_name.lower()
+    for category, keywords in CATEGORY_KEYWORDS.items():
+        if any(keyword in name for keyword in keywords):
+            return category
+    return 'Other'
+
+
+def resolve_pantry_category(raw_category, item_name):
+    normalized = normalize_pantry_category(raw_category)
+    if normalized and normalized != 'Other':
+        return normalized
+    inferred = auto_assign_pantry_category(item_name)
+    return inferred if inferred else 'Other'
+
 def ensure_recipe_image_url(recipe):
     """
     Ensure recipe.image_url is a valid URL/path.
@@ -418,7 +480,7 @@ def import_recipe_from_image():
 @login_required
 def get_pantry():
     """Get all pantry items for current user"""
-    items = PantryItem.query.filter_by(user_id=current_user.id).all()
+    items = PantryItem.query.filter_by(user_id=current_user.id).order_by(PantryItem.added_at.desc()).all()
     return jsonify([item.to_dict() for item in items]), 200
 
 @api_bp.route('/pantry', methods=['POST'])
@@ -431,14 +493,17 @@ def add_pantry_item():
     if data.get('expiry_date'):
         expiry_date = datetime.strptime(data.get('expiry_date'), '%Y-%m-%d').date()
     
+    item_name = data.get('item_name')
+
     item = PantryItem(
         user_id=current_user.id,
-        item_name=data.get('item_name'),
+        item_name=item_name,
         barcode=data.get('barcode'),
         quantity=data.get('quantity'),
         unit=data.get('unit'),
         expiry_date=expiry_date,
-        nutritional_info=json.dumps(data.get('nutritional_info', {})) if data.get('nutritional_info') else None
+        nutritional_info=json.dumps(data.get('nutritional_info', {})) if data.get('nutritional_info') else None,
+        category=resolve_pantry_category(data.get('category'), item_name)
     )
     
     db.session.add(item)
@@ -461,12 +526,15 @@ def update_pantry_item(item_id):
     item.barcode = data.get('barcode', item.barcode)
     item.quantity = data.get('quantity', item.quantity)
     item.unit = data.get('unit', item.unit)
+    next_item_name = data.get('item_name', item.item_name)
     
     if data.get('expiry_date'):
         item.expiry_date = datetime.strptime(data.get('expiry_date'), '%Y-%m-%d').date()
     
     if data.get('nutritional_info'):
         item.nutritional_info = json.dumps(data.get('nutritional_info'))
+
+    item.category = resolve_pantry_category(data.get('category', item.category), next_item_name)
     
     db.session.commit()
     

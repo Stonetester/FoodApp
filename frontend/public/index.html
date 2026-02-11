@@ -359,6 +359,10 @@
                         <button class="btn btn-primary" id="addPantryItemBtn">+ Add Item</button>
                     </div>
                 </div>
+                <div class="pantry-toolbar">
+                    <label for="pantryCategoryFilter" class="pantry-toolbar__label">Filter category</label>
+                    <select id="pantryCategoryFilter"></select>
+                </div>
                 <div id="pantryList" class="pantry-grid"></div>
             </div>
         </div>
@@ -373,6 +377,10 @@
                     <div class="form-group">
                         <label for="pantryItemName">Item Name</label>
                         <input type="text" id="pantryItemName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pantryCategory">Category</label>
+                        <select id="pantryCategory"></select>
                     </div>
                     <div class="form-group">
                         <label for="pantryBarcode">Barcode</label>
