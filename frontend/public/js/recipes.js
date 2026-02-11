@@ -227,10 +227,10 @@ function getRecipeNutrition(recipe) {
 function formatNutritionPerServing(nutrition) {
     if (!nutrition) return '';
     const parts = [];
-    if (nutrition.energy_kcal) parts.push(`${nutrition.energy_kcal} kcal`);
-    if (nutrition.proteins) parts.push(`${nutrition.proteins}g protein`);
-    if (nutrition.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
-    if (nutrition.fat) parts.push(`${nutrition.fat}g fat`);
+    if (nutrition.energy_kcal !== undefined && nutrition.energy_kcal !== null) parts.push(`${nutrition.energy_kcal} calories`);
+    if (nutrition.proteins !== undefined && nutrition.proteins !== null) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates !== undefined && nutrition.carbohydrates !== null) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat !== undefined && nutrition.fat !== null) parts.push(`${nutrition.fat}g fat`);
     return parts.join(' • ');
 }
 
@@ -448,13 +448,20 @@ function closeRecipeModal() {
     document.getElementById('recipeModal').classList.remove('active');
 }
 
+function stripTrailingPriceAnnotation(text) {
+    if (!text || typeof text !== 'string') {
+        return text;
+    }
+    return text.replace(/\s*\(\s*\$\s*\d+(?:\.\d{1,2})?\s*\)\s*$/, '').trim();
+}
+
 function addIngredientField(ingredient = null) {
     const container = document.getElementById('ingredientsList');
     const div = document.createElement('div');
     div.className = 'ingredient-item';
 
     div.innerHTML = `
-        <input type="text" placeholder="Ingredient name" class="ingredient-name" value="${ingredient?.ingredient_name || ''}" required>
+        <input type="text" placeholder="Ingredient name" class="ingredient-name" value="${stripTrailingPriceAnnotation(ingredient?.ingredient_name || '')}" required>
         <input type="number" step="0.01" placeholder="Quantity" class="ingredient-quantity" value="${ingredient?.quantity || ''}">
         <input type="text" placeholder="Unit" class="ingredient-unit" value="${ingredient?.unit || ''}">
         <button type="button" class="btn-icon" onclick="this.parentElement.remove()">🗑️</button>
@@ -501,7 +508,13 @@ function buildRecipeNutrition() {
         return null;
     }
 
-    return parsed;
+    return {
+        energy_kcal: Number.isNaN(parsed.energy_kcal) || parsed.energy_kcal === null ? 0 : parsed.energy_kcal,
+        proteins: Number.isNaN(parsed.proteins) || parsed.proteins === null ? 0 : parsed.proteins,
+        carbohydrates: Number.isNaN(parsed.carbohydrates) || parsed.carbohydrates === null ? 0 : parsed.carbohydrates,
+        fat: Number.isNaN(parsed.fat) || parsed.fat === null ? 0 : parsed.fat,
+        serving_size: parsed.serving_size || '1 serving'
+    };
 }
 
 async function saveRecipe() {
@@ -525,7 +538,7 @@ async function saveRecipe() {
 
         if (name && name.trim()) {
             ingredients.push({
-                ingredient_name: name.trim(),
+                ingredient_name: stripTrailingPriceAnnotation(name.trim()),
                 quantity: quantity && quantity.trim() ? parseFloat(quantity) : null,
                 unit: unit && unit.trim() ? unit.trim() : null
             });

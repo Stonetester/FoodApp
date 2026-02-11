@@ -211,10 +211,10 @@ function getRecipeNutrition(recipe) {
 function formatNutritionPerServing(nutrition) {
     if (!nutrition) return '';
     const parts = [];
-    if (nutrition.energy_kcal) parts.push(`${nutrition.energy_kcal} kcal`);
-    if (nutrition.proteins) parts.push(`${nutrition.proteins}g protein`);
-    if (nutrition.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
-    if (nutrition.fat) parts.push(`${nutrition.fat}g fat`);
+    if (nutrition.energy_kcal !== undefined && nutrition.energy_kcal !== null) parts.push(`${nutrition.energy_kcal} calories`);
+    if (nutrition.proteins !== undefined && nutrition.proteins !== null) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates !== undefined && nutrition.carbohydrates !== null) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat !== undefined && nutrition.fat !== null) parts.push(`${nutrition.fat}g fat`);
     return parts.join(' • ');
 }
 
