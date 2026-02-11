@@ -233,6 +233,30 @@ function buildNutritionPayload(values) {
     };
 }
 
+function formatServingInfo(item) {
+    const parts = [];
+    if (item.quantity) {
+        parts.push(`${item.quantity} ${item.unit || ''}`.trim());
+    }
+    if (item.nutritional_info?.serving_size) {
+        parts.push(`Serving size: ${item.nutritional_info.serving_size}`);
+    }
+    if (item.nutritional_info?.servings_per_item !== undefined && item.nutritional_info?.servings_per_item !== null) {
+        parts.push(`Servings/item: ${item.nutritional_info.servings_per_item}`);
+    }
+    return parts.length ? parts.join(' • ') : '';
+}
+
+function formatNutritionInfo(nutrition) {
+    if (!nutrition) return '';
+    const parts = [];
+    if (nutrition.energy_kcal !== undefined && nutrition.energy_kcal !== null) parts.push(`${nutrition.energy_kcal} calories`);
+    if (nutrition.proteins !== undefined && nutrition.proteins !== null) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates !== undefined && nutrition.carbohydrates !== null) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat !== undefined && nutrition.fat !== null) parts.push(`${nutrition.fat}g fat`);
+    return parts.length ? `Nutrition (per serving): ${parts.join(' • ')}` : '';
+}
+
 async function editPantryItem(id) {
     const item = pantryItems.find(i => i.id === id);
     if (item) {
