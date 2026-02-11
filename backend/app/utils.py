@@ -20,6 +20,13 @@ def parse_nutrition_value(value):
                 return None
     return None
 
+
+def strip_trailing_price_annotation(text):
+    """Remove trailing per-ingredient cost snippets like "($0.20)" from ingredient text."""
+    if not isinstance(text, str):
+        return text
+    return re.sub(r'\s*\(\s*\$\s*\d+(?:\.\d{1,2})?\s*\)\s*$', '', text).strip()
+
 def generate_qr_code(data):
     """Generate QR code image from data string"""
     qr = qrcode.QRCode(
@@ -275,7 +282,7 @@ def extract_recipe_from_url(url):
             for ing in recipe_data['recipeIngredient']:
                 if isinstance(ing, str):
                     result['ingredients'].append({
-                        'ingredient_name': ing,
+                        'ingredient_name': strip_trailing_price_annotation(ing),
                         'quantity': None,
                         'unit': None
                     })
@@ -820,6 +827,7 @@ def clean_ingredient_line(line):
     # Remove bullets, numbers, and extra whitespace
     clean = re.sub(r'^[\d\-\•\*\u2022\u2023\u25E6\)\.\s]+', '', line)
     clean = re.sub(r'\s+', ' ', clean)
+    clean = strip_trailing_price_annotation(clean)
     return clean.strip()
 
 
@@ -829,4 +837,5 @@ def clean_instruction_line(line):
     clean = re.sub(r'^[\-\•\*\u2022\u2023\u25E6\s]+', '', line)
     # Don't remove numbered steps like "1. Mix..."
     clean = re.sub(r'\s+', ' ', clean)
+    clean = strip_trailing_price_annotation(clean)
     return clean.strip()

@@ -448,13 +448,20 @@ function closeRecipeModal() {
     document.getElementById('recipeModal').classList.remove('active');
 }
 
+function stripTrailingPriceAnnotation(text) {
+    if (!text || typeof text !== 'string') {
+        return text;
+    }
+    return text.replace(/\s*\(\s*\$\s*\d+(?:\.\d{1,2})?\s*\)\s*$/, '').trim();
+}
+
 function addIngredientField(ingredient = null) {
     const container = document.getElementById('ingredientsList');
     const div = document.createElement('div');
     div.className = 'ingredient-item';
 
     div.innerHTML = `
-        <input type="text" placeholder="Ingredient name" class="ingredient-name" value="${ingredient?.ingredient_name || ''}" required>
+        <input type="text" placeholder="Ingredient name" class="ingredient-name" value="${stripTrailingPriceAnnotation(ingredient?.ingredient_name || '')}" required>
         <input type="number" step="0.01" placeholder="Quantity" class="ingredient-quantity" value="${ingredient?.quantity || ''}">
         <input type="text" placeholder="Unit" class="ingredient-unit" value="${ingredient?.unit || ''}">
         <button type="button" class="btn-icon" onclick="this.parentElement.remove()">🗑️</button>
@@ -531,7 +538,7 @@ async function saveRecipe() {
 
         if (name && name.trim()) {
             ingredients.push({
-                ingredient_name: name.trim(),
+                ingredient_name: stripTrailingPriceAnnotation(name.trim()),
                 quantity: quantity && quantity.trim() ? parseFloat(quantity) : null,
                 unit: unit && unit.trim() ? unit.trim() : null
             });

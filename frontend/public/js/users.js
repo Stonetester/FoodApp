@@ -333,6 +333,13 @@ async function viewRecipeDetail(recipeId, isOtherUser = false) {
     }
 }
 
+function stripTrailingPriceAnnotation(text) {
+    if (!text || typeof text !== 'string') {
+        return text;
+    }
+    return text.replace(/\s*\(\s*\$\s*\d+(?:\.\d{1,2})?\s*\)\s*$/, '').trim();
+}
+
 function showRecipeDetailModal(recipe, isOtherUser) {
     const modal = document.getElementById('recipeDetailModal');
     const content = document.getElementById('recipeDetailContent');
@@ -353,11 +360,11 @@ function showRecipeDetailModal(recipe, isOtherUser) {
     const ingredientsHtml = filteredIngredients.length > 0
         ? `<ul class="ingredients-list">
             ${filteredIngredients.map(ing => {
-                let line = ing.ingredient_name;
+                let line = stripTrailingPriceAnnotation(ing.ingredient_name);
                 if (ing.quantity && ing.unit) {
-                    line = `${ing.quantity} ${ing.unit} ${ing.ingredient_name}`;
+                    line = `${ing.quantity} ${ing.unit} ${stripTrailingPriceAnnotation(ing.ingredient_name)}`;
                 } else if (ing.quantity) {
-                    line = `${ing.quantity} ${ing.ingredient_name}`;
+                    line = `${ing.quantity} ${stripTrailingPriceAnnotation(ing.ingredient_name)}`;
                 }
                 return `<li>${line}</li>`;
             }).join('')}
