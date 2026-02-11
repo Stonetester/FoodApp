@@ -2532,22 +2532,6 @@ button {
     stroke: currentColor;
 }
 
-.settings-styleguide-action {
-    margin-top: 1.5rem;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.settings-styleguide-action .btn {
-    width: 100%;
-}
-
-@media (min-width: 768px) {
-    .settings-styleguide-action .btn {
-        width: auto;
-    }
-}
-
 @media (min-width: 768px) {
     .styleguide-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));

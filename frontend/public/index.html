@@ -51,6 +51,7 @@
                     <a href="#" class="nav-link" data-page="pantry">Pantry</a>
                     <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link" data-page="history">History</a>
+                    <a href="#" class="nav-link" data-page="styleGuide">Style Guide</a>
                     <a href="#" class="nav-link" data-page="account">Account</a>
                     <a href="#" class="nav-link" data-page="settings">Settings</a>
                     <a href="#" class="nav-link" id="logoutBtn">Logout</a>
@@ -834,6 +835,102 @@
 
                 <div class="settings-styleguide-action">
                     <button class="btn btn-secondary page-link" type="button" data-page="styleGuide">🎨 Open Style Guide</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="styleGuidePage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h1>Style Guide</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary page-link" type="button" data-page="dashboard">Back</button>
+                    </div>
+                </div>
+
+                <div class="styleguide-grid">
+                    <section class="sg-card">
+                        <h2>Colors</h2>
+                        <div class="swatch-grid">
+                            <div class="swatch-item"><div class="swatch" style="background:#c0672d"></div><span>Primary · #c0672d</span></div>
+                            <div class="swatch-item"><div class="swatch" style="background:#2BAF90"></div><span>Accent Teal · #2BAF90</span></div>
+                            <div class="swatch-item"><div class="swatch" style="background:#A1DAB1"></div><span>Accent Mint · #A1DAB1</span></div>
+                            <div class="swatch-item"><div class="swatch" style="background:#F1A512"></div><span>Accent Gold · #F1A512</span></div>
+                            <div class="swatch-item"><div class="swatch" style="background:#DD4111"></div><span>Accent Red · #DD4111</span></div>
+                            <div class="swatch-item"><div class="swatch" style="background:#8C0027"></div><span>Accent Wine · #8C0027</span></div>
+                        </div>
+                    </section>
+
+                    <section class="sg-card">
+                        <h2>Typography</h2>
+                        <div class="sg-type-samples">
+                            <h1>Heading 1 / Dashboard</h1>
+                            <h2>Heading 2 / Section title</h2>
+                            <p>Body copy for recipes, descriptions, and supporting content.</p>
+                            <small>Secondary and helper text for subtle UI guidance.</small>
+                        </div>
+                    </section>
+
+                    <section class="sg-card">
+                        <h2>Buttons</h2>
+                        <div class="sg-button-row">
+                            <button class="btn btn-primary" type="button">Primary</button>
+                            <button class="btn btn-secondary" type="button">Secondary</button>
+                            <button class="btn btn-destructive" type="button">Destructive</button>
+                        </div>
+                    </section>
+
+                    <section class="sg-card">
+                        <h2>Chips & badges</h2>
+                        <div class="sg-chip-row">
+                            <span class="recipe-tag">vegan</span>
+                            <span class="recipe-tag">gluten-free</span>
+                            <span class="recipe-tag">high-protein</span>
+                            <span class="meal-type-badge">Dinner</span>
+                        </div>
+                    </section>
+
+                    <section class="sg-card">
+                        <h2>Cards</h2>
+                        <article class="recipe-card sg-preview-card">
+                            <div class="recipe-card-content">
+                                <h3 class="recipe-card-title">Sample recipe card</h3>
+                                <p class="recipe-card-description">Cards group related content with spacing, border, and subtle depth.</p>
+                                <div class="recipe-card-tags">
+                                    <span class="recipe-tag">quick</span>
+                                    <span class="recipe-tag">family</span>
+                                </div>
+                            </div>
+                        </article>
+                    </section>
+
+                    <section class="sg-card">
+                        <h2>Forms</h2>
+                        <div class="form-group">
+                            <label for="sgName">Recipe name</label>
+                            <input id="sgName" type="text" placeholder="Spicy bean bowls">
+                        </div>
+                        <div class="form-group">
+                            <label for="sgMealType">Meal type</label>
+                            <select id="sgMealType">
+                                <option>Breakfast</option>
+                                <option>Lunch</option>
+                                <option>Dinner</option>
+                            </select>
+                        </div>
+                    </section>
+
+                    <section class="sg-card">
+                        <h2>Icons</h2>
+                        <div class="icon-gallery">
+                            <div class="icon-tile"><i data-lucide="home"></i><span>home</span></div>
+                            <div class="icon-tile"><i data-lucide="book-open"></i><span>book-open</span></div>
+                            <div class="icon-tile"><i data-lucide="calendar-days"></i><span>calendar-days</span></div>
+                            <div class="icon-tile"><i data-lucide="basket"></i><span>basket</span></div>
+                            <div class="icon-tile"><i data-lucide="users"></i><span>users</span></div>
+                            <div class="icon-tile"><i data-lucide="more-horizontal"></i><span>more-horizontal</span></div>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
