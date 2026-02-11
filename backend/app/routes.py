@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, send_from_directory, send_file, current_app
 from flask_login import login_required, current_user
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError, OperationalError
 from app.account_profile import get_account_profile
 from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship
 from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image
@@ -487,6 +488,7 @@ def get_pantry():
 @login_required
 def add_pantry_item():
     """Add a new pantry item"""
+    ensure_pantry_category_column()
     data = request.get_json()
     
     expiry_date = None
@@ -515,6 +517,7 @@ def add_pantry_item():
 @login_required
 def update_pantry_item(item_id):
     """Update a pantry item"""
+    ensure_pantry_category_column()
     item = PantryItem.query.filter_by(id=item_id, user_id=current_user.id).first()
     
     if not item:
