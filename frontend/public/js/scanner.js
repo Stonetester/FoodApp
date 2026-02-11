@@ -151,7 +151,14 @@ function onScanSuccess(decodedText, decodedResult) {
     lookupAndAddProduct(decodedText);
 }
 
+function roundToTenth(value) {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) return null;
+    return Math.round(parsed * 10) / 10;
+}
+
 function onScanError(errorMessage) {
+
     // Silent - we expect many errors while scanning
     // Only log if it's not the common "No MultiFormat Readers" error
     if (!errorMessage.includes('No MultiFormat')) {
@@ -203,10 +210,19 @@ async function lookupAndAddProduct(barcode) {
         }
         
         // Store product info for add action
+        const normalizedNutritionInfo = {
+            energy_kcal: roundToTenth(data.nutritional_info?.energy_kcal ?? 0),
+            proteins: roundToTenth(data.nutritional_info?.proteins ?? 0),
+            carbohydrates: roundToTenth(data.nutritional_info?.carbohydrates ?? 0),
+            fat: roundToTenth(data.nutritional_info?.fat ?? 0),
+            serving_size: data.nutritional_info?.serving_size || data.quantity || '100 g',
+            servings_per_item: roundToTenth(data.nutritional_info?.servings_per_item ?? 1)
+        };
+
         lastScannedProduct = {
             barcode,
             name: data.name,
-            nutritionalInfo: data.nutritional_info
+            nutritionalInfo: normalizedNutritionInfo
         };
 
         // Show product info
