@@ -227,10 +227,10 @@ function getRecipeNutrition(recipe) {
 function formatNutritionPerServing(nutrition) {
     if (!nutrition) return '';
     const parts = [];
-    if (nutrition.energy_kcal) parts.push(`${nutrition.energy_kcal} kcal`);
-    if (nutrition.proteins) parts.push(`${nutrition.proteins}g protein`);
-    if (nutrition.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
-    if (nutrition.fat) parts.push(`${nutrition.fat}g fat`);
+    if (nutrition.energy_kcal !== undefined && nutrition.energy_kcal !== null) parts.push(`${nutrition.energy_kcal} calories`);
+    if (nutrition.proteins !== undefined && nutrition.proteins !== null) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates !== undefined && nutrition.carbohydrates !== null) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat !== undefined && nutrition.fat !== null) parts.push(`${nutrition.fat}g fat`);
     return parts.join(' • ');
 }
 
@@ -501,7 +501,13 @@ function buildRecipeNutrition() {
         return null;
     }
 
-    return parsed;
+    return {
+        energy_kcal: Number.isNaN(parsed.energy_kcal) || parsed.energy_kcal === null ? 0 : parsed.energy_kcal,
+        proteins: Number.isNaN(parsed.proteins) || parsed.proteins === null ? 0 : parsed.proteins,
+        carbohydrates: Number.isNaN(parsed.carbohydrates) || parsed.carbohydrates === null ? 0 : parsed.carbohydrates,
+        fat: Number.isNaN(parsed.fat) || parsed.fat === null ? 0 : parsed.fat,
+        serving_size: parsed.serving_size || '1 serving'
+    };
 }
 
 async function saveRecipe() {

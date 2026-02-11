@@ -164,13 +164,16 @@ function buildNutritionPayload(values) {
         return null;
     }
 
+    const normalizedServingSize = servingSize || '1 serving';
+    const normalizedServingsPerItem = Number.isNaN(servingsPerItem) || servingsPerItem === null ? 1 : servingsPerItem;
+
     return {
-        energy_kcal: Number.isNaN(calories) ? null : calories,
-        proteins: Number.isNaN(protein) ? null : protein,
-        carbohydrates: Number.isNaN(carbs) ? null : carbs,
-        fat: Number.isNaN(fat) ? null : fat,
-        serving_size: servingSize || null,
-        servings_per_item: Number.isNaN(servingsPerItem) ? null : servingsPerItem
+        energy_kcal: Number.isNaN(calories) || calories === null ? 0 : calories,
+        proteins: Number.isNaN(protein) || protein === null ? 0 : protein,
+        carbohydrates: Number.isNaN(carbs) || carbs === null ? 0 : carbs,
+        fat: Number.isNaN(fat) || fat === null ? 0 : fat,
+        serving_size: normalizedServingSize,
+        servings_per_item: normalizedServingsPerItem
     };
 }
 
@@ -182,7 +185,7 @@ function formatServingInfo(item) {
     if (item.nutritional_info?.serving_size) {
         parts.push(`Serving size: ${item.nutritional_info.serving_size}`);
     }
-    if (item.nutritional_info?.servings_per_item) {
+    if (item.nutritional_info?.servings_per_item !== undefined && item.nutritional_info?.servings_per_item !== null) {
         parts.push(`Servings/item: ${item.nutritional_info.servings_per_item}`);
     }
     return parts.length ? parts.join(' • ') : '';
@@ -191,10 +194,10 @@ function formatServingInfo(item) {
 function formatNutritionInfo(nutrition) {
     if (!nutrition) return '';
     const parts = [];
-    if (nutrition.energy_kcal) parts.push(`${nutrition.energy_kcal} kcal`);
-    if (nutrition.proteins) parts.push(`${nutrition.proteins}g protein`);
-    if (nutrition.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
-    if (nutrition.fat) parts.push(`${nutrition.fat}g fat`);
+    if (nutrition.energy_kcal !== undefined && nutrition.energy_kcal !== null) parts.push(`${nutrition.energy_kcal} calories`);
+    if (nutrition.proteins !== undefined && nutrition.proteins !== null) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates !== undefined && nutrition.carbohydrates !== null) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat !== undefined && nutrition.fat !== null) parts.push(`${nutrition.fat}g fat`);
     return parts.length ? `Nutrition (per serving): ${parts.join(' • ')}` : '';
 }
 
