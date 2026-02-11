@@ -130,10 +130,7 @@ function createPantryCard(item) {
     card.innerHTML = `
         <div class="pantry-card__content">
             <div class="pantry-card__left">
-                <div class="pantry-card-title-row">
-                    <h3 class="pantry-card-title">${item.item_name}</h3>
-                    <span class="pantry-category-pill">${normalizePantryCategory(item.category)}</span>
-                </div>
+                <h3 class="pantry-card-title">${item.item_name}</h3>
                 ${servingSize ? `<p class="pantry-card-meta">Serving size: ${servingSize}</p>` : ''}
                 ${addedDate ? `<p class="pantry-card-meta">Added: ${addedDate}</p>` : ''}
                 ${item.expiry_date ? `<p class="pantry-card-meta">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : ''}
@@ -168,22 +165,9 @@ function createNutritionMiniTable(nutrition) {
     `;
 }
 
-function roundToTenth(value) {
-    const parsed = Number(value);
-    if (Number.isNaN(parsed)) return null;
-    return Math.round(parsed * 10) / 10;
-}
-
-function formatNutritionDisplayValue(value, suffix = '') {
-    const rounded = roundToTenth(value);
-    if (rounded === null) {
-        return '—';
-    }
-    return `${rounded.toFixed(1)}${suffix}`;
-}
-
 function createNutritionMiniCell(label, value, suffix) {
-    const displayValue = formatNutritionDisplayValue(value, suffix);
+    const hasValue = value !== undefined && value !== null && !Number.isNaN(Number(value));
+    const displayValue = hasValue ? `${value}${suffix}` : '—';
 
     return `
         <div class="nutrition-mini__cell" role="row">
@@ -308,13 +292,37 @@ function buildNutritionPayload(values) {
     const normalizedServingsPerItem = Number.isNaN(servingsPerItem) || servingsPerItem === null ? 1 : servingsPerItem;
 
     return {
-        energy_kcal: Number.isNaN(calories) || calories === null ? 0 : roundToTenth(calories),
-        proteins: Number.isNaN(protein) || protein === null ? 0 : roundToTenth(protein),
-        carbohydrates: Number.isNaN(carbs) || carbs === null ? 0 : roundToTenth(carbs),
-        fat: Number.isNaN(fat) || fat === null ? 0 : roundToTenth(fat),
+        energy_kcal: Number.isNaN(calories) || calories === null ? 0 : calories,
+        proteins: Number.isNaN(protein) || protein === null ? 0 : protein,
+        carbohydrates: Number.isNaN(carbs) || carbs === null ? 0 : carbs,
+        fat: Number.isNaN(fat) || fat === null ? 0 : fat,
         serving_size: normalizedServingSize,
-        servings_per_item: roundToTenth(normalizedServingsPerItem)
+        servings_per_item: normalizedServingsPerItem
     };
+}
+
+function formatServingInfo(item) {
+    const parts = [];
+    if (item.quantity) {
+        parts.push(`${item.quantity} ${item.unit || ''}`.trim());
+    }
+    if (item.nutritional_info?.serving_size) {
+        parts.push(`Serving size: ${item.nutritional_info.serving_size}`);
+    }
+    if (item.nutritional_info?.servings_per_item !== undefined && item.nutritional_info?.servings_per_item !== null) {
+        parts.push(`Servings/item: ${item.nutritional_info.servings_per_item}`);
+    }
+    return parts.length ? parts.join(' • ') : '';
+}
+
+function formatNutritionInfo(nutrition) {
+    if (!nutrition) return '';
+    const parts = [];
+    if (nutrition.energy_kcal !== undefined && nutrition.energy_kcal !== null) parts.push(`${nutrition.energy_kcal} calories`);
+    if (nutrition.proteins !== undefined && nutrition.proteins !== null) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition.carbohydrates !== undefined && nutrition.carbohydrates !== null) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition.fat !== undefined && nutrition.fat !== null) parts.push(`${nutrition.fat}g fat`);
+    return parts.length ? `Nutrition (per serving): ${parts.join(' • ')}` : '';
 }
 
 async function editPantryItem(id) {
