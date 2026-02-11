@@ -215,14 +215,17 @@ async function lookupAndAddProduct(barcode) {
             proteins: data.nutritional_info?.proteins ?? 0,
             carbohydrates: data.nutritional_info?.carbohydrates ?? 0,
             fat: data.nutritional_info?.fat ?? 0,
-            serving_size: data.nutritional_info?.serving_size || data.quantity || '100 g',
+            serving_size: data.nutritional_info?.serving_size || data.serving_size_text || data.quantity || '100 g',
             servings_per_item: data.nutritional_info?.servings_per_item ?? 1
         };
 
         lastScannedProduct = {
             barcode,
             name: data.name,
-            nutritionalInfo: normalizedNutritionInfo
+            nutritionalInfo: normalizedNutritionInfo,
+            servingSizeText: data.serving_size_text || null,
+            servingsPerContainer: data.servings_per_container || null,
+            packageSizeText: data.package_size_text || data.quantity || null
         };
 
         // Show product info
@@ -271,7 +274,14 @@ async function lookupAndAddProduct(barcode) {
         if (addButton) {
             addButton.addEventListener('click', () => {
                 if (lastScannedProduct) {
-                    addScannedProduct(lastScannedProduct.barcode, lastScannedProduct.name, lastScannedProduct.nutritionalInfo);
+                    addScannedProduct(
+                        lastScannedProduct.barcode,
+                        lastScannedProduct.name,
+                        lastScannedProduct.nutritionalInfo,
+                        lastScannedProduct.servingSizeText,
+                        lastScannedProduct.servingsPerContainer,
+                        lastScannedProduct.packageSizeText
+                    );
                 }
             });
         }
@@ -292,7 +302,7 @@ async function lookupAndAddProduct(barcode) {
     }
 }
 
-async function addScannedProduct(barcode, name, nutritionalInfo) {
+async function addScannedProduct(barcode, name, nutritionalInfo, servingSizeText, servingsPerContainer, packageSizeText) {
     const quantity = parseFloat(document.getElementById('scanQuantity').value) || 1;
     const unit = document.getElementById('scanUnit').value || 'item';
     const expiry = document.getElementById('scanExpiry').value || null;
@@ -312,7 +322,10 @@ async function addScannedProduct(barcode, name, nutritionalInfo) {
                 quantity: quantity,
                 unit: unit,
                 expiry_date: expiry,
-                nutritional_info: nutritionalInfo
+                nutritional_info: nutritionalInfo,
+                serving_size_text: servingSizeText,
+                servings_per_container: servingsPerContainer,
+                package_size_text: packageSizeText
             })
         });
         

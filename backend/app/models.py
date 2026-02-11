@@ -191,6 +191,9 @@ class PantryItem(db.Model):
     nutritional_info = db.Column(db.Text)  # JSON string
     category = db.Column(db.String(64), nullable=False, default='Other', index=True)
     added_at = db.Column(db.DateTime, default=datetime.utcnow)
+    serving_size_text = db.Column(db.String(255))
+    servings_per_container = db.Column(db.String(64))
+    package_size_text = db.Column(db.String(255))
     
     def to_dict(self):
         nutritional = {}
@@ -208,7 +211,10 @@ class PantryItem(db.Model):
             'expiry_date': self.expiry_date.isoformat() if self.expiry_date else None,
             'nutritional_info': nutritional,
             'category': self.category or 'Other',
-            'added_at': self.added_at.isoformat() if self.added_at else None
+            'added_at': self.added_at.isoformat() if self.added_at else None,
+            'serving_size_text': self.serving_size_text,
+            'servings_per_container': self.servings_per_container,
+            'package_size_text': self.package_size_text
         }
     
     def __repr__(self):

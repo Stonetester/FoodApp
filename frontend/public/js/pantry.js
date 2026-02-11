@@ -124,14 +124,19 @@ function createPantryCard(item) {
     const card = document.createElement('div');
     card.className = 'pantry-card';
 
-    const servingSize = getPantryServingSize(item);
     const addedDate = formatPantryAddedDate(item.added_at || item.created_at);
+    const category = normalizePantryCategory(item.category);
 
     card.innerHTML = `
         <div class="pantry-card__content">
             <div class="pantry-card__left">
-                <h3 class="pantry-card-title">${item.item_name}</h3>
-                ${servingSize ? `<p class="pantry-card-meta">Serving size: ${servingSize}</p>` : ''}
+                <div class="pantry-card__title-row">
+                    <h3 class="pantry-card-title">${item.item_name}</h3>
+                    <span class="pantry-category-pill">${category}</span>
+                </div>
+                <p class="pantry-card-meta">Serving: ${item.serving_size_text || '—'}</p>
+                <p class="pantry-card-meta">Servings/container: ${item.servings_per_container || '—'}</p>
+                <p class="pantry-card-meta">Package: ${item.package_size_text || '—'}</p>
                 ${addedDate ? `<p class="pantry-card-meta">Added: ${addedDate}</p>` : ''}
                 ${item.expiry_date ? `<p class="pantry-card-meta">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : ''}
                 ${item.barcode ? `<p class="pantry-card-meta pantry-card-meta--muted">Barcode: ${item.barcode}</p>` : ''}
@@ -177,17 +182,6 @@ function createNutritionMiniCell(label, value, suffix) {
     `;
 }
 
-function getPantryServingSize(item) {
-    const servingSize = item.nutritional_info?.serving_size;
-    if (servingSize) {
-        return servingSize;
-    }
-    if (item.quantity) {
-        return `${item.quantity} ${item.unit || ''}`.trim();
-    }
-    return '';
-}
-
 function formatPantryAddedDate(isoDate) {
     if (!isoDate) return '';
     const parsed = new Date(isoDate);
@@ -215,8 +209,9 @@ function openPantryModal(item = null) {
         document.getElementById('pantryUnit').value = item.unit || '';
         document.getElementById('pantryExpiryDate').value = item.expiry_date || '';
         const nutrition = item.nutritional_info || {};
-        document.getElementById('pantryServingSize').value = nutrition.serving_size || '';
-        document.getElementById('pantryServingsPerItem').value = nutrition.servings_per_item ?? '';
+        document.getElementById('pantryServingSizeText').value = item.serving_size_text || nutrition.serving_size || '';
+        document.getElementById('pantryServingsPerContainer').value = item.servings_per_container ?? '';
+        document.getElementById('pantryPackageSizeText').value = item.package_size_text || item.quantity || '';
         document.getElementById('pantryCalories').value = nutrition.energy_kcal ?? '';
         document.getElementById('pantryProtein').value = nutrition.proteins ?? '';
         document.getElementById('pantryCarbs').value = nutrition.carbohydrates ?? '';
@@ -246,13 +241,16 @@ async function savePantryItem() {
         quantity: document.getElementById('pantryQuantity').value ? parseFloat(document.getElementById('pantryQuantity').value) : null,
         unit: document.getElementById('pantryUnit').value || null,
         expiry_date: document.getElementById('pantryExpiryDate').value || null,
+        serving_size_text: document.getElementById('pantryServingSizeText').value || null,
+        servings_per_container: document.getElementById('pantryServingsPerContainer').value || null,
+        package_size_text: document.getElementById('pantryPackageSizeText').value || null,
         nutritional_info: buildNutritionPayload({
             calories: document.getElementById('pantryCalories').value,
             protein: document.getElementById('pantryProtein').value,
             carbs: document.getElementById('pantryCarbs').value,
             fat: document.getElementById('pantryFat').value,
-            servingSize: document.getElementById('pantryServingSize').value,
-            servingsPerItem: document.getElementById('pantryServingsPerItem').value
+            servingSize: document.getElementById('pantryServingSizeText').value,
+            servingsPerItem: document.getElementById('pantryServingsPerContainer').value
         })
     };
 

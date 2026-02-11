@@ -505,7 +505,10 @@ def add_pantry_item():
         unit=data.get('unit'),
         expiry_date=expiry_date,
         nutritional_info=json.dumps(data.get('nutritional_info', {})) if data.get('nutritional_info') else None,
-        category=resolve_pantry_category(data.get('category'), item_name)
+        category=resolve_pantry_category(data.get('category'), item_name),
+        serving_size_text=data.get('serving_size_text'),
+        servings_per_container=data.get('servings_per_container'),
+        package_size_text=data.get('package_size_text')
     )
     
     db.session.add(item)
@@ -536,6 +539,13 @@ def update_pantry_item(item_id):
     
     if data.get('nutritional_info'):
         item.nutritional_info = json.dumps(data.get('nutritional_info'))
+
+    if 'serving_size_text' in data:
+        item.serving_size_text = data.get('serving_size_text')
+    if 'servings_per_container' in data:
+        item.servings_per_container = data.get('servings_per_container')
+    if 'package_size_text' in data:
+        item.package_size_text = data.get('package_size_text')
 
     item.category = resolve_pantry_category(data.get('category', item.category), next_item_name)
     

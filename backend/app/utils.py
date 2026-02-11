@@ -64,6 +64,9 @@ def lookup_barcode(barcode):
                     'name': product.get('product_name', '') or product.get('product_name_en', '') or 'Unknown Product',
                     'brand': product.get('brands', ''),
                     'quantity': product.get('quantity', ''),
+                    'serving_size_text': product.get('serving_size'),
+                    'servings_per_container': product.get('servings_per_container') or product.get('number_of_servings'),
+                    'package_size_text': product.get('quantity', ''),
                     'nutritional_info': {}
                 }
                 
@@ -79,6 +82,7 @@ def lookup_barcode(barcode):
                         'fiber': nutriments.get('fiber_100g'),
                         'proteins': nutriments.get('proteins_100g'),
                         'salt': nutriments.get('salt_100g'),
+                        'serving_size': product.get('serving_size'),
                     }
                 
                 # Extract allergens and dietary info
