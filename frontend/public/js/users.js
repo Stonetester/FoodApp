@@ -368,11 +368,12 @@ function showRecipeDetailModal(recipe, isOtherUser) {
     const nutritionHtml = nutrition ? `
         <div class="recipe-section">
             <h3>🍎 Nutrition (per serving)</h3>
+            ${nutrition.serving_size ? `<p><strong>Serving size:</strong> ${nutrition.serving_size}</p>` : ''}
             <p>
-                ${nutrition.energy_kcal ? `${nutrition.energy_kcal} kcal` : ''}
-                ${nutrition.proteins ? `${nutrition.proteins}g protein` : ''}
-                ${nutrition.carbohydrates ? `${nutrition.carbohydrates}g carbs` : ''}
-                ${nutrition.fat ? `${nutrition.fat}g fat` : ''}
+                ${nutrition.energy_kcal !== undefined && nutrition.energy_kcal !== null ? `${nutrition.energy_kcal} calories` : ''}
+                ${nutrition.proteins !== undefined && nutrition.proteins !== null ? `${nutrition.proteins}g protein` : ''}
+                ${nutrition.carbohydrates !== undefined && nutrition.carbohydrates !== null ? `${nutrition.carbohydrates}g carbs` : ''}
+                ${nutrition.fat !== undefined && nutrition.fat !== null ? `${nutrition.fat}g fat` : ''}
             </p>
         </div>
     ` : '';
