@@ -58,6 +58,29 @@ function displayHistory() {
     });
 }
 
+function getRecipeNutrition(recipe) {
+    if (!recipe?.ingredients || !Array.isArray(recipe.ingredients)) return null;
+    const nutritionIngredient = recipe.ingredients.find((ingredient) => ingredient.ingredient_name === '__nutrition__');
+    return nutritionIngredient?.nutritional_info || null;
+}
+
+function formatPerServingText(recipe) {
+    if (!recipe) return '';
+    const nutrition = getRecipeNutrition(recipe);
+    const parts = [];
+    if (nutrition?.energy_kcal) parts.push(`${nutrition.energy_kcal} kcal`);
+    if (nutrition?.proteins) parts.push(`${nutrition.proteins}g protein`);
+    if (nutrition?.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
+    if (nutrition?.fat) parts.push(`${nutrition.fat}g fat`);
+
+    const details = [];
+    if (recipe.servings) details.push(`Serves ${recipe.servings}`);
+    if (nutrition?.serving_size) details.push(`Serving size: ${nutrition.serving_size}`);
+    if (parts.length) details.push(`Per serving: ${parts.join(' • ')}`);
+
+    return details.join(' • ');
+}
+
 function createHistoryItem(meal) {
     const item = document.createElement('div');
     item.className = 'history-item';
@@ -69,6 +92,7 @@ function createHistoryItem(meal) {
             <h3>${meal.recipe ? meal.recipe.title : 'Unknown Recipe'}</h3>
             <p><strong>Date:</strong> ${new Date(meal.consumed_date).toLocaleDateString()}</p>
             <p><strong>Meal Type:</strong> ${meal.meal_type}</p>
+            ${formatPerServingText(meal.recipe) ? `<p><strong>Serving info:</strong> ${formatPerServingText(meal.recipe)}</p>` : ''}
             ${meal.notes ? `<p><strong>Notes:</strong> ${meal.notes}</p>` : ''}
         </div>
         <div class="history-item-rating">${ratingStars}</div>

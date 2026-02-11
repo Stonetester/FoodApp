@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     setupResponsiveClass();
     applyMaintenanceBanners();
+    initializeLucideIcons();
 });
 
 async function initializeApp() {
@@ -333,6 +334,7 @@ function navigateToPage(pageName) {
         'userSearch': 'userSearchPage',
         'social': 'socialPage',
         'friends': 'friendsPage',
+        'styleGuide': 'styleGuidePage',
         'account': 'accountPage',
         'settings': 'settingsPage'
     };
@@ -378,6 +380,14 @@ function navigateToPage(pageName) {
                 document.querySelector('.view-switcher .view-btn[data-view="mealWeek"]')?.click();
             }
         }, 120);
+    }
+
+    initializeLucideIcons();
+}
+
+function initializeLucideIcons() {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
     }
 }
 
@@ -535,7 +545,7 @@ function updateActiveNav(pageName) {
     const moreTabBtn = document.getElementById('moreTabBtn');
     navLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
     bottomLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
-    const morePages = ['history', 'friends', 'userSearch', 'settings'];
+    const morePages = ['history', 'friends', 'userSearch', 'styleGuide', 'settings'];
     if (moreTabBtn) {
         moreTabBtn.classList.toggle('is-active', morePages.includes(pageName));
     }

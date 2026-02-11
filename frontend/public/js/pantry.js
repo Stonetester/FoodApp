@@ -61,11 +61,12 @@ function createPantryCard(item) {
 
     const expiryInfo = item.expiry_date ? 
         `<p class="pantry-card-info">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : '';
+    const servingInfo = formatServingInfo(item);
     const nutrition = formatNutritionInfo(item.nutritional_info);
 
     card.innerHTML = `
         <h3 class="pantry-card-title">${item.item_name}</h3>
-        ${item.quantity ? `<p class="pantry-card-info">Quantity: ${item.quantity} ${item.unit || ''}</p>` : ''}
+        ${servingInfo ? `<p class="pantry-card-info"><strong>Serving info:</strong> ${servingInfo}</p>` : ''}
         ${item.barcode ? `<p class="pantry-card-info">Barcode: ${item.barcode}</p>` : ''}
         ${expiryInfo}
         ${nutrition ? `<p class="pantry-card-info">${nutrition}</p>` : ''}
@@ -92,6 +93,8 @@ function openPantryModal(item = null) {
         document.getElementById('pantryUnit').value = item.unit || '';
         document.getElementById('pantryExpiryDate').value = item.expiry_date || '';
         const nutrition = item.nutritional_info || {};
+        document.getElementById('pantryServingSize').value = nutrition.serving_size || '';
+        document.getElementById('pantryServingsPerItem').value = nutrition.servings_per_item ?? '';
         document.getElementById('pantryCalories').value = nutrition.energy_kcal ?? '';
         document.getElementById('pantryProtein').value = nutrition.proteins ?? '';
         document.getElementById('pantryCarbs').value = nutrition.carbohydrates ?? '';
@@ -123,7 +126,9 @@ async function savePantryItem() {
             calories: document.getElementById('pantryCalories').value,
             protein: document.getElementById('pantryProtein').value,
             carbs: document.getElementById('pantryCarbs').value,
-            fat: document.getElementById('pantryFat').value
+            fat: document.getElementById('pantryFat').value,
+            servingSize: document.getElementById('pantryServingSize').value,
+            servingsPerItem: document.getElementById('pantryServingsPerItem').value
         })
     };
 
@@ -149,8 +154,13 @@ function buildNutritionPayload(values) {
     const protein = values.protein ? parseFloat(values.protein) : null;
     const carbs = values.carbs ? parseFloat(values.carbs) : null;
     const fat = values.fat ? parseFloat(values.fat) : null;
+    const servingsPerItem = values.servingsPerItem ? parseFloat(values.servingsPerItem) : null;
+    const servingSize = values.servingSize ? values.servingSize.trim() : '';
 
-    if ([calories, protein, carbs, fat].every(value => value === null || Number.isNaN(value))) {
+    const hasMacroValue = [calories, protein, carbs, fat].some(value => value !== null && !Number.isNaN(value));
+    const hasServingValue = Boolean(servingSize) || (servingsPerItem !== null && !Number.isNaN(servingsPerItem));
+
+    if (!hasMacroValue && !hasServingValue) {
         return null;
     }
 
@@ -158,8 +168,24 @@ function buildNutritionPayload(values) {
         energy_kcal: Number.isNaN(calories) ? null : calories,
         proteins: Number.isNaN(protein) ? null : protein,
         carbohydrates: Number.isNaN(carbs) ? null : carbs,
-        fat: Number.isNaN(fat) ? null : fat
+        fat: Number.isNaN(fat) ? null : fat,
+        serving_size: servingSize || null,
+        servings_per_item: Number.isNaN(servingsPerItem) ? null : servingsPerItem
     };
+}
+
+function formatServingInfo(item) {
+    const parts = [];
+    if (item.quantity) {
+        parts.push(`${item.quantity} ${item.unit || ''}`.trim());
+    }
+    if (item.nutritional_info?.serving_size) {
+        parts.push(`Serving size: ${item.nutritional_info.serving_size}`);
+    }
+    if (item.nutritional_info?.servings_per_item) {
+        parts.push(`Servings/item: ${item.nutritional_info.servings_per_item}`);
+    }
+    return parts.length ? parts.join(' • ') : '';
 }
 
 function formatNutritionInfo(nutrition) {
@@ -169,7 +195,7 @@ function formatNutritionInfo(nutrition) {
     if (nutrition.proteins) parts.push(`${nutrition.proteins}g protein`);
     if (nutrition.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
     if (nutrition.fat) parts.push(`${nutrition.fat}g fat`);
-    return parts.length ? `Nutrition: ${parts.join(' • ')}` : '';
+    return parts.length ? `Nutrition (per serving): ${parts.join(' • ')}` : '';
 }
 
 async function editPantryItem(id) {
