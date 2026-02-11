@@ -2,6 +2,25 @@
 
 let pantryItems = [];
 
+const PANTRY_CATEGORIES = [
+    'Fruit',
+    'Vegetables',
+    'Sauces',
+    'Baking',
+    'Meat',
+    'Seafood',
+    'Eggs',
+    'Milk/Dairy',
+    'Grains/Pasta/Rice',
+    'Canned Goods',
+    'Snacks',
+    'Beverages',
+    'Frozen',
+    'Other'
+];
+
+let selectedPantryCategoryFilter = 'All Categories';
+
 document.addEventListener('DOMContentLoaded', () => {
     setupPantryListeners();
 });
@@ -17,6 +36,13 @@ function setupPantryListeners() {
         openScanner();
     });
 
+    document.getElementById('pantryCategoryFilter')?.addEventListener('change', (event) => {
+        selectedPantryCategoryFilter = event.target.value || 'All Categories';
+        displayPantry();
+    });
+
+    initPantryCategorySelects();
+
     // Pantry form submission
     document.getElementById('pantryForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -31,6 +57,7 @@ function setupPantryListeners() {
 
 async function loadPantry() {
     try {
+        initPantryCategorySelects();
         pantryItems = await api.getPantryItems();
         displayPantry();
     } catch (error) {
@@ -50,33 +77,130 @@ function displayPantry() {
         return;
     }
 
-    pantryItems.forEach(item => {
+    const filteredItems = selectedPantryCategoryFilter === 'All Categories'
+        ? pantryItems
+        : pantryItems.filter(item => normalizePantryCategory(item.category) === selectedPantryCategoryFilter);
+
+    if (!filteredItems.length) {
+        container.innerHTML = '<p>No pantry items match this category.</p>';
+        return;
+    }
+
+    filteredItems.forEach(item => {
         container.appendChild(createPantryCard(item));
     });
 }
+
+function initPantryCategorySelects() {
+    const categorySelect = document.getElementById('pantryCategory');
+    const filterSelect = document.getElementById('pantryCategoryFilter');
+
+    if (categorySelect && !categorySelect.options.length) {
+        categorySelect.innerHTML = PANTRY_CATEGORIES
+            .map(category => `<option value="${category}">${category}</option>`)
+            .join('');
+    }
+
+    if (filterSelect && !filterSelect.options.length) {
+        filterSelect.innerHTML = ['All Categories', ...PANTRY_CATEGORIES]
+            .map(category => `<option value="${category}">${category}</option>`)
+            .join('');
+        filterSelect.value = selectedPantryCategoryFilter;
+    }
+}
+
+function normalizePantryCategory(category) {
+    if (!category || typeof category !== 'string') {
+        return 'Other';
+    }
+
+    const trimmed = category.trim();
+    const matched = PANTRY_CATEGORIES.find((option) => option.toLowerCase() === trimmed.toLowerCase());
+    return matched || 'Other';
+}
+
 
 function createPantryCard(item) {
     const card = document.createElement('div');
     card.className = 'pantry-card';
 
-    const expiryInfo = item.expiry_date ? 
-        `<p class="pantry-card-info">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : '';
-    const servingInfo = formatServingInfo(item);
-    const nutrition = formatNutritionInfo(item.nutritional_info);
+    const servingSize = getPantryServingSize(item);
+    const addedDate = formatPantryAddedDate(item.added_at || item.created_at);
 
     card.innerHTML = `
-        <h3 class="pantry-card-title">${item.item_name}</h3>
-        ${servingInfo ? `<p class="pantry-card-info"><strong>Serving info:</strong> ${servingInfo}</p>` : ''}
-        ${item.barcode ? `<p class="pantry-card-info">Barcode: ${item.barcode}</p>` : ''}
-        ${expiryInfo}
-        ${nutrition ? `<p class="pantry-card-info">${nutrition}</p>` : ''}
+        <div class="pantry-card__content">
+            <div class="pantry-card__left">
+                <div class="pantry-card-title-row">
+                    <h3 class="pantry-card-title">${item.item_name}</h3>
+                    <span class="pantry-category-pill">${normalizePantryCategory(item.category)}</span>
+                </div>
+                ${servingSize ? `<p class="pantry-card-meta">Serving size: ${servingSize}</p>` : ''}
+                ${addedDate ? `<p class="pantry-card-meta">Added: ${addedDate}</p>` : ''}
+                ${item.expiry_date ? `<p class="pantry-card-meta">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : ''}
+                ${item.barcode ? `<p class="pantry-card-meta pantry-card-meta--muted">Barcode: ${item.barcode}</p>` : ''}
+            </div>
+            <div class="pantry-card__right">
+                ${createNutritionMiniTable(item.nutritional_info)}
+            </div>
+        </div>
         <div class="pantry-card-actions">
-            <button class="btn btn-secondary" onclick="editPantryItem(${item.id})">Edit</button>
-            <button class="btn btn-secondary" onclick="deletePantryItem(${item.id})">Delete</button>
+            <button class="pantry-action-btn" onclick="editPantryItem(${item.id})">Edit</button>
+            <button class="pantry-action-btn" onclick="deletePantryItem(${item.id})">Delete</button>
         </div>
     `;
 
     return card;
+}
+
+function createNutritionMiniTable(nutrition) {
+    const normalized = nutrition || {};
+
+    return `
+        <div class="nutrition-mini" role="table" aria-label="Nutrition per serving">
+            <div class="nutrition-mini__header">Per serving</div>
+            <div class="nutrition-mini__grid">
+                ${createNutritionMiniCell('Calories', normalized.energy_kcal, '')}
+                ${createNutritionMiniCell('Protein', normalized.proteins, 'g')}
+                ${createNutritionMiniCell('Carbs', normalized.carbohydrates, 'g')}
+                ${createNutritionMiniCell('Fat', normalized.fat, 'g')}
+            </div>
+        </div>
+    `;
+}
+
+function createNutritionMiniCell(label, value, suffix) {
+    const hasValue = value !== undefined && value !== null && !Number.isNaN(Number(value));
+    const displayValue = hasValue ? `${value}${suffix}` : '—';
+
+    return `
+        <div class="nutrition-mini__cell" role="row">
+            <span class="nutrition-mini__label">${label}</span>
+            <span class="nutrition-mini__value">${displayValue}</span>
+        </div>
+    `;
+}
+
+function getPantryServingSize(item) {
+    const servingSize = item.nutritional_info?.serving_size;
+    if (servingSize) {
+        return servingSize;
+    }
+    if (item.quantity) {
+        return `${item.quantity} ${item.unit || ''}`.trim();
+    }
+    return '';
+}
+
+function formatPantryAddedDate(isoDate) {
+    if (!isoDate) return '';
+    const parsed = new Date(isoDate);
+    if (Number.isNaN(parsed.getTime())) return '';
+
+    return new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    }).format(parsed);
 }
 
 function openPantryModal(item = null) {
@@ -88,6 +212,7 @@ function openPantryModal(item = null) {
         title.textContent = 'Edit Pantry Item';
         document.getElementById('pantryItemId').value = item.id;
         document.getElementById('pantryItemName').value = item.item_name;
+        document.getElementById('pantryCategory').value = normalizePantryCategory(item.category);
         document.getElementById('pantryBarcode').value = item.barcode || '';
         document.getElementById('pantryQuantity').value = item.quantity || '';
         document.getElementById('pantryUnit').value = item.unit || '';
@@ -103,6 +228,7 @@ function openPantryModal(item = null) {
         title.textContent = 'Add Pantry Item';
         form.reset();
         document.getElementById('pantryItemId').value = '';
+        document.getElementById('pantryCategory').value = 'Other';
     }
 
     modal.classList.add('active');
@@ -118,6 +244,7 @@ async function savePantryItem() {
 
     const itemData = {
         item_name: document.getElementById('pantryItemName').value,
+        category: normalizePantryCategory(document.getElementById('pantryCategory').value),
         barcode: document.getElementById('pantryBarcode').value || null,
         quantity: document.getElementById('pantryQuantity').value ? parseFloat(document.getElementById('pantryQuantity').value) : null,
         unit: document.getElementById('pantryUnit').value || null,
@@ -164,38 +291,17 @@ function buildNutritionPayload(values) {
         return null;
     }
 
+    const normalizedServingSize = servingSize || '1 serving';
+    const normalizedServingsPerItem = Number.isNaN(servingsPerItem) || servingsPerItem === null ? 1 : servingsPerItem;
+
     return {
-        energy_kcal: Number.isNaN(calories) ? null : calories,
-        proteins: Number.isNaN(protein) ? null : protein,
-        carbohydrates: Number.isNaN(carbs) ? null : carbs,
-        fat: Number.isNaN(fat) ? null : fat,
-        serving_size: servingSize || null,
-        servings_per_item: Number.isNaN(servingsPerItem) ? null : servingsPerItem
+        energy_kcal: Number.isNaN(calories) || calories === null ? 0 : calories,
+        proteins: Number.isNaN(protein) || protein === null ? 0 : protein,
+        carbohydrates: Number.isNaN(carbs) || carbs === null ? 0 : carbs,
+        fat: Number.isNaN(fat) || fat === null ? 0 : fat,
+        serving_size: normalizedServingSize,
+        servings_per_item: normalizedServingsPerItem
     };
-}
-
-function formatServingInfo(item) {
-    const parts = [];
-    if (item.quantity) {
-        parts.push(`${item.quantity} ${item.unit || ''}`.trim());
-    }
-    if (item.nutritional_info?.serving_size) {
-        parts.push(`Serving size: ${item.nutritional_info.serving_size}`);
-    }
-    if (item.nutritional_info?.servings_per_item) {
-        parts.push(`Servings/item: ${item.nutritional_info.servings_per_item}`);
-    }
-    return parts.length ? parts.join(' • ') : '';
-}
-
-function formatNutritionInfo(nutrition) {
-    if (!nutrition) return '';
-    const parts = [];
-    if (nutrition.energy_kcal) parts.push(`${nutrition.energy_kcal} kcal`);
-    if (nutrition.proteins) parts.push(`${nutrition.proteins}g protein`);
-    if (nutrition.carbohydrates) parts.push(`${nutrition.carbohydrates}g carbs`);
-    if (nutrition.fat) parts.push(`${nutrition.fat}g fat`);
-    return parts.length ? `Nutrition (per serving): ${parts.join(' • ')}` : '';
 }
 
 async function editPantryItem(id) {

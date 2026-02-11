@@ -203,10 +203,19 @@ async function lookupAndAddProduct(barcode) {
         }
         
         // Store product info for add action
+        const normalizedNutritionInfo = {
+            energy_kcal: data.nutritional_info?.energy_kcal ?? 0,
+            proteins: data.nutritional_info?.proteins ?? 0,
+            carbohydrates: data.nutritional_info?.carbohydrates ?? 0,
+            fat: data.nutritional_info?.fat ?? 0,
+            serving_size: data.nutritional_info?.serving_size || data.quantity || '100 g',
+            servings_per_item: data.nutritional_info?.servings_per_item ?? 1
+        };
+
         lastScannedProduct = {
             barcode,
             name: data.name,
-            nutritionalInfo: data.nutritional_info
+            nutritionalInfo: normalizedNutritionInfo
         };
 
         // Show product info
