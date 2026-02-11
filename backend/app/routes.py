@@ -115,45 +115,6 @@ def resolve_pantry_category(raw_category, item_name):
     inferred = auto_assign_pantry_category(item_name)
     return inferred if inferred else 'Other'
 
-def ensure_pantry_category_column():
-    """Ensure legacy databases have pantry_items.category before ORM selects run."""
-    try:
-        with db.engine.begin() as conn:
-            has_column = conn.execute(
-                text(
-                    """
-                    SELECT COUNT(*)
-                    FROM information_schema.columns
-                    WHERE table_schema = DATABASE()
-                      AND table_name = 'pantry_items'
-                      AND column_name = 'category'
-                    """
-                )
-            ).scalar()
-            if has_column and int(has_column) > 0:
-                return
-
-            conn.execute(
-                text(
-                    """
-                    ALTER TABLE pantry_items
-                    ADD COLUMN category VARCHAR(64) NOT NULL DEFAULT 'Other'
-                    """
-                )
-            )
-            conn.execute(
-                text(
-                    """
-                    CREATE INDEX idx_pantry_items_category
-                    ON pantry_items (category)
-                    """
-                )
-            )
-            current_app.logger.info("Added missing pantry_items.category column and index")
-    except OperationalError as exc:
-        # Index may already exist or a concurrent process may have created the column.
-        current_app.logger.warning("Pantry category schema ensure warning: %s", exc)
-
 def ensure_recipe_image_url(recipe):
     """
     Ensure recipe.image_url is a valid URL/path.
@@ -520,7 +481,6 @@ def import_recipe_from_image():
 @login_required
 def get_pantry():
     """Get all pantry items for current user"""
-    ensure_pantry_category_column()
     items = PantryItem.query.filter_by(user_id=current_user.id).order_by(PantryItem.added_at.desc()).all()
     return jsonify([item.to_dict() for item in items]), 200
 
