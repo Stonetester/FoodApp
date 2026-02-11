@@ -1121,52 +1121,122 @@ body.has-maintenance-banner .page-header {
 .pantry-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .pantry-card {
     background-color: var(--surface);
-    padding: 1.5rem;
+    padding: 1rem;
     border-radius: 12px;
-    border: 2px solid var(--border);
-    box-shadow: 6px 6px 0 var(--border);
-    transition: transform 0.3s;
-    position: relative;
-    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 3px 3px 0 var(--border);
 }
 
-.pantry-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 12px;
-    right: 12px;
-    height: 5px;
-    border-radius: 999px;
-    background: var(--border);
-}
-
-.pantry-card:hover {
-    transform: translateY(-2px);
+.pantry-card__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 1rem;
+    align-items: start;
 }
 
 .pantry-card-title {
-    font-size: 1.2rem;
+    font-size: 1.08rem;
     color: var(--primary);
-    margin-bottom: 0.5rem;
+    margin: 0 0 0.35rem;
+    line-height: 1.2;
 }
 
-.pantry-card-info {
+.pantry-card-meta {
     color: var(--text);
+    font-size: 0.82rem;
+    margin: 0.2rem 0;
+    line-height: 1.35;
+}
+
+.pantry-card-meta--muted {
+    opacity: 0.7;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    word-break: break-all;
+}
+
+.nutrition-mini {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface) 78%, var(--light-cream) 22%);
+    padding: 0.45rem;
+}
+
+.nutrition-mini__header {
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--text);
+    opacity: 0.75;
+    margin-bottom: 0.4rem;
+}
+
+.nutrition-mini__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+}
+
+.nutrition-mini__cell {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.35rem 0.4rem;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.nutrition-mini__label {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    opacity: 0.7;
+}
+
+.nutrition-mini__value {
     font-size: 0.9rem;
-    margin-bottom: 0.5rem;
+    font-weight: 700;
+    line-height: 1.1;
 }
 
 .pantry-card-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.45rem;
     justify-content: flex-end;
-    margin-top: 1rem;
+    margin-top: 0.75rem;
+}
+
+.pantry-action-btn {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-size: 0.8rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.pantry-action-btn:hover {
+    background: var(--light-cream);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+    .pantry-card__content {
+        grid-template-columns: 1fr;
+        gap: 0.7rem;
+    }
+
+    .pantry-card-actions {
+        justify-content: flex-start;
+    }
 }
 
 /* Calendar */

@@ -333,6 +333,13 @@ async function viewRecipeDetail(recipeId, isOtherUser = false) {
     }
 }
 
+function stripTrailingPriceAnnotation(text) {
+    if (!text || typeof text !== 'string') {
+        return text;
+    }
+    return text.replace(/\s*\(\s*\$\s*\d+(?:\.\d{1,2})?\s*\)\s*$/, '').trim();
+}
+
 function showRecipeDetailModal(recipe, isOtherUser) {
     const modal = document.getElementById('recipeDetailModal');
     const content = document.getElementById('recipeDetailContent');
@@ -353,11 +360,11 @@ function showRecipeDetailModal(recipe, isOtherUser) {
     const ingredientsHtml = filteredIngredients.length > 0
         ? `<ul class="ingredients-list">
             ${filteredIngredients.map(ing => {
-                let line = ing.ingredient_name;
+                let line = stripTrailingPriceAnnotation(ing.ingredient_name);
                 if (ing.quantity && ing.unit) {
-                    line = `${ing.quantity} ${ing.unit} ${ing.ingredient_name}`;
+                    line = `${ing.quantity} ${ing.unit} ${stripTrailingPriceAnnotation(ing.ingredient_name)}`;
                 } else if (ing.quantity) {
-                    line = `${ing.quantity} ${ing.ingredient_name}`;
+                    line = `${ing.quantity} ${stripTrailingPriceAnnotation(ing.ingredient_name)}`;
                 }
                 return `<li>${line}</li>`;
             }).join('')}
@@ -368,11 +375,12 @@ function showRecipeDetailModal(recipe, isOtherUser) {
     const nutritionHtml = nutrition ? `
         <div class="recipe-section">
             <h3>🍎 Nutrition (per serving)</h3>
+            ${nutrition.serving_size ? `<p><strong>Serving size:</strong> ${nutrition.serving_size}</p>` : ''}
             <p>
-                ${nutrition.energy_kcal ? `${nutrition.energy_kcal} kcal` : ''}
-                ${nutrition.proteins ? `${nutrition.proteins}g protein` : ''}
-                ${nutrition.carbohydrates ? `${nutrition.carbohydrates}g carbs` : ''}
-                ${nutrition.fat ? `${nutrition.fat}g fat` : ''}
+                ${nutrition.energy_kcal !== undefined && nutrition.energy_kcal !== null ? `${nutrition.energy_kcal} calories` : ''}
+                ${nutrition.proteins !== undefined && nutrition.proteins !== null ? `${nutrition.proteins}g protein` : ''}
+                ${nutrition.carbohydrates !== undefined && nutrition.carbohydrates !== null ? `${nutrition.carbohydrates}g carbs` : ''}
+                ${nutrition.fat !== undefined && nutrition.fat !== null ? `${nutrition.fat}g fat` : ''}
             </p>
         </div>
     ` : '';
