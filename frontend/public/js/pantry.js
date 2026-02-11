@@ -59,24 +59,80 @@ function createPantryCard(item) {
     const card = document.createElement('div');
     card.className = 'pantry-card';
 
-    const expiryInfo = item.expiry_date ? 
-        `<p class="pantry-card-info">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : '';
-    const servingInfo = formatServingInfo(item);
-    const nutrition = formatNutritionInfo(item.nutritional_info);
+    const servingSize = getPantryServingSize(item);
+    const addedDate = formatPantryAddedDate(item.added_at || item.created_at);
 
     card.innerHTML = `
-        <h3 class="pantry-card-title">${item.item_name}</h3>
-        ${servingInfo ? `<p class="pantry-card-info"><strong>Serving info:</strong> ${servingInfo}</p>` : ''}
-        ${item.barcode ? `<p class="pantry-card-info">Barcode: ${item.barcode}</p>` : ''}
-        ${expiryInfo}
-        ${nutrition ? `<p class="pantry-card-info">${nutrition}</p>` : ''}
+        <div class="pantry-card__content">
+            <div class="pantry-card__left">
+                <h3 class="pantry-card-title">${item.item_name}</h3>
+                ${servingSize ? `<p class="pantry-card-meta">Serving size: ${servingSize}</p>` : ''}
+                ${addedDate ? `<p class="pantry-card-meta">Added: ${addedDate}</p>` : ''}
+                ${item.expiry_date ? `<p class="pantry-card-meta">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : ''}
+                ${item.barcode ? `<p class="pantry-card-meta pantry-card-meta--muted">Barcode: ${item.barcode}</p>` : ''}
+            </div>
+            <div class="pantry-card__right">
+                ${createNutritionMiniTable(item.nutritional_info)}
+            </div>
+        </div>
         <div class="pantry-card-actions">
-            <button class="btn btn-secondary" onclick="editPantryItem(${item.id})">Edit</button>
-            <button class="btn btn-secondary" onclick="deletePantryItem(${item.id})">Delete</button>
+            <button class="pantry-action-btn" onclick="editPantryItem(${item.id})">Edit</button>
+            <button class="pantry-action-btn" onclick="deletePantryItem(${item.id})">Delete</button>
         </div>
     `;
 
     return card;
+}
+
+function createNutritionMiniTable(nutrition) {
+    const normalized = nutrition || {};
+
+    return `
+        <div class="nutrition-mini" role="table" aria-label="Nutrition per serving">
+            <div class="nutrition-mini__header">Per serving</div>
+            <div class="nutrition-mini__grid">
+                ${createNutritionMiniCell('Calories', normalized.energy_kcal, '')}
+                ${createNutritionMiniCell('Protein', normalized.proteins, 'g')}
+                ${createNutritionMiniCell('Carbs', normalized.carbohydrates, 'g')}
+                ${createNutritionMiniCell('Fat', normalized.fat, 'g')}
+            </div>
+        </div>
+    `;
+}
+
+function createNutritionMiniCell(label, value, suffix) {
+    const hasValue = value !== undefined && value !== null && !Number.isNaN(Number(value));
+    const displayValue = hasValue ? `${value}${suffix}` : '—';
+
+    return `
+        <div class="nutrition-mini__cell" role="row">
+            <span class="nutrition-mini__label">${label}</span>
+            <span class="nutrition-mini__value">${displayValue}</span>
+        </div>
+    `;
+}
+
+function getPantryServingSize(item) {
+    const servingSize = item.nutritional_info?.serving_size;
+    if (servingSize) {
+        return servingSize;
+    }
+    if (item.quantity) {
+        return `${item.quantity} ${item.unit || ''}`.trim();
+    }
+    return '';
+}
+
+function formatPantryAddedDate(isoDate) {
+    if (!isoDate) return '';
+    const parsed = new Date(isoDate);
+    if (Number.isNaN(parsed.getTime())) return '';
+
+    return new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    }).format(parsed);
 }
 
 function openPantryModal(item = null) {
