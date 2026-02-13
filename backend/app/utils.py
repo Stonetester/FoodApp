@@ -391,21 +391,29 @@ def _estimate_nutrition_from_ingredients(ingredients):
             'carbohydrates', 'fiber', 'sugars', 'added_sugars', 'proteins',
             'vitamin_d', 'calcium', 'iron', 'potassium']
     found = False
+    consecutive_failures = 0
 
     for ing in (ingredients or []):
         name = ing.get('ingredient_name', '')
         if not name or name == '__nutrition__':
             continue
+        # Circuit breaker: stop calling the API after 2 consecutive failures
+        # (likely means the service is down or unreachable)
+        if consecutive_failures >= 2:
+            break
         try:
             nutrition = lookup_ingredient_nutrition(name)
         except Exception:
             nutrition = None
         if nutrition:
             found = True
+            consecutive_failures = 0
             for k in keys:
                 val = nutrition.get(k)
                 if val is not None:
                     totals[k] = totals.get(k, 0) + val
+        else:
+            consecutive_failures += 1
 
     if not found:
         return None
