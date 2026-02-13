@@ -227,6 +227,31 @@ function setupEventListeners() {
         });
     }
 
+    // Mobile FAB buttons
+    const mobileFabRecipe = document.getElementById('mobileFabRecipe');
+    if (mobileFabRecipe) {
+        mobileFabRecipe.addEventListener('click', () => {
+            const modal = document.getElementById('quickAddRecipeModal');
+            if (modal) {
+                document.getElementById('quickPasteLinkForm').style.display = 'none';
+                document.getElementById('quickImportResult').innerHTML = '';
+                document.getElementById('quickRecipeUrl').value = '';
+                modal.classList.add('active');
+            }
+        });
+    }
+
+    const mobileFabPantry = document.getElementById('mobileFabPantry');
+    if (mobileFabPantry) {
+        mobileFabPantry.addEventListener('click', () => {
+            const scannerModal = document.getElementById('scannerModal');
+            if (scannerModal) {
+                scannerModal.classList.add('active');
+                if (window.initScanner) window.initScanner();
+            }
+        });
+    }
+
     // Quick paste link
     const quickPasteLinkBtn = document.getElementById('quickPasteLinkBtn');
     if (quickPasteLinkBtn) {
@@ -720,7 +745,7 @@ function updateActiveNav(pageName) {
     const moreTabBtn = document.getElementById('moreTabBtn');
     navLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
     bottomLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
-    const morePages = ['history', 'userSearch', 'styleGuide', 'settings'];
+    const morePages = ['account', 'history', 'userSearch', 'styleGuide', 'settings'];
     if (moreTabBtn) {
         moreTabBtn.classList.toggle('is-active', morePages.includes(pageName));
     }
@@ -733,14 +758,20 @@ function updateActiveNav(pageName) {
 function applyMaintenanceBanners() {
     const banners = document.querySelectorAll('[data-maintenance-banner]');
     const isEnabled = maintenanceAnnouncement.enabled;
+    const wasDismissed = sessionStorage.getItem('mg_banner_dismissed') === '1';
     banners.forEach((banner) => {
         const messageEl = banner.querySelector('[data-maintenance-message]');
         if (messageEl) {
             messageEl.textContent = maintenanceAnnouncement.message;
         }
-        banner.classList.toggle('is-hidden', !isEnabled);
+        banner.classList.toggle('is-hidden', !isEnabled || wasDismissed);
+        banner.addEventListener('click', () => {
+            banner.classList.add('is-hidden');
+            document.body.classList.remove('has-maintenance-banner');
+            sessionStorage.setItem('mg_banner_dismissed', '1');
+        });
     });
-    document.body.classList.toggle('has-maintenance-banner', isEnabled);
+    document.body.classList.toggle('has-maintenance-banner', isEnabled && !wasDismissed);
 }
 
 
