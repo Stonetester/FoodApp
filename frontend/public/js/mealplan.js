@@ -649,16 +649,19 @@ function renderMealSections(viewName) {
                 return zone;
             }
 
-            // Snack zone before breakfast
-            col.appendChild(buildSnackZone(snackSlots[0].note));
+            // Only render snack zones and meal blocks that have actual content
+            const hasBeforeBreakfastSnacks = mealsByType.snacks.some(s => normalizeNote(s.notes) === normalizeNote(snackSlots[0].note));
+            if (hasBeforeBreakfastSnacks) {
+                col.appendChild(buildSnackZone(snackSlots[0].note));
+            }
 
-            // Breakfast
-            const bfBlock = document.createElement('div');
-            bfBlock.className = 'week-meal-block';
+            // Breakfast - only if populated
             const bfMeal = mealsByType.breakfast;
-            bfBlock.innerHTML = `
-                <div class="week-meal-label">🌅 Breakfast</div>
-                ${bfMeal && bfMeal.recipe ? `
+            if (bfMeal && bfMeal.recipe) {
+                const bfBlock = document.createElement('div');
+                bfBlock.className = 'week-meal-block';
+                bfBlock.innerHTML = `
+                    <div class="week-meal-label">🌅 Breakfast</div>
                     <div class="week-meal-content">
                         <strong>${bfMeal.recipe.title}</strong>
                         <div class="meal-section-actions">
@@ -666,20 +669,22 @@ function renderMealSections(viewName) {
                             <button class="btn-icon" type="button" data-delete="${bfMeal.id}" title="Delete">🗑️</button>
                         </div>
                     </div>
-                ` : `<p class="meal-empty">—</p>`}
-            `;
-            col.appendChild(bfBlock);
+                `;
+                col.appendChild(bfBlock);
+            }
 
-            // Snack zone between breakfast & lunch
-            col.appendChild(buildSnackZone(snackSlots[1].note));
+            const hasBfLnSnacks = mealsByType.snacks.some(s => normalizeNote(s.notes) === normalizeNote(snackSlots[1].note));
+            if (hasBfLnSnacks) {
+                col.appendChild(buildSnackZone(snackSlots[1].note));
+            }
 
-            // Lunch
-            const lnBlock = document.createElement('div');
-            lnBlock.className = 'week-meal-block';
+            // Lunch - only if populated
             const lnMeal = mealsByType.lunch;
-            lnBlock.innerHTML = `
-                <div class="week-meal-label">☀️ Lunch</div>
-                ${lnMeal && lnMeal.recipe ? `
+            if (lnMeal && lnMeal.recipe) {
+                const lnBlock = document.createElement('div');
+                lnBlock.className = 'week-meal-block';
+                lnBlock.innerHTML = `
+                    <div class="week-meal-label">☀️ Lunch</div>
                     <div class="week-meal-content">
                         <strong>${lnMeal.recipe.title}</strong>
                         <div class="meal-section-actions">
@@ -687,20 +692,22 @@ function renderMealSections(viewName) {
                             <button class="btn-icon" type="button" data-delete="${lnMeal.id}" title="Delete">🗑️</button>
                         </div>
                     </div>
-                ` : `<p class="meal-empty">—</p>`}
-            `;
-            col.appendChild(lnBlock);
+                `;
+                col.appendChild(lnBlock);
+            }
 
-            // Snack zone between lunch & dinner
-            col.appendChild(buildSnackZone(snackSlots[2].note));
+            const hasLnDnSnacks = mealsByType.snacks.some(s => normalizeNote(s.notes) === normalizeNote(snackSlots[2].note));
+            if (hasLnDnSnacks) {
+                col.appendChild(buildSnackZone(snackSlots[2].note));
+            }
 
-            // Dinner
-            const dnBlock = document.createElement('div');
-            dnBlock.className = 'week-meal-block';
+            // Dinner - only if populated
             const dnMeal = mealsByType.dinner;
-            dnBlock.innerHTML = `
-                <div class="week-meal-label">🌙 Dinner</div>
-                ${dnMeal && dnMeal.recipe ? `
+            if (dnMeal && dnMeal.recipe) {
+                const dnBlock = document.createElement('div');
+                dnBlock.className = 'week-meal-block';
+                dnBlock.innerHTML = `
+                    <div class="week-meal-label">🌙 Dinner</div>
                     <div class="week-meal-content">
                         <strong>${dnMeal.recipe.title}</strong>
                         <div class="meal-section-actions">
@@ -708,12 +715,14 @@ function renderMealSections(viewName) {
                             <button class="btn-icon" type="button" data-delete="${dnMeal.id}" title="Delete">🗑️</button>
                         </div>
                     </div>
-                ` : `<p class="meal-empty">—</p>`}
-            `;
-            col.appendChild(dnBlock);
+                `;
+                col.appendChild(dnBlock);
+            }
 
-            // Snack zone after dinner
-            col.appendChild(buildSnackZone(snackSlots[3].note));
+            const hasAfterDinnerSnacks = mealsByType.snacks.some(s => normalizeNote(s.notes) === normalizeNote(snackSlots[3].note));
+            if (hasAfterDinnerSnacks) {
+                col.appendChild(buildSnackZone(snackSlots[3].note));
+            }
 
             // Anytime snacks (unmatched)
             const anytimeSnacks = mealsByType.snacks.filter(s => !snackSlots.some(slot => normalizeNote(s.notes) === normalizeNote(slot.note)));

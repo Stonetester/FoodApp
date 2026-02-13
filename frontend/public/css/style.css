@@ -382,6 +382,15 @@ body::before {
     color: var(--text);
 }
 
+.bottom-nav__link--center .bottom-nav__icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+.bottom-nav__link--center.is-active {
+    background: rgba(192, 103, 45, 0.2);
+}
+
 .bottom-nav__more {
     border: 1px dashed rgba(201, 164, 129, 0.6);
 }
@@ -3632,4 +3641,99 @@ button {
     font-weight: 500;
     color: var(--primary);
     margin: 0;
+}
+
+/* ==================== LOGIN LOGO ==================== */
+.login-logo {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.login-logo-img {
+    width: 120px;
+    height: auto;
+}
+
+/* ==================== FRIENDS AVATAR ==================== */
+.friends-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+}
+
+/* ==================== MAINTENANCE BANNER DISMISS ==================== */
+.maintenance-banner--global {
+    cursor: pointer;
+}
+
+/* ==================== MOBILE FAB BUTTONS ==================== */
+.mobile-fab-container {
+    display: none;
+}
+
+/* ==================== MOBILE UX FIXES ==================== */
+@media (max-width: 899px) {
+    /* Container shadow clipping fix */
+    .container {
+        box-shadow: 3px 3px 0 var(--border), 0 8px 16px rgba(46, 27, 13, 0.08);
+        border: 1px solid var(--border);
+    }
+
+    /* Dashboard stat cards - reduce sizing */
+    .stat-card h3 {
+        font-size: 2rem;
+    }
+    .stat-card {
+        box-shadow: 3px 3px 0 var(--border);
+    }
+    .dashboard-stats {
+        gap: 0.75rem;
+    }
+
+    /* Friends avatar on mobile */
+    .friends-avatar {
+        width: 56px;
+        height: 56px;
+    }
+
+    /* Mobile FABs - visible when authenticated */
+    .app-authenticated .mobile-fab-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        z-index: 1100;
+    }
+
+    body.has-maintenance-banner .mobile-fab-container {
+        top: calc(var(--maintenance-banner-height) + 12px);
+    }
+
+    .mobile-fab {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 2px solid var(--border);
+        background: #1B3A5C;
+        color: var(--accent-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 2px 2px 0 var(--border), 0 4px 8px rgba(0, 0, 0, 0.15);
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .mobile-fab svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .mobile-fab:active {
+        transform: scale(0.92);
+        box-shadow: 1px 1px 0 var(--border);
+    }
 }
