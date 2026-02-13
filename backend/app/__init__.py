@@ -46,8 +46,16 @@ def _get_columns(conn, table_name):
             """
         ),
         {"table_name": table_name}
-    ).mappings().all()
-    return {row["column_name"]: row for row in rows}
+    ).fetchall()
+    result = {}
+    for row in rows:
+        result[row[0]] = {
+            "column_name": row[0],
+            "is_nullable": row[1],
+            "column_default": row[2],
+            "extra": row[3],
+        }
+    return result
 
 def _get_primary_key_columns(conn, table_name):
     rows = conn.execute(
@@ -83,8 +91,15 @@ def _get_indexes(conn, table_name):
             """
         ),
         {"table_name": table_name}
-    ).mappings().all()
-    return rows
+    ).fetchall()
+    result = []
+    for row in rows:
+        result.append({
+            "index_name": row[0],
+            "non_unique": row[1],
+            "columns": row[2],
+        })
+    return result
 
 def _has_index(conn, table_name, index_name):
     result = conn.execute(
@@ -341,10 +356,72 @@ def _ensure_friendships_schema(conn):
                 text("ALTER TABLE friendships MODIFY COLUMN friend_id INT NOT NULL")
             )
 
+def _ensure_recipe_reviews_schema(conn):
+    if not _table_exists(conn, "recipe_reviews"):
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS recipe_reviews (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    user_id INT NOT NULL,
+                    recipe_id INT NOT NULL,
+                    rating INT NOT NULL,
+                    review_text TEXT,
+                    created_at DATETIME,
+                    updated_at DATETIME,
+                    PRIMARY KEY (id),
+                    UNIQUE KEY unique_user_recipe_review (user_id, recipe_id),
+                    INDEX idx_recipe_reviews_recipe (recipe_id),
+                    INDEX idx_recipe_reviews_user (user_id)
+                )
+                """
+            )
+        )
+
 def ensure_social_schema():
     with db.engine.begin() as conn:
         _ensure_friend_requests_schema(conn)
         _ensure_friendships_schema(conn)
+        _ensure_recipe_reviews_schema(conn)
+
+def _ensure_pantry_and_recipe_schema():
+    """Add new columns for pantry categories, serving info, and recipe serving_size."""
+    with db.engine.begin() as conn:
+        # -- pantry_items new columns --
+        if _table_exists(conn, 'pantry_items'):
+            cols = _get_columns(conn, 'pantry_items')
+            if 'category' not in cols:
+                conn.execute(text(
+                    "ALTER TABLE pantry_items ADD COLUMN category VARCHAR(64) NOT NULL DEFAULT 'Other'"
+                ))
+            if 'serving_size' not in cols:
+                conn.execute(text(
+                    "ALTER TABLE pantry_items ADD COLUMN serving_size VARCHAR(100) DEFAULT NULL"
+                ))
+            if 'servings_per_container' not in cols:
+                conn.execute(text(
+                    "ALTER TABLE pantry_items ADD COLUMN servings_per_container FLOAT DEFAULT NULL"
+                ))
+            if 'container_type' not in cols:
+                conn.execute(text(
+                    "ALTER TABLE pantry_items ADD COLUMN container_type VARCHAR(50) DEFAULT NULL"
+                ))
+            if not _has_index(conn, 'pantry_items', 'idx_pantry_items_category'):
+                conn.execute(text(
+                    "CREATE INDEX idx_pantry_items_category ON pantry_items (category)"
+                ))
+
+        # -- recipes new columns --
+        if _table_exists(conn, 'recipes'):
+            cols = _get_columns(conn, 'recipes')
+            if 'serving_size' not in cols:
+                conn.execute(text(
+                    "ALTER TABLE recipes ADD COLUMN serving_size VARCHAR(100) DEFAULT NULL"
+                ))
+            if 'source_url' not in cols:
+                conn.execute(text(
+                    "ALTER TABLE recipes ADD COLUMN source_url VARCHAR(500) DEFAULT NULL"
+                ))
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -376,7 +453,11 @@ def create_app(config_class=Config):
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(main_bp)  # Register main blueprint last for catch-all route
-    
+
+    # Register CLI commands
+    from app.tasks import register_cli
+    register_cli(app)
+
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
@@ -396,9 +477,9 @@ def create_app(config_class=Config):
     
     # Create tables
     with app.app_context():
-        #db.create_all()
-        #ensure_social_schema()
-        #print("✅ Database tables created successfully")
-        print("✅ App started (DB schema not auto-modified on startup)")
+        db.create_all()
+        ensure_social_schema()
+        _ensure_pantry_and_recipe_schema()
+        print("✅ Database tables created successfully")
     
     return app

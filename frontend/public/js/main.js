@@ -2,10 +2,17 @@
 
 let currentUser = null;
 
+const maintenanceAnnouncement = {
+    enabled: true,
+    message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
+};
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     setupResponsiveClass();
+    applyMaintenanceBanners();
+    initializeLucideIcons();
 });
 
 async function initializeApp() {
@@ -104,6 +111,34 @@ function setupEventListeners() {
         });
     });
 
+    document.querySelectorAll('.page-link[data-page]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = e.currentTarget.dataset.page;
+            if (page) {
+                navigateToPage(page);
+            }
+        });
+    });
+
+    document.querySelectorAll('.bottom-nav__link[data-page]').forEach(link => {
+        link.addEventListener('click', () => {
+            const page = link.dataset.page;
+            if (page) {
+                navigateToPage(page);
+            }
+        });
+    });
+
+    document.querySelectorAll('.sheet-link[data-page]').forEach(link => {
+        link.addEventListener('click', () => {
+            const page = link.dataset.page;
+            if (page) {
+                navigateToPage(page);
+            }
+        });
+    });
+
     // Mobile menu toggle
     const navToggle = document.getElementById('navToggle');
     const navMenu = document.getElementById('navMenu');
@@ -112,6 +147,41 @@ function setupEventListeners() {
             navMenu.classList.toggle('active');
         });
     }
+
+    const moreTabBtn = document.getElementById('moreTabBtn');
+    const moreSheetClose = document.getElementById('moreSheetClose');
+    const moreSheetBackdrop = document.getElementById('moreSheetBackdrop');
+
+    if (moreTabBtn) {
+        moreTabBtn.addEventListener('click', () => {
+            toggleMoreSheet();
+        });
+    }
+
+    if (moreSheetClose) {
+        moreSheetClose.addEventListener('click', () => {
+            toggleMoreSheet(false);
+        });
+    }
+
+    if (moreSheetBackdrop) {
+        moreSheetBackdrop.addEventListener('click', () => {
+            toggleMoreSheet(false);
+        });
+    }
+
+    const logoutBtnSheet = document.getElementById('logoutBtnSheet');
+    if (logoutBtnSheet) {
+        logoutBtnSheet.addEventListener('click', async () => {
+            await handleLogout();
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            toggleMoreSheet(false);
+        }
+    });
 
     // Modal close buttons
     document.querySelectorAll('.close').forEach(closeBtn => {
@@ -130,6 +200,171 @@ function setupEventListeners() {
                 modal.classList.remove('active');
             }
         });
+    });
+
+    // Quick action buttons
+    const quickAddRecipeBtn = document.getElementById('quickAddRecipeBtn');
+    if (quickAddRecipeBtn) {
+        quickAddRecipeBtn.addEventListener('click', () => {
+            const modal = document.getElementById('quickAddRecipeModal');
+            if (modal) {
+                document.getElementById('quickPasteLinkForm').style.display = 'none';
+                document.getElementById('quickImportResult').innerHTML = '';
+                document.getElementById('quickRecipeUrl').value = '';
+                modal.classList.add('active');
+            }
+        });
+    }
+
+    const quickAddPantryBtn = document.getElementById('quickAddPantryBtn');
+    if (quickAddPantryBtn) {
+        quickAddPantryBtn.addEventListener('click', () => {
+            const scannerModal = document.getElementById('scannerModal');
+            if (scannerModal) {
+                scannerModal.classList.add('active');
+                if (window.initScanner) window.initScanner();
+            }
+        });
+    }
+
+    // Quick paste link
+    const quickPasteLinkBtn = document.getElementById('quickPasteLinkBtn');
+    if (quickPasteLinkBtn) {
+        quickPasteLinkBtn.addEventListener('click', async () => {
+            const urlInput = document.getElementById('quickRecipeUrl');
+            const form = document.getElementById('quickPasteLinkForm');
+            form.style.display = 'block';
+            // Try clipboard auto-fill
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
+                    urlInput.value = text;
+                }
+            } catch (e) {
+                // Clipboard not available, user will type manually
+            }
+            urlInput.focus();
+        });
+    }
+
+    // Quick manual recipe
+    const quickManualRecipeBtn = document.getElementById('quickManualRecipeBtn');
+    if (quickManualRecipeBtn) {
+        quickManualRecipeBtn.addEventListener('click', () => {
+            document.getElementById('quickAddRecipeModal').classList.remove('active');
+            if (window.openRecipeModal) window.openRecipeModal();
+            else navigateToPage('recipes');
+        });
+    }
+
+    // Quick import URL
+    const quickImportUrlBtn = document.getElementById('quickImportUrlBtn');
+    if (quickImportUrlBtn) {
+        quickImportUrlBtn.addEventListener('click', async () => {
+            const url = document.getElementById('quickRecipeUrl').value.trim();
+            const resultDiv = document.getElementById('quickImportResult');
+            if (!url) {
+                resultDiv.innerHTML = '<p class="error-message">Please enter a URL</p>';
+                return;
+            }
+            try { new URL(url); } catch (e) {
+                resultDiv.innerHTML = '<p class="error-message">Please enter a valid URL</p>';
+                return;
+            }
+            resultDiv.innerHTML = '<p style="text-align:center;">Importing recipe...</p>';
+            try {
+                const recipeData = await api.importRecipeFromUrl(url);
+                if (recipeData && recipeData.title) {
+                    document.getElementById('quickAddRecipeModal').classList.remove('active');
+                    if (window.openRecipeModal) {
+                        window.openRecipeModal({
+                            id: undefined,
+                            title: recipeData.title || 'Imported Recipe',
+                            description: recipeData.description || null,
+                            instructions: recipeData.instructions || null,
+                            prep_time: recipeData.prep_time || null,
+                            cook_time: recipeData.cook_time || null,
+                            servings: recipeData.servings || null,
+                            nutrition: recipeData.nutrition || null,
+                            image_url: recipeData.image_url || null,
+                            source_url: recipeData.source_url || url,
+                            ingredients: recipeData.ingredients || [],
+                            tags: recipeData.tags || []
+                        });
+                    }
+                } else {
+                    resultDiv.innerHTML = '<p class="error-message">Could not extract recipe from URL.</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error-message">${error.message || 'Import failed'}</p>`;
+            }
+        });
+    }
+
+    // Nav dropdown toggle
+    const navDropdownToggle = document.getElementById('navDropdownToggle');
+    const navDropdownMenu = document.getElementById('navDropdownMenu');
+    if (navDropdownToggle && navDropdownMenu) {
+        navDropdownToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = navDropdownMenu.classList.toggle('is-open');
+            navDropdownToggle.setAttribute('aria-expanded', String(isOpen));
+        });
+        document.addEventListener('click', (e) => {
+            if (!navDropdownMenu.contains(e.target) && e.target !== navDropdownToggle) {
+                navDropdownMenu.classList.remove('is-open');
+                navDropdownToggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
+
+    // Swipe-to-dismiss for modals
+    document.querySelectorAll('.modal').forEach(modal => {
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+        const content = modal.querySelector('.modal-content');
+        if (!content) return;
+
+        content.addEventListener('touchstart', (e) => {
+            if (content.scrollTop > 0) return; // Only allow swipe when scrolled to top
+            startY = e.touches[0].clientY;
+            isDragging = true;
+            content.style.transition = 'none';
+        }, { passive: true });
+
+        content.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentY = e.touches[0].clientY;
+            const diff = currentY - startY;
+            if (diff > 0) { // Only allow downward swipe
+                content.style.transform = `translateY(${diff}px)`;
+                content.style.opacity = String(Math.max(0.5, 1 - diff / 400));
+            }
+        }, { passive: true });
+
+        content.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            const diff = currentY - startY;
+            content.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+            if (diff > 120) {
+                // Dismiss
+                content.style.transform = 'translateY(100%)';
+                content.style.opacity = '0';
+                setTimeout(() => {
+                    modal.classList.remove('active');
+                    content.style.transform = '';
+                    content.style.opacity = '';
+                }, 250);
+            } else {
+                // Snap back
+                content.style.transform = '';
+                content.style.opacity = '';
+            }
+            currentY = 0;
+            startY = 0;
+        }, { passive: true });
     });
 }
 
@@ -202,19 +437,22 @@ async function handleLogout() {
 }
 
 function showLogin() {
+    hideAllPages();
     document.getElementById('loginPage').classList.add('active');
     document.getElementById('navbar').style.display = 'none';
     document.body.classList.remove('app-authenticated');
-    hideAllPages();
+    toggleMoreSheet(false);
 }
 
 function showApp() {
     document.getElementById('loginPage').classList.remove('active');
-    document.getElementById('navbar').style.display = 'block';
+    document.getElementById('navbar').style.display = '';
     document.body.classList.add('app-authenticated');
     navigateToPage('dashboard');
     loadDashboard();
     handleSharedRecipeLink();
+    initTutorial();
+    showTutorialIfNew();
 }
 
 function updateRecipesTitle() {
@@ -261,13 +499,25 @@ function navigateToPage(pageName) {
         'mealplan': 'mealplanPage',
         'history': 'historyPage',
         'userSearch': 'userSearchPage',
-        'social': 'socialPage'
+        'social': 'socialPage',
+        'friends': 'friendsPage',
+        'styleGuide': 'styleGuidePage',
+        'account': 'accountPage',
+        'settings': 'settingsPage'
     };
+
+    if (pageName === 'friends') {
+        pageName = 'social';
+        // After navigation, activate friends tab
+        setTimeout(() => {
+            if (window.activateSocialFriendsTab) window.activateSocialFriendsTab();
+        }, 100);
+    }
 
     const pageId = pageMap[pageName];
     if (pageId) {
         document.getElementById(pageId).classList.add('active');
-        
+
         // Load page-specific data
         if (pageName === 'recipes') {
             loadRecipes();
@@ -278,17 +528,42 @@ function navigateToPage(pageName) {
         } else if (pageName === 'social') {
             if (window.loadSocialData) window.loadSocialData();
             if (window.startSocialPolling) window.startSocialPolling();
+        } else if (pageName === 'friends') {
+            if (window.loadFriendsPage) window.loadFriendsPage();
+        } else if (pageName === 'account') {
+            if (window.loadAccountPage) window.loadAccountPage();
         } else if (pageName === 'pantry') {
             loadPantry();
         } else if (pageName === 'mealplan') {
             loadMealPlan();
         } else if (pageName === 'history') {
             loadHistory();
+        } else if (pageName === 'settings') {
+            if (window.loadSettingsPage) window.loadSettingsPage();
         }
     }
 
     // Close mobile menu
     document.getElementById('navMenu').classList.remove('active');
+    closeAllSheetsAndModals();
+    updateActiveNav(pageName);
+
+    if (pageName === 'mealplan' && window.innerWidth < 768) {
+        setTimeout(() => {
+            const activeView = document.querySelector('.view-switcher .view-btn.active')?.dataset.view;
+            if (activeView === 'dayGridMonth') {
+                document.querySelector('.view-switcher .view-btn[data-view="mealWeek"]')?.click();
+            }
+        }, 120);
+    }
+
+    initializeLucideIcons();
+}
+
+function initializeLucideIcons() {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+    }
 }
 
 async function loadDashboard() {
@@ -419,7 +694,117 @@ function setupResponsiveClass() {
     window.addEventListener('resize', apply);
 }
 
+function closeAllSheetsAndModals() {
+    toggleMoreSheet(false);
+    document.querySelectorAll('.modal.active').forEach((modal) => {
+        modal.classList.remove('active');
+    });
+}
+
+function toggleMoreSheet(shouldOpen) {
+    const sheet = document.getElementById('moreSheet');
+    const backdrop = document.getElementById('moreSheetBackdrop');
+    const moreTabBtn = document.getElementById('moreTabBtn');
+    if (!sheet || !backdrop || !moreTabBtn) return;
+    const isOpen = shouldOpen ?? !sheet.classList.contains('is-open');
+    sheet.classList.toggle('is-open', isOpen);
+    backdrop.classList.toggle('is-open', isOpen);
+    sheet.setAttribute('aria-hidden', String(!isOpen));
+    backdrop.setAttribute('aria-hidden', String(!isOpen));
+    moreTabBtn.setAttribute('aria-expanded', String(isOpen));
+}
+
+function updateActiveNav(pageName) {
+    const navLinks = document.querySelectorAll('.nav-link[data-page], .nav-link-inline[data-page]');
+    const bottomLinks = document.querySelectorAll('.bottom-nav__link[data-page]');
+    const moreTabBtn = document.getElementById('moreTabBtn');
+    navLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
+    bottomLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
+    const morePages = ['history', 'userSearch', 'styleGuide', 'settings'];
+    if (moreTabBtn) {
+        moreTabBtn.classList.toggle('is-active', morePages.includes(pageName));
+    }
+
+    document.querySelectorAll('.sheet-link[data-page]').forEach((sheetLink) => {
+        sheetLink.classList.toggle('is-active', sheetLink.dataset.page === pageName);
+    });
+}
+
+function applyMaintenanceBanners() {
+    const banners = document.querySelectorAll('[data-maintenance-banner]');
+    const isEnabled = maintenanceAnnouncement.enabled;
+    banners.forEach((banner) => {
+        const messageEl = banner.querySelector('[data-maintenance-message]');
+        if (messageEl) {
+            messageEl.textContent = maintenanceAnnouncement.message;
+        }
+        banner.classList.toggle('is-hidden', !isEnabled);
+    });
+    document.body.classList.toggle('has-maintenance-banner', isEnabled);
+}
+
+
+// ---- Tutorial / Help ----
+function initTutorial() {
+    const modal = document.getElementById('tutorialModal');
+    if (!modal) return;
+
+    const slides = modal.querySelectorAll('.tutorial-slide');
+    const dotsContainer = document.getElementById('tutorialDots');
+    const prevBtn = document.getElementById('tutorialPrev');
+    const nextBtn = document.getElementById('tutorialNext');
+    let current = 0;
+
+    // Build dots
+    dotsContainer.innerHTML = '';
+    slides.forEach((_, i) => {
+        const dot = document.createElement('span');
+        dot.className = 'tutorial-dot' + (i === 0 ? ' active' : '');
+        dotsContainer.appendChild(dot);
+    });
+    const dots = dotsContainer.querySelectorAll('.tutorial-dot');
+
+    function goTo(index) {
+        slides[current].classList.remove('active');
+        dots[current].classList.remove('active');
+        current = Math.max(0, Math.min(index, slides.length - 1));
+        slides[current].classList.add('active');
+        dots[current].classList.add('active');
+        prevBtn.style.visibility = current === 0 ? 'hidden' : 'visible';
+        nextBtn.textContent = current === slides.length - 1 ? 'Done' : 'Next';
+    }
+
+    prevBtn.addEventListener('click', () => goTo(current - 1));
+    nextBtn.addEventListener('click', () => {
+        if (current === slides.length - 1) {
+            modal.classList.remove('active');
+            localStorage.setItem('mg_tutorial_seen', '1');
+        } else {
+            goTo(current + 1);
+        }
+    });
+
+    // Help button
+    const helpBtn = document.getElementById('navHelpBtn');
+    if (helpBtn) {
+        helpBtn.addEventListener('click', () => {
+            goTo(0);
+            modal.classList.add('active');
+        });
+    }
+
+    goTo(0);
+}
+
+function showTutorialIfNew() {
+    if (!localStorage.getItem('mg_tutorial_seen')) {
+        const modal = document.getElementById('tutorialModal');
+        if (modal) modal.classList.add('active');
+    }
+}
 
 // Export for use in other modules
 window.navigateToPage = navigateToPage;
 window.currentUser = () => currentUser;
+window.initTutorial = initTutorial;
+window.showTutorialIfNew = showTutorialIfNew;

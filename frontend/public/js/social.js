@@ -11,6 +11,7 @@ let socialPollInterval = null;
 function setupSocialListeners() {
     const sendBtn = document.getElementById('sendFriendRequestBtn');
     const friendInput = document.getElementById('friendUsernameInput');
+    const refreshBtn = document.getElementById('refreshSocialBtn');
     if (sendBtn) {
         sendBtn.addEventListener('click', async () => {
             const input = document.getElementById('friendUsernameInput');
@@ -50,6 +51,19 @@ function setupSocialListeners() {
         });
     }
 
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            refreshBtn.setAttribute('disabled', 'disabled');
+            refreshBtn.classList.add('is-loading');
+            try {
+                await loadSocialData();
+            } finally {
+                refreshBtn.removeAttribute('disabled');
+                refreshBtn.classList.remove('is-loading');
+            }
+        });
+    }
+
     if (friendInput) {
         friendInput.addEventListener('input', () => {
             const query = friendInput.value.trim();
@@ -61,7 +75,35 @@ function setupSocialListeners() {
             }, 250);
         });
     }
+
+    setupSocialTabs();
 }
+
+function setupSocialTabs() {
+    document.querySelectorAll('.social-tab[data-social-tab]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Update tab buttons
+            document.querySelectorAll('.social-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.social-tab-content').forEach(c => c.classList.remove('active'));
+            const target = tab.dataset.socialTab;
+            if (target === 'activity') {
+                document.getElementById('socialActivityTab')?.classList.add('active');
+            } else if (target === 'friends') {
+                document.getElementById('socialFriendsTab')?.classList.add('active');
+                if (window.loadFriendsPage) window.loadFriendsPage();
+            }
+        });
+    });
+}
+
+function activateSocialFriendsTab() {
+    const friendsTab = document.querySelector('.social-tab[data-social-tab="friends"]');
+    if (friendsTab) friendsTab.click();
+}
+window.activateSocialFriendsTab = activateSocialFriendsTab;
 
 async function handleFriendRequestSubmit() {
     const input = document.getElementById('friendUsernameInput');
@@ -139,7 +181,7 @@ async function loadSocialData() {
             api.getFriendRequests()
         ]);
         renderFriendRequests(requests);
-        renderFriendsList(friends);
+        renderSocialFriendsList(friends);
     } catch (error) {
         console.error('Error loading social data:', error);
     }
@@ -189,7 +231,7 @@ function renderFriendRequests(requests) {
     }
 }
 
-function renderFriendsList(friends) {
+function renderSocialFriendsList(friends) {
     const friendsContainer = document.getElementById('friendsList');
     if (!friendsContainer) return;
     

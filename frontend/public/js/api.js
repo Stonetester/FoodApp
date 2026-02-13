@@ -72,6 +72,44 @@ class ApiService {
         return this.request('/api/auth/me');
     }
 
+
+    async getMyAccountProfile() {
+        return this.request('/api/auth/account-profile');
+    }
+
+    async getAccountProfile() {
+        const data = await this.getMyAccountProfile();
+        return data.account_profile || {};
+    }
+
+    async updateAccountProfile(profileData) {
+        return this.request('/api/auth/account-profile', {
+            method: 'PUT',
+            body: JSON.stringify(profileData),
+        });
+    }
+
+    async updateProfile(profileData) {
+        return this.request('/api/auth/settings/profile', {
+            method: 'PUT',
+            body: JSON.stringify(profileData),
+        });
+    }
+
+    async changePassword(passwordData) {
+        return this.request('/api/auth/settings/password', {
+            method: 'PUT',
+            body: JSON.stringify(passwordData),
+        });
+    }
+
+    async deleteAccount(password) {
+        return this.request('/api/auth/settings/account', {
+            method: 'DELETE',
+            body: JSON.stringify({ password, confirm: 'DELETE' }),
+        });
+    }
+
     // Recipes
     async getRecipes(filters = {}) {
         const params = new URLSearchParams();
@@ -171,6 +209,13 @@ class ApiService {
         });
     }
 
+    async scanNutritionLabel(imageData) {
+        return this.request('/api/pantry/scan-nutrition-label', {
+            method: 'POST',
+            body: JSON.stringify({ image: imageData }),
+        });
+    }
+
     // Meal Planning
     async getMealPlan(startDate, endDate) {
         const params = new URLSearchParams();
@@ -221,6 +266,18 @@ class ApiService {
         return this.request('/api/friends');
     }
 
+    async getUserRecipes(userId) {
+        return this.request(`/api/users/${userId}/recipes`);
+    }
+
+    async getUserMealPlan(userId, startDate, endDate) {
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        const query = params.toString();
+        return this.request(`/api/users/${userId}/mealplan${query ? '?' + query : ''}`);
+    }
+
     async getFriendRequests() {
         return this.request('/api/friends/requests');
     }
@@ -247,6 +304,24 @@ class ApiService {
     async removeFriend(friendId) {
         return this.request(`/api/friends/${friendId}`, {
             method: 'DELETE'
+        });
+    }
+
+    // Recipe Reviews
+    async getRecipeReviews(recipeId) {
+        return this.request(`/api/recipes/${recipeId}/reviews`);
+    }
+
+    async createRecipeReview(recipeId, data) {
+        return this.request(`/api/recipes/${recipeId}/reviews`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteRecipeReview(recipeId, reviewId) {
+        return this.request(`/api/recipes/${recipeId}/reviews/${reviewId}`, {
+            method: 'DELETE',
         });
     }
 }
