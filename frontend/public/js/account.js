@@ -147,17 +147,39 @@ function handleProfileImageSelected(file) {
             return;
         }
 
-        const avatarInput = document.getElementById('accountAvatarUrl');
-        if (avatarInput) {
-            avatarInput.value = dataUrl;
-        }
+        // Resize image to 256x256 for avatar
+        const img = new Image();
+        img.onload = () => {
+            const size = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
 
-        const preview = document.getElementById('accountPreviewAvatar');
-        if (preview) {
-            preview.src = dataUrl;
-        }
+            // Center-crop to square
+            const minDim = Math.min(img.width, img.height);
+            const sx = (img.width - minDim) / 2;
+            const sy = (img.height - minDim) / 2;
+            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
 
-        setAccountStatus('Profile photo selected. Click "Save profile" to apply.');
+            const resizedUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+            const avatarInput = document.getElementById('accountAvatarUrl');
+            if (avatarInput) {
+                avatarInput.value = resizedUrl;
+            }
+
+            const preview = document.getElementById('accountPreviewAvatar');
+            if (preview) {
+                preview.src = resizedUrl;
+            }
+
+            setAccountStatus('Profile photo selected. Click "Save profile" to apply.');
+        };
+        img.onerror = () => {
+            setAccountStatus('Failed to process the selected image.', true);
+        };
+        img.src = dataUrl;
     };
 
     reader.onerror = () => {
