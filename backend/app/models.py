@@ -56,6 +56,8 @@ class Recipe(db.Model):
     cook_time = db.Column(db.Integer)  # minutes
     servings = db.Column(db.Integer)
     image_url = db.Column(db.String(500))
+    source_url = db.Column(db.String(500))
+    serving_size = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -76,6 +78,8 @@ class Recipe(db.Model):
             'cook_time': self.cook_time,
             'servings': self.servings,
             'image_url': self.image_url,
+            'source_url': self.source_url,
+            'serving_size': self.serving_size,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'ingredients': [ing.to_dict() for ing in self.ingredients],
@@ -190,7 +194,11 @@ class PantryItem(db.Model):
     expiry_date = db.Column(db.Date, index=True)
     nutritional_info = db.Column(db.Text)  # JSON string
     added_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    category = db.Column(db.String(64), nullable=False, default='Other', index=True)
+    serving_size = db.Column(db.String(100))
+    servings_per_container = db.Column(db.Float)
+    container_type = db.Column(db.String(50))
+
     def to_dict(self):
         nutritional = {}
         if self.nutritional_info:
@@ -206,7 +214,11 @@ class PantryItem(db.Model):
             'unit': self.unit,
             'expiry_date': self.expiry_date.isoformat() if self.expiry_date else None,
             'nutritional_info': nutritional,
-            'added_at': self.added_at.isoformat() if self.added_at else None
+            'added_at': self.added_at.isoformat() if self.added_at else None,
+            'category': self.category,
+            'serving_size': self.serving_size,
+            'servings_per_container': self.servings_per_container,
+            'container_type': self.container_type
         }
     
     def __repr__(self):
@@ -265,3 +277,37 @@ class MealHistory(db.Model):
     
     def __repr__(self):
         return f'<MealHistory {self.consumed_date}>'
+
+class RecipeReview(db.Model):
+    __tablename__ = 'recipe_reviews'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipes.id'), nullable=False, index=True)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5
+    review_text = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'recipe_id', name='unique_user_recipe_review'),
+        db.CheckConstraint('rating >= 1 AND rating <= 5', name='check_review_rating'),
+    )
+
+    reviewer = db.relationship('User', backref=db.backref('reviews', lazy=True))
+    recipe_ref = db.relationship('Recipe', backref=db.backref('reviews', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'recipe_id': self.recipe_id,
+            'rating': self.rating,
+            'review_text': self.review_text,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'username': self.reviewer.username if self.reviewer else None,
+        }
+
+    def __repr__(self):
+        return f'<RecipeReview user={self.user_id} recipe={self.recipe_id} rating={self.rating}>'
