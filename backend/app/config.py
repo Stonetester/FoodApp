@@ -23,6 +23,13 @@ class Config:
     UPLOAD_FOLDER = 'uploads'
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+    # Email (SendGrid)
+    SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+    SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@modogusto.com')
+    SENDGRID_FROM_NAME = os.environ.get('SENDGRID_FROM_NAME', 'Modo Gusto')
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
+    APP_BASE_URL = os.environ.get('APP_BASE_URL', 'http://localhost:5000')
+
 class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True

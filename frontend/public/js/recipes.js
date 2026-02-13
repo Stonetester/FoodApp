@@ -96,6 +96,19 @@ function setupRecipeListeners() {
         addIngredientField();
     });
 
+    // Scan nutrition label for recipe
+    document.getElementById('scanRecipeNutritionLabelBtn')?.addEventListener('click', async () => {
+        if (typeof window.initNutritionLabelScannerForRecipe !== 'function') {
+            alert('Nutrition label scanner is not available.');
+            return;
+        }
+        try {
+            await window.initNutritionLabelScannerForRecipe();
+        } catch (err) {
+            // User cancelled or error - already handled
+        }
+    });
+
     // Search input
     document.getElementById('recipeSearch')?.addEventListener('input', (e) => {
         currentFilters.search = e.target.value;
@@ -155,7 +168,11 @@ function createRecipeCard(recipe) {
         <div class="recipe-card-content">
             <h3 class="recipe-card-title">${recipe.title}</h3>
             <p class="recipe-card-description">${recipe.description || ''}</p>
+            ${recipe.source_url ? `<p class="recipe-card-source"><a href="${recipe.source_url}" target="_blank" rel="noopener noreferrer">🔗 Original recipe</a></p>` : ''}
             <div class="recipe-card-meta">${buildRecipeServingAndNutritionMeta(recipe)}</div>
+            <div class="recipe-card-rating">
+                ${buildRecipeRatingDisplay(recipe)}
+            </div>
             <div class="recipe-card-tags">${tagsHtml}</div>
             <div class="recipe-card-actions">
                 <button class="btn-icon" type="button" data-action="view" title="View recipe">
@@ -236,6 +253,7 @@ function formatNutritionPerServing(nutrition) {
 
 function buildRecipeServingAndNutritionMeta(recipe) {
     const meta = [];
+    const servings = parseInt(recipe.servings) || 1;
     if (recipe.servings) {
         meta.push(`🍽️ ${recipe.servings} servings`);
     }
@@ -248,8 +266,25 @@ function buildRecipeServingAndNutritionMeta(recipe) {
     if (nutritionSummary) {
         meta.push(`Per serving: ${nutritionSummary}`);
     }
+    if (nutrition?.energy_kcal && servings > 1) {
+        const totalCal = Math.round(nutrition.energy_kcal * servings);
+        meta.push(`Total meal: ${totalCal} calories`);
+    }
 
     return meta.map(item => `<p class="recipe-card-info">${item}</p>`).join('');
+}
+
+function buildRecipeRatingDisplay(recipe) {
+    if (recipe.average_rating) {
+        const rating = recipe.average_rating;
+        const count = recipe.rating_count || 0;
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+            stars += i <= Math.round(rating) ? '<span class="recipe-rating-star filled">★</span>' : '<span class="recipe-rating-star empty">☆</span>';
+        }
+        return `<span class="recipe-rating-stars">${stars}</span> <span class="recipe-rating-text">${rating} (${count} ${count === 1 ? 'review' : 'reviews'})</span>`;
+    }
+    return '<span class="recipe-rating-stars"><span class="recipe-rating-star empty">☆</span><span class="recipe-rating-star empty">☆</span><span class="recipe-rating-star empty">☆</span><span class="recipe-rating-star empty">☆</span><span class="recipe-rating-star empty">☆</span></span> <span class="recipe-rating-text">No ratings yet</span>';
 }
 
 function openRecipeModal(recipe = null) {
@@ -367,6 +402,10 @@ function openRecipeModal(recipe = null) {
         if (imageUrlField) {
             imageUrlField.value = recipe.image_url || '';
         }
+        const sourceUrlField = document.getElementById('recipeSourceUrl');
+        if (sourceUrlField) {
+            sourceUrlField.value = recipe.source_url || '';
+        }
         if (photoPreview) {
             if (recipe.image_url) {
                 photoPreview.src = recipe.image_url;
@@ -380,6 +419,11 @@ function openRecipeModal(recipe = null) {
         // Load nutrition data if present
         const nutrition = recipe.nutrition || getNutritionFromIngredients(recipe.ingredients || []);
         setNutritionFields(nutrition);
+
+        // Set serving_size from recipe-level field if available
+        if (recipe.serving_size) {
+            document.getElementById('recipeNutritionServingSize').value = recipe.serving_size;
+        }
 
         // Load ingredients
         console.log('Loading ingredients...');
@@ -415,6 +459,7 @@ function openRecipeModal(recipe = null) {
         title.textContent = 'Add Recipe';
         form.reset();
         document.getElementById('recipeId').value = '';
+        document.getElementById('recipeSourceUrl').value = '';
         document.getElementById('ingredientsList').innerHTML = '';
         // Add one empty ingredient field
         addIngredientField();
@@ -476,7 +521,32 @@ function isNutritionIngredient(ingredient) {
 
 function getNutritionFromIngredients(ingredients = []) {
     const nutritionItem = ingredients.find(ing => isNutritionIngredient(ing));
-    return nutritionItem?.nutritional_info || {};
+    if (nutritionItem?.nutritional_info && Object.keys(nutritionItem.nutritional_info).length > 0) {
+        return nutritionItem.nutritional_info;
+    }
+    // Fallback: sum individual ingredient nutrition
+    const keys = ['energy_kcal', 'fat', 'saturated_fat', 'trans_fat', 'cholesterol', 'sodium', 'carbohydrates', 'fiber', 'sugars', 'added_sugars', 'proteins', 'vitamin_d', 'calcium', 'iron', 'potassium', 'salt'];
+    const totals = {};
+    let found = false;
+    for (const ing of ingredients) {
+        if (isNutritionIngredient(ing)) continue;
+        const info = ing.nutritional_info;
+        if (!info || typeof info !== 'object') continue;
+        for (const k of keys) {
+            const v = parseFloat(info[k]);
+            if (!isNaN(v)) {
+                totals[k] = (totals[k] || 0) + v;
+                found = true;
+            }
+        }
+    }
+    if (!found) return {};
+    for (const k of keys) {
+        if (totals[k] !== undefined) {
+            totals[k] = Math.round(totals[k] * 10) / 10;
+        }
+    }
+    return totals;
 }
 
 function setNutritionFields(nutrition = {}) {
@@ -484,50 +554,85 @@ function setNutritionFields(nutrition = {}) {
     document.getElementById('recipeProtein').value = nutrition.proteins ?? '';
     document.getElementById('recipeCarbs').value = nutrition.carbohydrates ?? '';
     document.getElementById('recipeFat').value = nutrition.fat ?? '';
+    document.getElementById('recipeSatFat').value = nutrition.saturated_fat ?? '';
+    document.getElementById('recipeTransFat').value = nutrition.trans_fat ?? '';
+    document.getElementById('recipeCholesterol').value = nutrition.cholesterol ?? '';
+    document.getElementById('recipeSodium').value = nutrition.sodium ?? '';
+    document.getElementById('recipeFiber').value = nutrition.fiber ?? '';
+    document.getElementById('recipeSugars').value = nutrition.sugars ?? '';
+    document.getElementById('recipeAddedSugars').value = nutrition.added_sugars ?? '';
+    document.getElementById('recipeVitaminD').value = nutrition.vitamin_d ?? '';
+    document.getElementById('recipeCalcium').value = nutrition.calcium ?? '';
+    document.getElementById('recipeIron').value = nutrition.iron ?? '';
+    document.getElementById('recipePotassium').value = nutrition.potassium ?? '';
     document.getElementById('recipeNutritionServingSize').value = nutrition.serving_size ?? '';
 }
 
 function buildRecipeNutrition() {
-    const calories = document.getElementById('recipeCalories').value;
-    const protein = document.getElementById('recipeProtein').value;
-    const carbs = document.getElementById('recipeCarbs').value;
-    const fat = document.getElementById('recipeFat').value;
+    const fields = {
+        energy_kcal: document.getElementById('recipeCalories').value,
+        proteins: document.getElementById('recipeProtein').value,
+        carbohydrates: document.getElementById('recipeCarbs').value,
+        fat: document.getElementById('recipeFat').value,
+        saturated_fat: document.getElementById('recipeSatFat').value,
+        trans_fat: document.getElementById('recipeTransFat').value,
+        cholesterol: document.getElementById('recipeCholesterol').value,
+        sodium: document.getElementById('recipeSodium').value,
+        fiber: document.getElementById('recipeFiber').value,
+        sugars: document.getElementById('recipeSugars').value,
+        added_sugars: document.getElementById('recipeAddedSugars').value,
+        vitamin_d: document.getElementById('recipeVitaminD').value,
+        calcium: document.getElementById('recipeCalcium').value,
+        iron: document.getElementById('recipeIron').value,
+        potassium: document.getElementById('recipePotassium').value,
+    };
     const servingSize = document.getElementById('recipeNutritionServingSize').value.trim();
 
-    const parsed = {
-        energy_kcal: calories ? parseFloat(calories) : null,
-        proteins: protein ? parseFloat(protein) : null,
-        carbohydrates: carbs ? parseFloat(carbs) : null,
-        fat: fat ? parseFloat(fat) : null,
-        serving_size: servingSize || null
-    };
-
-    const hasMacroValue = [parsed.energy_kcal, parsed.proteins, parsed.carbohydrates, parsed.fat].some(value => value !== null && !Number.isNaN(value));
-    const hasValue = hasMacroValue || Boolean(parsed.serving_size);
-    if (!hasValue) {
-        return null;
+    const parsed = {};
+    let hasMacroValue = false;
+    for (const [key, val] of Object.entries(fields)) {
+        const num = val ? parseFloat(val) : null;
+        parsed[key] = num;
+        if (num !== null && !Number.isNaN(num)) hasMacroValue = true;
     }
 
-    return {
-        energy_kcal: Number.isNaN(parsed.energy_kcal) || parsed.energy_kcal === null ? 0 : parsed.energy_kcal,
-        proteins: Number.isNaN(parsed.proteins) || parsed.proteins === null ? 0 : parsed.proteins,
-        carbohydrates: Number.isNaN(parsed.carbohydrates) || parsed.carbohydrates === null ? 0 : parsed.carbohydrates,
-        fat: Number.isNaN(parsed.fat) || parsed.fat === null ? 0 : parsed.fat,
-        serving_size: parsed.serving_size || '1 serving'
-    };
+    const hasValue = hasMacroValue || Boolean(servingSize);
+    if (!hasValue) return null;
+
+    const result = {};
+    for (const [key, num] of Object.entries(parsed)) {
+        result[key] = (num === null || Number.isNaN(num)) ? 0 : num;
+    }
+    result.serving_size = servingSize || '1 serving';
+    return result;
 }
 
+let _recipeSaving = false;
+
 async function saveRecipe() {
+    // Prevent duplicate saves from button spamming
+    if (_recipeSaving) return;
+
     const form = document.getElementById('recipeForm');
     const recipeId = document.getElementById('recipeId').value;
     const titleField = document.getElementById('recipeTitle');
-    
+
     // Validate title
     if (!titleField.value || !titleField.value.trim()) {
         alert('Please enter a recipe title');
         titleField.focus();
         return;
     }
+
+    // Lock saving and show overlay
+    _recipeSaving = true;
+    const saveBtn = document.getElementById('saveRecipeBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.dataset.originalText = saveBtn.textContent;
+        saveBtn.textContent = 'Saving...';
+    }
+    showSavingOverlay(true);
 
     // Collect ingredients (only if they have a name)
     const ingredients = [];
@@ -564,7 +669,8 @@ async function saveRecipe() {
     const servingsField = document.getElementById('recipeServings');
     const instructionsField = document.getElementById('recipeInstructions');
     const imageUrlField = document.getElementById('recipeImageUrl');
-    
+
+    const sourceUrlField = document.getElementById('recipeSourceUrl');
     const recipeData = {
         title: titleField.value.trim(),
         description: descriptionField.value && !descriptionField.classList.contains('placeholder-text') ? descriptionField.value.trim() : null,
@@ -573,22 +679,28 @@ async function saveRecipe() {
         servings: servingsField.value && !servingsField.classList.contains('placeholder-text') && servingsField.value.trim() ? parseInt(servingsField.value) : null,
         instructions: instructionsField.value && !instructionsField.classList.contains('placeholder-text') ? instructionsField.value.trim() : null,
         image_url: imageUrlField.value && imageUrlField.value.trim() ? imageUrlField.value.trim() : null,
+        source_url: sourceUrlField && sourceUrlField.value.trim() ? sourceUrlField.value.trim() : null,
         ingredients: ingredients,
-        tags: tags
+        tags: tags,
+        serving_size: document.getElementById('recipeNutritionServingSize').value.trim() || null
     };
 
     try {
         const recipeIdValue = recipeId && recipeId.trim() ? recipeId : null;
+        let savedRecipe;
         if (recipeIdValue) {
-            await api.updateRecipe(parseInt(recipeIdValue), recipeData);
+            savedRecipe = await api.updateRecipe(parseInt(recipeIdValue), recipeData);
         } else {
-            await api.createRecipe(recipeData);
+            savedRecipe = await api.createRecipe(recipeData);
         }
+        showSavingOverlay(false);
         closeRecipeModal();
         await loadRecipes();
         if (window.loadDashboard) {
             window.loadDashboard();
         }
+        // Show confirmation toast
+        showSaveConfirmation(recipeData.title || 'Recipe');
     } catch (error) {
         console.error('Error saving recipe:', error);
         let errorMsg = 'Failed to save recipe';
@@ -596,13 +708,68 @@ async function saveRecipe() {
             errorMsg += ': ' + error.message;
         }
         alert(errorMsg);
+    } finally {
+        // Always unlock saving state
+        _recipeSaving = false;
+        showSavingOverlay(false);
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = saveBtn.dataset.originalText || 'Save Recipe';
+        }
     }
+}
+
+function showSavingOverlay(show) {
+    let overlay = document.getElementById('recipeSavingOverlay');
+    if (show) {
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'recipeSavingOverlay';
+            overlay.className = 'recipe-saving-overlay';
+            overlay.innerHTML = '<div class="recipe-saving-content"><div class="loading"></div><p>Saving recipe...</p></div>';
+            const modalContent = document.querySelector('#recipeModal .modal-content');
+            if (modalContent) {
+                modalContent.appendChild(overlay);
+            }
+        }
+        overlay.classList.add('active');
+    } else {
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+    }
+}
+
+function showSaveConfirmation(recipeName) {
+    // Remove existing toast if any
+    const existing = document.querySelector('.recipe-save-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'recipe-save-toast';
+    toast.innerHTML = `<span>Recipe "${recipeName}" saved!</span>`;
+    document.body.appendChild(toast);
+
+    // Trigger animation
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 async function viewRecipeDetail(id) {
     try {
         const recipe = await api.getRecipe(id);
-        openRecipeModal(recipe);
+        if (typeof showRecipeDetailModal === 'function') {
+            showRecipeDetailModal(recipe, false);
+        } else {
+            openRecipeModal(recipe);
+        }
     } catch (error) {
         console.error('Error loading recipe:', error);
         alert('Failed to load recipe');
@@ -647,8 +814,12 @@ async function shareRecipeQR(id) {
         const result = await api.getRecipeQR(id);
         const modal = document.getElementById('qrModal');
         const container = document.getElementById('qrCodeContainer');
-        
-        container.innerHTML = `<img src="data:image/png;base64,${result.qr_code}" alt="Recipe QR Code">`;
+
+        container.innerHTML = `
+            <img src="data:image/png;base64,${result.qr_code}" alt="Recipe QR Code">
+            ${result.recipe_url ? `<p style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text); word-break: break-all; text-align: center;"><a href="${result.recipe_url}" style="color: var(--primary);">${result.recipe_url}</a></p>` : ''}
+            ${result.source_url ? `<p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text); word-break: break-all; text-align: center;"><a href="${result.source_url}" target="_blank" rel="noopener noreferrer" style="color: var(--primary);">🔗 Original recipe: ${result.source_url}</a></p>` : ''}
+        `;
         modal.classList.add('active');
     } catch (error) {
         console.error('Error generating QR code:', error);
@@ -731,8 +902,10 @@ async function importRecipeFromUrl() {
                     cook_time: recipeData.cook_time || null,
                     servings: recipeData.servings || null,
                     nutrition: recipeData.nutrition || null,
+                    image_url: recipeData.image_url || null,
+                    source_url: recipeData.source_url || url,
                     ingredients: ingredients,
-                    tags: []
+                    tags: recipeData.tags || []
                 });
             } else {
                 resultDiv.innerHTML = '<p class="error-message">Could not extract recipe from URL. The page may not contain recipe data, or it may be in an unsupported format. Please try another URL or add manually.</p>';
@@ -1080,3 +1253,4 @@ window.editRecipe = editRecipe;
 window.deleteRecipe = deleteRecipe;
 window.shareRecipeQR = shareRecipeQR;
 window.loadRecipes = loadRecipes;
+window.openRecipeModal = openRecipeModal;

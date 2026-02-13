@@ -27,6 +27,26 @@ function setupPantryListeners() {
     document.getElementById('cancelPantryBtn')?.addEventListener('click', () => {
         closePantryModal();
     });
+
+    // Scan Nutrition Label button (inside pantry modal)
+    document.getElementById('scanNutritionLabelBtn')?.addEventListener('click', () => {
+        if (window.initNutritionLabelScanner) {
+            window.initNutritionLabelScanner().catch(() => {
+                // User cancelled or error already shown via alert
+            });
+        }
+    });
+
+    // Scan Nutrition Label button (pantry page header)
+    document.getElementById('scanNutritionLabelPageBtn')?.addEventListener('click', () => {
+        // Open the pantry modal first, then trigger the nutrition label scanner
+        openPantryModal();
+        setTimeout(() => {
+            if (window.initNutritionLabelScanner) {
+                window.initNutritionLabelScanner().catch(() => {});
+            }
+        }, 200);
+    });
 }
 
 async function loadPantry() {
@@ -66,13 +86,16 @@ function createPantryCard(item) {
         <div class="pantry-card__content">
             <div class="pantry-card__left">
                 <h3 class="pantry-card-title">${item.item_name}</h3>
+                ${item.category && item.category !== 'Other' ? `<span class="pantry-category-badge" data-category="${item.category}">${item.category}</span>` : ''}
                 ${servingSize ? `<p class="pantry-card-meta">Serving size: ${servingSize}</p>` : ''}
+                ${item.servings_per_container ? `<p class="pantry-card-meta">Servings/container: ${item.servings_per_container}</p>` : ''}
+                ${item.container_type ? `<p class="pantry-card-meta">Container: ${item.container_type}</p>` : ''}
                 ${addedDate ? `<p class="pantry-card-meta">Added: ${addedDate}</p>` : ''}
                 ${item.expiry_date ? `<p class="pantry-card-meta">Expires: ${new Date(item.expiry_date).toLocaleDateString()}</p>` : ''}
                 ${item.barcode ? `<p class="pantry-card-meta pantry-card-meta--muted">Barcode: ${item.barcode}</p>` : ''}
             </div>
             <div class="pantry-card__right">
-                ${createNutritionMiniTable(item.nutritional_info)}
+                ${createNutritionMiniTable(item.nutritional_info, item)}
             </div>
         </div>
         <div class="pantry-card-actions">
@@ -84,12 +107,22 @@ function createPantryCard(item) {
     return card;
 }
 
-function createNutritionMiniTable(nutrition) {
+function createNutritionMiniTable(nutrition, item) {
     const normalized = nutrition || {};
+    // Prefer item-level serving_size (descriptive text from barcode scan)
+    // over the one embedded in nutritional_info
+    const servingSize = (item && item.serving_size) || normalized.serving_size;
+    const source = normalized._source;
+    let headerText = 'Per serving';
+    if (source === 'per_100g' && !servingSize) {
+        headerText = 'Per 100g';
+    } else if (servingSize) {
+        headerText = `Per serving (${servingSize})`;
+    }
 
     return `
-        <div class="nutrition-mini" role="table" aria-label="Nutrition per serving">
-            <div class="nutrition-mini__header">Per serving</div>
+        <div class="nutrition-mini" role="table" aria-label="${headerText}">
+            <div class="nutrition-mini__header">${headerText}</div>
             <div class="nutrition-mini__grid">
                 ${createNutritionMiniCell('Calories', normalized.energy_kcal, '')}
                 ${createNutritionMiniCell('Protein', normalized.proteins, 'g')}
@@ -113,6 +146,11 @@ function createNutritionMiniCell(label, value, suffix) {
 }
 
 function getPantryServingSize(item) {
+    // Prefer the top-level serving_size (from barcode scan / Open Food Facts)
+    // which contains descriptive text like "2 cookies (30g)" or "1 cup (28g)"
+    if (item.serving_size) {
+        return item.serving_size;
+    }
     const servingSize = item.nutritional_info?.serving_size;
     if (servingSize) {
         return servingSize;
@@ -149,12 +187,26 @@ function openPantryModal(item = null) {
         document.getElementById('pantryUnit').value = item.unit || '';
         document.getElementById('pantryExpiryDate').value = item.expiry_date || '';
         const nutrition = item.nutritional_info || {};
-        document.getElementById('pantryServingSize').value = nutrition.serving_size || '';
-        document.getElementById('pantryServingsPerItem').value = nutrition.servings_per_item ?? '';
+        document.getElementById('pantryServingSize').value = item.serving_size || nutrition.serving_size || '';
+        document.getElementById('pantryServingsPerContainer').value = item.servings_per_container ?? '';
         document.getElementById('pantryCalories').value = nutrition.energy_kcal ?? '';
         document.getElementById('pantryProtein').value = nutrition.proteins ?? '';
         document.getElementById('pantryCarbs').value = nutrition.carbohydrates ?? '';
         document.getElementById('pantryFat').value = nutrition.fat ?? '';
+        document.getElementById('pantrySatFat').value = nutrition.saturated_fat ?? '';
+        document.getElementById('pantryTransFat').value = nutrition.trans_fat ?? '';
+        document.getElementById('pantryCholesterol').value = nutrition.cholesterol ?? '';
+        document.getElementById('pantrySodium').value = nutrition.sodium ?? '';
+        document.getElementById('pantryFiber').value = nutrition.fiber ?? '';
+        document.getElementById('pantrySugars').value = nutrition.sugars ?? '';
+        document.getElementById('pantryAddedSugars').value = nutrition.added_sugars ?? '';
+        document.getElementById('pantryVitaminD').value = nutrition.vitamin_d ?? '';
+        document.getElementById('pantryCalcium').value = nutrition.calcium ?? '';
+        document.getElementById('pantryIron').value = nutrition.iron ?? '';
+        document.getElementById('pantryPotassium').value = nutrition.potassium ?? '';
+        document.getElementById('pantryCategory').value = item.category || '';
+        document.getElementById('pantryContainerType').value = item.container_type || '';
+        document.getElementById('pantryServingsPerContainer').value = item.servings_per_container ?? '';
     } else {
         title.textContent = 'Add Pantry Item';
         form.reset();
@@ -178,13 +230,28 @@ async function savePantryItem() {
         quantity: document.getElementById('pantryQuantity').value ? parseFloat(document.getElementById('pantryQuantity').value) : null,
         unit: document.getElementById('pantryUnit').value || null,
         expiry_date: document.getElementById('pantryExpiryDate').value || null,
+        category: document.getElementById('pantryCategory').value || null,
+        serving_size: document.getElementById('pantryServingSize').value || null,
+        servings_per_container: document.getElementById('pantryServingsPerContainer').value ? parseFloat(document.getElementById('pantryServingsPerContainer').value) : null,
+        container_type: document.getElementById('pantryContainerType').value || null,
         nutritional_info: buildNutritionPayload({
             calories: document.getElementById('pantryCalories').value,
             protein: document.getElementById('pantryProtein').value,
             carbs: document.getElementById('pantryCarbs').value,
             fat: document.getElementById('pantryFat').value,
+            saturated_fat: document.getElementById('pantrySatFat').value,
+            trans_fat: document.getElementById('pantryTransFat').value,
+            cholesterol: document.getElementById('pantryCholesterol').value,
+            sodium: document.getElementById('pantrySodium').value,
+            fiber: document.getElementById('pantryFiber').value,
+            sugars: document.getElementById('pantrySugars').value,
+            added_sugars: document.getElementById('pantryAddedSugars').value,
+            vitamin_d: document.getElementById('pantryVitaminD').value,
+            calcium: document.getElementById('pantryCalcium').value,
+            iron: document.getElementById('pantryIron').value,
+            potassium: document.getElementById('pantryPotassium').value,
             servingSize: document.getElementById('pantryServingSize').value,
-            servingsPerItem: document.getElementById('pantryServingsPerItem').value
+            servingsPerItem: document.getElementById('pantryServingsPerContainer').value
         })
     };
 
@@ -210,26 +277,48 @@ function buildNutritionPayload(values) {
     const protein = values.protein ? parseFloat(values.protein) : null;
     const carbs = values.carbs ? parseFloat(values.carbs) : null;
     const fat = values.fat ? parseFloat(values.fat) : null;
+    const saturated_fat = values.saturated_fat ? parseFloat(values.saturated_fat) : null;
+    const trans_fat = values.trans_fat ? parseFloat(values.trans_fat) : null;
+    const cholesterol = values.cholesterol ? parseFloat(values.cholesterol) : null;
+    const sodium = values.sodium ? parseFloat(values.sodium) : null;
+    const fiber = values.fiber ? parseFloat(values.fiber) : null;
+    const sugars = values.sugars ? parseFloat(values.sugars) : null;
+    const added_sugars = values.added_sugars ? parseFloat(values.added_sugars) : null;
+    const vitamin_d = values.vitamin_d ? parseFloat(values.vitamin_d) : null;
+    const calcium = values.calcium ? parseFloat(values.calcium) : null;
+    const iron = values.iron ? parseFloat(values.iron) : null;
+    const potassium = values.potassium ? parseFloat(values.potassium) : null;
     const servingsPerItem = values.servingsPerItem ? parseFloat(values.servingsPerItem) : null;
     const servingSize = values.servingSize ? values.servingSize.trim() : '';
 
-    const hasMacroValue = [calories, protein, carbs, fat].some(value => value !== null && !Number.isNaN(value));
+    const allValues = [calories, protein, carbs, fat, saturated_fat, trans_fat, cholesterol, sodium, fiber, sugars, added_sugars, vitamin_d, calcium, iron, potassium];
+    const hasMacroValue = allValues.some(v => v !== null && !Number.isNaN(v));
     const hasServingValue = Boolean(servingSize) || (servingsPerItem !== null && !Number.isNaN(servingsPerItem));
 
     if (!hasMacroValue && !hasServingValue) {
         return null;
     }
 
-    const normalizedServingSize = servingSize || '1 serving';
-    const normalizedServingsPerItem = Number.isNaN(servingsPerItem) || servingsPerItem === null ? 1 : servingsPerItem;
+    function norm(v) { return (v === null || Number.isNaN(v)) ? 0 : v; }
 
     return {
-        energy_kcal: Number.isNaN(calories) || calories === null ? 0 : calories,
-        proteins: Number.isNaN(protein) || protein === null ? 0 : protein,
-        carbohydrates: Number.isNaN(carbs) || carbs === null ? 0 : carbs,
-        fat: Number.isNaN(fat) || fat === null ? 0 : fat,
-        serving_size: normalizedServingSize,
-        servings_per_item: normalizedServingsPerItem
+        energy_kcal: norm(calories),
+        proteins: norm(protein),
+        carbohydrates: norm(carbs),
+        fat: norm(fat),
+        saturated_fat: norm(saturated_fat),
+        trans_fat: norm(trans_fat),
+        cholesterol: norm(cholesterol),
+        sodium: norm(sodium),
+        fiber: norm(fiber),
+        sugars: norm(sugars),
+        added_sugars: norm(added_sugars),
+        vitamin_d: norm(vitamin_d),
+        calcium: norm(calcium),
+        iron: norm(iron),
+        potassium: norm(potassium),
+        serving_size: servingSize || '1 serving',
+        servings_per_item: Number.isNaN(servingsPerItem) || servingsPerItem === null ? 1 : servingsPerItem
     };
 }
 

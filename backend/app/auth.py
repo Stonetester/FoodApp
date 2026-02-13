@@ -81,7 +81,14 @@ def register():
         
         db.session.add(user)
         db.session.commit()
-        
+
+        # Send welcome email (fire-and-forget)
+        try:
+            from app.email_service import send_welcome_email
+            send_welcome_email(user)
+        except Exception as e:
+            print(f"Welcome email failed (non-critical): {e}")
+
         return jsonify({
             'message': 'User created successfully',
             'user_id': user.id,
@@ -171,6 +178,14 @@ def update_my_account_profile():
     avatar_url = (data.get('avatar_url') or '').strip()
     bio = (data.get('bio') or '').strip()
     top_meals = data.get('top_meals') or []
+
+    # Convert data URL avatar to saved file
+    if avatar_url and avatar_url.startswith('data:image'):
+        try:
+            from app.utils import normalize_image_url
+            avatar_url = normalize_image_url(avatar_url) or ''
+        except Exception as e:
+            return jsonify({'error': f'Failed to process avatar image: {str(e)}'}), 400
 
     try:
         profile = save_account_profile(current_user.id, avatar_url, bio, top_meals)

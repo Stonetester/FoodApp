@@ -383,8 +383,7 @@ async function showDayDetail(dateStr) {
     const mealTypes = [
         { key: 'breakfast', label: '🌅 Breakfast', icon: '🌅' },
         { key: 'lunch', label: '☀️ Lunch', icon: '☀️' },
-        { key: 'dinner', label: '🌙 Dinner', icon: '🌙' },
-        { key: 'snack', label: '🍎 Snacks', icon: '🍎', multiple: true }
+        { key: 'dinner', label: '🌙 Dinner', icon: '🌙' }
     ];
     
     mealTypes.forEach(mealType => {
@@ -441,6 +440,18 @@ async function showDayDetail(dateStr) {
         slotsEl.appendChild(slotDiv);
     });
     
+    // Show existing snacks as muted text list
+    const snackMeals = dayMeals.filter(m => m.meal_type === 'snack');
+    if (snackMeals.length > 0) {
+        const snackDiv = document.createElement('div');
+        snackDiv.style.cssText = 'margin-bottom: 1.5rem; padding: 0.75rem 1rem; background: var(--light-cream); border-radius: 8px; opacity: 0.8;';
+        snackDiv.innerHTML = `
+            <p style="margin: 0 0 0.25rem 0; font-size: 0.9rem; font-weight: 600; color: var(--text);">🍎 Snacks</p>
+            ${snackMeals.map(s => `<p style="margin: 0.15rem 0; font-size: 0.85rem; color: var(--text);">${s.recipe ? s.recipe.title : 'Snack'}${s.notes ? ` <em style="opacity:0.7">(${s.notes})</em>` : ''}</p>`).join('')}
+        `;
+        slotsEl.appendChild(snackDiv);
+    }
+
     // Store recipes for quick add
     slotsEl.dataset.recipes = JSON.stringify(allRecipes);
     slotsEl.dataset.date = dateStr;
@@ -563,58 +574,221 @@ function renderMealSections(viewName) {
     if (!sectionsEl) return;
 
     const isDayView = viewName === 'mealDay';
+    const isWeekView = viewName === 'mealWeek';
     const dates = isDayView ? [new Date(sectionFocusDate)] : getWeekDates(sectionFocusDate);
     sectionsEl.innerHTML = '';
 
-    dates.forEach(date => {
-        const dateStr = date.toISOString().split('T')[0];
-        const dayMeals = mealPlans.filter(plan => plan.planned_date === dateStr);
-        const mealsByType = {
-            breakfast: dayMeals.find(m => m.meal_type === 'breakfast'),
-            lunch: dayMeals.find(m => m.meal_type === 'lunch'),
-            dinner: dayMeals.find(m => m.meal_type === 'dinner'),
-            snacks: dayMeals.filter(m => m.meal_type === 'snack')
-        };
+    if (isWeekView) {
+        sectionsEl.className = 'meal-plan-sections week-grid';
+        dates.forEach(date => {
+            const dateStr = date.toISOString().split('T')[0];
+            const dayMeals = mealPlans.filter(plan => plan.planned_date === dateStr);
+            const mealsByType = {
+                breakfast: dayMeals.find(m => m.meal_type === 'breakfast'),
+                lunch: dayMeals.find(m => m.meal_type === 'lunch'),
+                dinner: dayMeals.find(m => m.meal_type === 'dinner'),
+                snacks: dayMeals.filter(m => m.meal_type === 'snack')
+            };
 
-        const card = document.createElement('details');
-        card.className = 'meal-day-card';
-        if (isDayView) {
+            const col = document.createElement('div');
+            col.className = 'week-column';
+
+            // Day header
+            const header = document.createElement('div');
+            header.className = 'week-column-header';
+            header.innerHTML = `
+                <strong>${date.toLocaleDateString('en-US', { weekday: 'short' })}</strong>
+                <span>${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+            `;
+            col.appendChild(header);
+
+            // Helper to render a snack drop zone
+            function buildSnackZone(slotNote) {
+                const zone = document.createElement('div');
+                zone.className = 'week-snack-zone';
+                zone.dataset.date = dateStr;
+                zone.dataset.slotNote = slotNote;
+
+                // Drag & drop handlers
+                zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+                zone.addEventListener('dragleave', () => { zone.classList.remove('drag-over'); });
+                zone.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    const snackId = e.dataTransfer.getData('text/plain');
+                    if (snackId) {
+                        try {
+                            await api.updateMealPlan(parseInt(snackId), { notes: slotNote || null });
+                            await loadMealPlan();
+                        } catch (err) {
+                            console.error('Error moving snack:', err);
+                        }
+                    }
+                });
+
+                // Render snacks assigned to this slot
+                const matchingSnacks = mealsByType.snacks.filter(s => normalizeNote(s.notes) === normalizeNote(slotNote));
+                matchingSnacks.forEach(snack => {
+                    const block = document.createElement('div');
+                    block.className = 'week-snack-block';
+                    block.draggable = true;
+                    block.dataset.snackId = snack.id;
+                    block.innerHTML = `
+                        <span>🍎 ${snack.recipe ? snack.recipe.title : 'Snack'}</span>
+                        <div class="meal-section-actions">
+                            <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
+                            <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>
+                        </div>
+                    `;
+                    block.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', String(snack.id));
+                    });
+                    zone.appendChild(block);
+                });
+
+                return zone;
+            }
+
+            // Snack zone before breakfast
+            col.appendChild(buildSnackZone(snackSlots[0].note));
+
+            // Breakfast
+            const bfBlock = document.createElement('div');
+            bfBlock.className = 'week-meal-block';
+            const bfMeal = mealsByType.breakfast;
+            bfBlock.innerHTML = `
+                <div class="week-meal-label">🌅 Breakfast</div>
+                ${bfMeal && bfMeal.recipe ? `
+                    <div class="week-meal-content">
+                        <strong>${bfMeal.recipe.title}</strong>
+                        <div class="meal-section-actions">
+                            <button class="btn-icon" type="button" data-edit="${bfMeal.id}" title="Edit">✏️</button>
+                            <button class="btn-icon" type="button" data-delete="${bfMeal.id}" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                ` : `<p class="meal-empty">—</p>`}
+            `;
+            col.appendChild(bfBlock);
+
+            // Snack zone between breakfast & lunch
+            col.appendChild(buildSnackZone(snackSlots[1].note));
+
+            // Lunch
+            const lnBlock = document.createElement('div');
+            lnBlock.className = 'week-meal-block';
+            const lnMeal = mealsByType.lunch;
+            lnBlock.innerHTML = `
+                <div class="week-meal-label">☀️ Lunch</div>
+                ${lnMeal && lnMeal.recipe ? `
+                    <div class="week-meal-content">
+                        <strong>${lnMeal.recipe.title}</strong>
+                        <div class="meal-section-actions">
+                            <button class="btn-icon" type="button" data-edit="${lnMeal.id}" title="Edit">✏️</button>
+                            <button class="btn-icon" type="button" data-delete="${lnMeal.id}" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                ` : `<p class="meal-empty">—</p>`}
+            `;
+            col.appendChild(lnBlock);
+
+            // Snack zone between lunch & dinner
+            col.appendChild(buildSnackZone(snackSlots[2].note));
+
+            // Dinner
+            const dnBlock = document.createElement('div');
+            dnBlock.className = 'week-meal-block';
+            const dnMeal = mealsByType.dinner;
+            dnBlock.innerHTML = `
+                <div class="week-meal-label">🌙 Dinner</div>
+                ${dnMeal && dnMeal.recipe ? `
+                    <div class="week-meal-content">
+                        <strong>${dnMeal.recipe.title}</strong>
+                        <div class="meal-section-actions">
+                            <button class="btn-icon" type="button" data-edit="${dnMeal.id}" title="Edit">✏️</button>
+                            <button class="btn-icon" type="button" data-delete="${dnMeal.id}" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                ` : `<p class="meal-empty">—</p>`}
+            `;
+            col.appendChild(dnBlock);
+
+            // Snack zone after dinner
+            col.appendChild(buildSnackZone(snackSlots[3].note));
+
+            // Anytime snacks (unmatched)
+            const anytimeSnacks = mealsByType.snacks.filter(s => !snackSlots.some(slot => normalizeNote(s.notes) === normalizeNote(slot.note)));
+            if (anytimeSnacks.length) {
+                const anyZone = buildSnackZone('');
+                anytimeSnacks.forEach(snack => {
+                    const block = document.createElement('div');
+                    block.className = 'week-snack-block';
+                    block.draggable = true;
+                    block.dataset.snackId = snack.id;
+                    block.innerHTML = `
+                        <span>🍎 ${snack.recipe ? snack.recipe.title : 'Snack'}</span>
+                        <div class="meal-section-actions">
+                            <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
+                            <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>
+                        </div>
+                    `;
+                    block.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', String(snack.id));
+                    });
+                    anyZone.appendChild(block);
+                });
+                col.appendChild(anyZone);
+            }
+
+            // Add Meal button
+            const addBtn = document.createElement('button');
+            addBtn.className = 'btn btn-secondary';
+            addBtn.style.cssText = 'width: 100%; margin-top: 0.5rem; font-size: 0.85rem;';
+            addBtn.textContent = '+ Add Meal';
+            addBtn.dataset.date = dateStr;
+            addBtn.dataset.action = 'add-main';
+            col.appendChild(addBtn);
+
+            sectionsEl.appendChild(col);
+        });
+    } else {
+        // Day view - keep existing details-based layout
+        sectionsEl.className = 'meal-plan-sections';
+        dates.forEach(date => {
+            const dateStr = date.toISOString().split('T')[0];
+            const dayMeals = mealPlans.filter(plan => plan.planned_date === dateStr);
+            const mealsByType = {
+                breakfast: dayMeals.find(m => m.meal_type === 'breakfast'),
+                lunch: dayMeals.find(m => m.meal_type === 'lunch'),
+                dinner: dayMeals.find(m => m.meal_type === 'dinner'),
+                snacks: dayMeals.filter(m => m.meal_type === 'snack')
+            };
+
+            const card = document.createElement('details');
+            card.className = 'meal-day-card';
             card.setAttribute('open', '');
-        }
 
-        const header = document.createElement('summary');
-        header.className = 'meal-day-summary';
-        header.innerHTML = `
-            <div>
-                <h3>${date.toLocaleDateString('en-US', { weekday: 'long' })}</h3>
-                <p>${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
-            </div>
-            <button class="btn btn-secondary" type="button" data-date="${dateStr}" data-action="add-main">
-                + Add Meal
-            </button>
-        `;
-        card.appendChild(header);
+            const header = document.createElement('summary');
+            header.className = 'meal-day-summary';
+            header.innerHTML = `
+                <div>
+                    <h3>${date.toLocaleDateString('en-US', { weekday: 'long' })}</h3>
+                    <p>${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
+                </div>
+                <button class="btn btn-secondary" type="button" data-date="${dateStr}" data-action="add-main">
+                    + Add Meal
+                </button>
+            `;
+            card.appendChild(header);
 
-        const mealList = document.createElement('div');
-        mealList.className = 'meal-day-list';
+            const mealList = document.createElement('div');
+            mealList.className = 'meal-day-list';
 
-        const orderedBlocks = [
-            { type: 'snack', slot: snackSlots[0] },
-            { type: 'meal', meal: 'breakfast' },
-            { type: 'snack', slot: snackSlots[1] },
-            { type: 'meal', meal: 'lunch' },
-            { type: 'snack', slot: snackSlots[2] },
-            { type: 'meal', meal: 'dinner' },
-            { type: 'snack', slot: snackSlots[3] }
-        ];
-
-        orderedBlocks.forEach(block => {
-            if (block.type === 'meal') {
-                const type = block.meal;
+            // Only main meals (breakfast, lunch, dinner) - no snack sections
+            ['breakfast', 'lunch', 'dinner'].forEach(type => {
                 const mealSlot = document.createElement('details');
                 mealSlot.className = 'meal-section';
                 const plannedMeal = mealsByType[type];
-                if (isDayView || plannedMeal) {
+                if (plannedMeal) {
                     mealSlot.setAttribute('open', '');
                 }
 
@@ -642,76 +816,25 @@ function renderMealSections(viewName) {
                     </div>
                 `;
                 mealList.appendChild(mealSlot);
-            } else if (block.type === 'snack') {
-                const slot = block.slot;
-                const snackContainer = document.createElement('details');
-                snackContainer.className = 'snack-section';
-                const snacks = mealsByType.snacks.filter(snack => normalizeNote(snack.notes) === normalizeNote(slot.note));
-                if (isDayView || snacks.length) {
-                    snackContainer.setAttribute('open', '');
-                }
-                snackContainer.innerHTML = `
-                    <summary class="snack-section-header">
-                        <span>${slot.label}</span>
-                        <button class="btn-icon" type="button" data-date="${dateStr}" data-snack-note="${slot.note}" title="Add snack">
-                            +
-                        </button>
-                    </summary>
-                    <div class="snack-section-body">
-                        ${snacks.length ? snacks.map(snack => `
-                            <div class="snack-item">
-                                <div>
-                                    <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
-                                    ${snack.recipe ? buildMealServingMeta(snack.recipe) : ''}
-                                </div>
-                                <div class="meal-section-actions">
-                                    <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
-                                    <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>
-                                </div>
-                            </div>
-                        `).join('') : '<p class="meal-empty">Add a snack</p>'}
-                    </div>
+            });
+
+            // Show existing snacks as muted text list (no action buttons)
+            if (mealsByType.snacks.length > 0) {
+                const snackList = document.createElement('div');
+                snackList.className = 'day-snack-list';
+                snackList.innerHTML = `
+                    <p class="day-snack-label">Snacks:</p>
+                    ${mealsByType.snacks.map(s => `<p class="day-snack-item">🍎 ${s.recipe ? s.recipe.title : 'Snack'}${s.notes ? ` <em>(${s.notes})</em>` : ''}</p>`).join('')}
                 `;
-                mealList.appendChild(snackContainer);
+                mealList.appendChild(snackList);
             }
+
+            card.appendChild(mealList);
+            sectionsEl.appendChild(card);
         });
+    }
 
-        const anytimeSnacks = mealsByType.snacks.filter(snack => {
-            return !snackSlots.some(slot => normalizeNote(snack.notes) === normalizeNote(slot.note));
-        });
-        if (anytimeSnacks.length) {
-            const snackContainer = document.createElement('details');
-            snackContainer.className = 'snack-section';
-            snackContainer.setAttribute('open', '');
-            snackContainer.innerHTML = `
-                <summary class="snack-section-header">
-                    <span>Anytime snacks</span>
-                    <button class="btn-icon" type="button" data-date="${dateStr}" data-snack-note="" title="Add snack">
-                        +
-                    </button>
-                </summary>
-                <div class="snack-section-body">
-                    ${anytimeSnacks.map(snack => `
-                        <div class="snack-item">
-                            <div>
-                                <span>${snack.recipe ? snack.recipe.title : 'Snack'}</span>
-                                ${snack.recipe ? buildMealServingMeta(snack.recipe) : ''}
-                            </div>
-                            <div class="meal-section-actions">
-                                <button class="btn-icon" type="button" data-edit="${snack.id}" title="Edit">✏️</button>
-                                <button class="btn-icon" type="button" data-delete="${snack.id}" title="Delete">🗑️</button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            mealList.appendChild(snackContainer);
-        }
-
-        card.appendChild(mealList);
-        sectionsEl.appendChild(card);
-    });
-
+    // Wire up event listeners for both views
     sectionsEl.querySelectorAll('[data-meal]').forEach(button => {
         button.addEventListener('click', async (event) => {
             event.preventDefault();

@@ -209,6 +209,13 @@ class ApiService {
         });
     }
 
+    async scanNutritionLabel(imageData) {
+        return this.request('/api/pantry/scan-nutrition-label', {
+            method: 'POST',
+            body: JSON.stringify({ image: imageData }),
+        });
+    }
+
     // Meal Planning
     async getMealPlan(startDate, endDate) {
         const params = new URLSearchParams();
@@ -297,6 +304,24 @@ class ApiService {
     async removeFriend(friendId) {
         return this.request(`/api/friends/${friendId}`, {
             method: 'DELETE'
+        });
+    }
+
+    // Recipe Reviews
+    async getRecipeReviews(recipeId) {
+        return this.request(`/api/recipes/${recipeId}/reviews`);
+    }
+
+    async createRecipeReview(recipeId, data) {
+        return this.request(`/api/recipes/${recipeId}/reviews`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteRecipeReview(recipeId, reviewId) {
+        return this.request(`/api/recipes/${recipeId}/reviews/${reviewId}`, {
+            method: 'DELETE',
         });
     }
 }

@@ -202,20 +202,42 @@ async function lookupAndAddProduct(barcode) {
             return;
         }
         
-        // Store product info for add action
+        // Prefer per-serving nutrition if available, fall back to per-100g
+        const perServing = data.nutritional_info_per_serving;
+        const per100g = data.nutritional_info;
+        const usePerServing = perServing && Object.values(perServing).some(v => v !== null && v !== undefined);
+        const src = usePerServing ? perServing : per100g;
+
         const normalizedNutritionInfo = {
-            energy_kcal: data.nutritional_info?.energy_kcal ?? 0,
-            proteins: data.nutritional_info?.proteins ?? 0,
-            carbohydrates: data.nutritional_info?.carbohydrates ?? 0,
-            fat: data.nutritional_info?.fat ?? 0,
-            serving_size: data.nutritional_info?.serving_size || data.quantity || '100 g',
-            servings_per_item: data.nutritional_info?.servings_per_item ?? 1
+            energy_kcal: src?.energy_kcal ?? 0,
+            proteins: src?.proteins ?? 0,
+            carbohydrates: src?.carbohydrates ?? 0,
+            fat: src?.fat ?? 0,
+            saturated_fat: src?.saturated_fat ?? 0,
+            trans_fat: src?.trans_fat ?? 0,
+            cholesterol: src?.cholesterol ?? 0,
+            sodium: src?.sodium ?? 0,
+            fiber: src?.fiber ?? 0,
+            sugars: src?.sugars ?? 0,
+            added_sugars: src?.added_sugars ?? 0,
+            vitamin_d: src?.vitamin_d ?? 0,
+            calcium: src?.calcium ?? 0,
+            iron: src?.iron ?? 0,
+            potassium: src?.potassium ?? 0,
+            salt: src?.salt ?? 0,
+            serving_size: data.serving_size || data.nutritional_info?.serving_size || null,
+            servings_per_item: data.servings_per_container ?? 1,
+            _source: usePerServing ? 'per_serving' : 'per_100g'
         };
 
         lastScannedProduct = {
             barcode,
             name: data.name,
-            nutritionalInfo: normalizedNutritionInfo
+            nutritionalInfo: normalizedNutritionInfo,
+            serving_size: data.serving_size || null,
+            servings_per_container: data.servings_per_container || null,
+            container_type: data.container_type || null,
+            categories_tags: data.categories_tags || []
         };
 
         // Show product info
@@ -305,7 +327,10 @@ async function addScannedProduct(barcode, name, nutritionalInfo) {
                 quantity: quantity,
                 unit: unit,
                 expiry_date: expiry,
-                nutritional_info: nutritionalInfo
+                nutritional_info: nutritionalInfo,
+                serving_size: lastScannedProduct?.serving_size || null,
+                servings_per_container: lastScannedProduct?.servings_per_container || null,
+                container_type: lastScannedProduct?.container_type || null
             })
         });
         
@@ -352,7 +377,377 @@ function closeScanner() {
     }
 }
 
+// ==================== NUTRITION LABEL SCANNER ====================
+
+let nutritionScannerStream = null;
+let nutritionAutoScanInterval = null;
+let nutritionScannerTarget = 'pantry'; // 'pantry' or 'recipe'
+let nutritionScannerResolve = null;
+let nutritionScannerReject = null;
+
+/**
+ * Read a File object as a base64-encoded data URL string.
+ */
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * Open the nutrition label scanner modal with live camera.
+ * @param {'pantry'|'recipe'} target - which form to populate
+ */
+function openNutritionScanner(target) {
+    return new Promise((resolve, reject) => {
+        nutritionScannerTarget = target || 'pantry';
+        nutritionScannerResolve = resolve;
+        nutritionScannerReject = reject;
+
+        const modal = document.getElementById('nutritionScannerModal');
+        const statusDiv = document.getElementById('nutritionScannerStatus');
+        statusDiv.innerHTML = '<p>Starting camera...</p>';
+        modal.classList.add('active');
+
+        startNutritionCamera();
+    });
+}
+
+async function startNutritionCamera() {
+    const video = document.getElementById('nutritionScannerVideo');
+    const statusDiv = document.getElementById('nutritionScannerStatus');
+
+    try {
+        // Request back camera
+        const constraints = {
+            video: {
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 960 }
+            }
+        };
+
+        nutritionScannerStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = nutritionScannerStream;
+        await video.play();
+
+        statusDiv.innerHTML = '<p>📷 Point camera at a nutrition label — auto-detecting...</p>';
+
+        // Start auto-scan every 4 seconds
+        startNutritionAutoScan();
+    } catch (err) {
+        console.error('Camera access failed:', err);
+        // Fall back to front camera
+        try {
+            nutritionScannerStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }
+            });
+            video.srcObject = nutritionScannerStream;
+            await video.play();
+            statusDiv.innerHTML = '<p>📷 Using front camera — point at nutrition label...</p>';
+            startNutritionAutoScan();
+        } catch (err2) {
+            console.error('All camera access failed:', err2);
+            statusDiv.innerHTML = '<p class="error-message">Camera not available. Use "Upload from Library" instead.</p>';
+        }
+    }
+}
+
+function startNutritionAutoScan() {
+    // Clear any existing interval
+    if (nutritionAutoScanInterval) clearInterval(nutritionAutoScanInterval);
+
+    let scanning = false;
+
+    nutritionAutoScanInterval = setInterval(async () => {
+        if (scanning) return; // Skip if previous scan still running
+        scanning = true;
+        try {
+            const imageData = captureNutritionFrame();
+            if (!imageData) { scanning = false; return; }
+
+            const result = await api.scanNutritionLabel(imageData);
+            if (result.nutrition) {
+                const n = result.nutrition;
+                // Check if we got meaningful data (at least calories)
+                if (n.energy_kcal !== null && n.energy_kcal !== undefined) {
+                    // Auto-detected! Stop scanning and populate
+                    stopNutritionAutoScan();
+                    const statusDiv = document.getElementById('nutritionScannerStatus');
+                    statusDiv.innerHTML = '<p style="color: var(--success); font-weight: bold;">✅ Nutrition label detected!</p>';
+
+                    handleNutritionScanResult(n);
+                    return;
+                }
+            }
+        } catch (err) {
+            // Silent — auto-scan failures are expected
+            console.log('Auto-scan attempt:', err.message || err);
+        }
+        scanning = false;
+    }, 4000);
+}
+
+function stopNutritionAutoScan() {
+    if (nutritionAutoScanInterval) {
+        clearInterval(nutritionAutoScanInterval);
+        nutritionAutoScanInterval = null;
+    }
+}
+
+function captureNutritionFrame() {
+    const video = document.getElementById('nutritionScannerVideo');
+    const canvas = document.getElementById('nutritionScannerCanvas');
+    if (!video || !canvas || video.readyState < 2) return null;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    return canvas.toDataURL('image/jpeg', 0.85);
+}
+
+async function manualCaptureNutrition() {
+    const statusDiv = document.getElementById('nutritionScannerStatus');
+    const captureBtn = document.getElementById('captureNutritionBtn');
+
+    const imageData = captureNutritionFrame();
+    if (!imageData) {
+        statusDiv.innerHTML = '<p class="error-message">Camera not ready. Try again.</p>';
+        return;
+    }
+
+    // Stop auto-scan while processing
+    stopNutritionAutoScan();
+    captureBtn.disabled = true;
+    captureBtn.textContent = 'Processing...';
+    statusDiv.innerHTML = '<p>🔍 Reading nutrition label...</p>';
+
+    try {
+        const result = await api.scanNutritionLabel(imageData);
+
+        if (result.error && !result.nutrition) {
+            throw new Error(result.error);
+        }
+
+        const nutrition = result.nutrition || {};
+        if (nutrition.energy_kcal !== null && nutrition.energy_kcal !== undefined) {
+            statusDiv.innerHTML = '<p style="color: var(--success); font-weight: bold;">✅ Nutrition label detected!</p>';
+            handleNutritionScanResult(nutrition);
+        } else {
+            statusDiv.innerHTML = '<p class="error-message">Could not read nutrition data. Try moving closer or improving lighting.</p>';
+            // Restart auto-scan
+            startNutritionAutoScan();
+        }
+    } catch (err) {
+        console.error('Manual capture failed:', err);
+        statusDiv.innerHTML = `<p class="error-message">Scan failed: ${err.message || err}. Try again.</p>`;
+        startNutritionAutoScan();
+    } finally {
+        captureBtn.disabled = false;
+        captureBtn.textContent = '📸 Capture Label';
+    }
+}
+
+async function uploadNutritionFromLibrary() {
+    const input = document.getElementById('nutritionLibraryInput');
+    input.click();
+}
+
+async function handleNutritionLibraryUpload(file) {
+    if (!file) return;
+
+    const statusDiv = document.getElementById('nutritionScannerStatus');
+    const captureBtn = document.getElementById('captureNutritionBtn');
+    stopNutritionAutoScan();
+    captureBtn.disabled = true;
+    statusDiv.innerHTML = '<p>🔍 Reading nutrition label from image...</p>';
+
+    try {
+        const imageData = await fileToBase64(file);
+        const result = await api.scanNutritionLabel(imageData);
+
+        if (result.error && !result.nutrition) {
+            throw new Error(result.error);
+        }
+
+        const nutrition = result.nutrition || {};
+        if (nutrition.energy_kcal !== null && nutrition.energy_kcal !== undefined) {
+            statusDiv.innerHTML = '<p style="color: var(--success); font-weight: bold;">✅ Nutrition label detected!</p>';
+            handleNutritionScanResult(nutrition);
+        } else {
+            statusDiv.innerHTML = '<p class="error-message">Could not read nutrition data from image. Try a clearer photo.</p>';
+            startNutritionAutoScan();
+        }
+    } catch (err) {
+        console.error('Library upload scan failed:', err);
+        statusDiv.innerHTML = `<p class="error-message">Scan failed: ${err.message || err}</p>`;
+        startNutritionAutoScan();
+    } finally {
+        captureBtn.disabled = false;
+    }
+}
+
+function handleNutritionScanResult(nutrition) {
+    if (nutritionScannerTarget === 'recipe') {
+        populateRecipeNutritionFields(nutrition);
+    } else {
+        populatePantryNutritionFields(nutrition);
+    }
+
+    // Close scanner after short delay so user sees the success message
+    setTimeout(() => {
+        closeNutritionScanner();
+        if (nutritionScannerResolve) {
+            nutritionScannerResolve(nutrition);
+            nutritionScannerResolve = null;
+            nutritionScannerReject = null;
+        }
+    }, 800);
+}
+
+function closeNutritionScanner() {
+    stopNutritionAutoScan();
+
+    // Stop camera stream
+    if (nutritionScannerStream) {
+        nutritionScannerStream.getTracks().forEach(track => track.stop());
+        nutritionScannerStream = null;
+    }
+    const video = document.getElementById('nutritionScannerVideo');
+    if (video) video.srcObject = null;
+
+    const modal = document.getElementById('nutritionScannerModal');
+    if (modal) modal.classList.remove('active');
+}
+
+/**
+ * Open nutrition scanner for PANTRY form.
+ */
+function initNutritionLabelScanner() {
+    return openNutritionScanner('pantry');
+}
+
+/**
+ * Open nutrition scanner for RECIPE form.
+ */
+function initNutritionLabelScannerForRecipe() {
+    return openNutritionScanner('recipe');
+}
+
+// Set up nutrition scanner modal listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Close button
+    const modal = document.getElementById('nutritionScannerModal');
+    if (modal) {
+        const closeBtn = modal.querySelector('.close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                closeNutritionScanner();
+                if (nutritionScannerReject) {
+                    nutritionScannerReject(new Error('Cancelled'));
+                    nutritionScannerResolve = null;
+                    nutritionScannerReject = null;
+                }
+            });
+        }
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeNutritionScanner();
+                if (nutritionScannerReject) {
+                    nutritionScannerReject(new Error('Cancelled'));
+                    nutritionScannerResolve = null;
+                    nutritionScannerReject = null;
+                }
+            }
+        });
+    }
+
+    // Capture button
+    document.getElementById('captureNutritionBtn')?.addEventListener('click', () => {
+        manualCaptureNutrition();
+    });
+
+    // Upload from library button
+    document.getElementById('uploadNutritionLibraryBtn')?.addEventListener('click', () => {
+        uploadNutritionFromLibrary();
+    });
+
+    // Library file input change
+    document.getElementById('nutritionLibraryInput')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) handleNutritionLibraryUpload(file);
+        e.target.value = ''; // Reset so same file can be selected again
+    });
+});
+
+/**
+ * Given a parsed nutrition object from the backend, fill in the
+ * corresponding form fields inside the pantry item modal.
+ */
+function populatePantryNutritionFields(nutrition) {
+    if (!nutrition) return;
+
+    const fieldMap = {
+        energy_kcal:           'pantryCalories',
+        proteins:              'pantryProtein',
+        carbohydrates:         'pantryCarbs',
+        fat:                   'pantryFat',
+        saturated_fat:         'pantrySatFat',
+        cholesterol:           'pantryCholesterol',
+        sodium:                'pantrySodium',
+        fiber:                 'pantryFiber',
+        sugars:                'pantrySugars',
+        serving_size:          'pantryServingSize',
+        servings_per_container: 'pantryServingsPerContainer',
+    };
+
+    for (const [key, elementId] of Object.entries(fieldMap)) {
+        const value = nutrition[key];
+        if (value !== null && value !== undefined) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.value = value;
+            }
+        }
+    }
+}
+
+function populateRecipeNutritionFields(nutrition) {
+    if (!nutrition) return;
+    const fieldMap = {
+        energy_kcal:    'recipeCalories',
+        proteins:       'recipeProtein',
+        carbohydrates:  'recipeCarbs',
+        fat:            'recipeFat',
+        saturated_fat:  'recipeSatFat',
+        trans_fat:      'recipeTransFat',
+        cholesterol:    'recipeCholesterol',
+        sodium:         'recipeSodium',
+        fiber:          'recipeFiber',
+        sugars:         'recipeSugars',
+        added_sugars:   'recipeAddedSugars',
+        vitamin_d:      'recipeVitaminD',
+        calcium:        'recipeCalcium',
+        iron:           'recipeIron',
+        potassium:      'recipePotassium',
+        serving_size:   'recipeNutritionServingSize',
+    };
+    for (const [key, elementId] of Object.entries(fieldMap)) {
+        const value = nutrition[key];
+        if (value !== null && value !== undefined) {
+            const el = document.getElementById(elementId);
+            if (el) el.value = value;
+        }
+    }
+}
+
 // Export functions for use in other scripts
 window.initScanner = initScanner;
 window.stopScanner = stopScanner;
 window.closeScanner = closeScanner;
+window.initNutritionLabelScanner = initNutritionLabelScanner;
+window.initNutritionLabelScannerForRecipe = initNutritionLabelScannerForRecipe;

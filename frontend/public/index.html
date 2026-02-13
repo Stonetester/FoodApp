@@ -10,6 +10,9 @@
     <link rel="icon" type="image/svg+xml" href="/images/app-icon.svg">
     <link rel="apple-touch-icon" href="/images/app-icon.svg">
     <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
@@ -27,27 +30,30 @@
         <nav class="navbar" id="navbar">
             <div class="nav-container">
                 <div class="nav-logo">
-                    <span class="logo-icon" aria-hidden="true">
-                        <svg viewBox="0 0 48 48" role="img" focusable="false">
-                            <path d="M8 22L24 10l16 12v16H30V28h-12v10H8z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
-                        </svg>
-                    </span>
                     <span class="logo-text">
                         <span class="logo-title">Modo Gusto</span>
                         <span class="nav-motto">meal prepping with passion</span>
                     </span>
                 </div>
                 <div class="nav-top-links">
-                    <a href="#" class="nav-link nav-link-inline" data-page="recipes" id="recipesNavBtn">Your Recipes</a>
-                    <a href="#" class="nav-link nav-link-inline" data-page="mealplan">Meal Plan</a>
-                    <a href="#" class="nav-link nav-link-inline" data-page="pantry">Pantry</a>
+                    <button class="btn-quick-action" id="quickAddRecipeBtn" type="button">+ Quick Recipe</button>
+                    <button class="btn-quick-action" id="quickAddPantryBtn" type="button">+ Quick Pantry</button>
+                    <div class="nav-dropdown">
+                        <button class="nav-dropdown-toggle" id="navDropdownToggle" type="button" aria-expanded="false" aria-label="Navigation links">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </button>
+                        <div class="nav-dropdown-menu" id="navDropdownMenu">
+                            <a href="#" class="nav-link nav-link-inline" data-page="recipes" id="recipesNavBtn">Your Recipes</a>
+                            <a href="#" class="nav-link nav-link-inline" data-page="mealplan">Meal Plan</a>
+                            <a href="#" class="nav-link nav-link-inline" data-page="pantry">Pantry</a>
+                        </div>
+                    </div>
                 </div>
                 <div class="nav-menu" id="navMenu">
                     <a href="#" class="nav-link" data-page="dashboard">Dashboard</a>
                     <a href="#" class="nav-link" data-page="recipes" id="recipesMenuBtn">Your Recipes</a>
                     <a href="#" class="nav-link" data-page="userSearch">Find Recipes</a>
                     <a href="#" class="nav-link" data-page="social">Social</a>
-                    <a href="#" class="nav-link" data-page="friends">Friends</a>
                     <a href="#" class="nav-link" data-page="pantry">Pantry</a>
                     <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link" data-page="history">History</a>
@@ -55,7 +61,10 @@
                     <a href="#" class="nav-link" data-page="settings">Settings</a>
                     <a href="#" class="nav-link" id="logoutBtn">Logout</a>
                 </div>
-                <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+                <div class="nav-right-controls">
+                    <button class="nav-help-btn" id="navHelpBtn" type="button" aria-label="Help &amp; Tutorial" title="Help">?</button>
+                    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+                </div>
             </div>
         </nav>
 
@@ -99,7 +108,6 @@
             </div>
             <div class="bottom-sheet__content">
                 <button class="sheet-link" type="button" data-page="history" aria-label="Open history page">🕒 History</button>
-                <button class="sheet-link" type="button" data-page="friends" aria-label="Open friends page">👥 Friends</button>
                 <button class="sheet-link" type="button" data-page="userSearch" aria-label="Open discover recipes page">🔍 Discover</button>
                 <button class="sheet-link sheet-link--danger" type="button" id="logoutBtnSheet" aria-label="Log out">🚪 Logout</button>
             </div>
@@ -109,7 +117,7 @@
         <div id="loginPage" class="page active">
             <div class="login-container">
                 <div class="login-card">
-                    <h1 class="login-title">🏠 Modo Gusto</h1>
+                    <h1 class="login-title">👨‍🍳 Modo Gusto</h1>
                     <div class="login-tabs">
                         <button class="tab-btn active" data-tab="login">Login</button>
                         <button class="tab-btn" data-tab="register">Register</button>
@@ -247,6 +255,7 @@
                 <h2 id="modalTitle">Add Recipe</h2>
                 <form id="recipeForm">
                     <input type="hidden" id="recipeId">
+                    <input type="hidden" id="recipeSourceUrl">
                     <div class="form-group">
                         <label for="recipeTitle">Title</label>
                         <input type="text" id="recipeTitle" required>
@@ -316,6 +325,9 @@
                     </div>
                     <div class="form-group">
                         <label>Nutrition (per serving)</label>
+                        <div style="margin-bottom: 0.75rem;">
+                            <button type="button" class="btn btn-secondary" id="scanRecipeNutritionLabelBtn">📷 Scan Nutrition Label</button>
+                        </div>
                         <div class="form-group">
                             <label for="recipeNutritionServingSize">Serving size label</label>
                             <input type="text" id="recipeNutritionServingSize" placeholder="e.g., 1 bowl (250g)">
@@ -323,7 +335,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="recipeCalories">Calories</label>
-                                <input type="number" step="0.1" id="recipeCalories" placeholder="Calories">
+                                <input type="number" step="0.1" id="recipeCalories" placeholder="kcal">
                             </div>
                             <div class="form-group">
                                 <label for="recipeProtein">Protein</label>
@@ -332,17 +344,73 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
+                                <label for="recipeFat">Total Fat</label>
+                                <input type="number" step="0.1" id="recipeFat" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="recipeSatFat">Saturated Fat</label>
+                                <input type="number" step="0.1" id="recipeSatFat" placeholder="g">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipeTransFat">Trans Fat</label>
+                                <input type="number" step="0.1" id="recipeTransFat" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="recipeCholesterol">Cholesterol</label>
+                                <input type="number" step="0.1" id="recipeCholesterol" placeholder="mg">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipeSodium">Sodium</label>
+                                <input type="number" step="0.1" id="recipeSodium" placeholder="mg">
+                            </div>
+                            <div class="form-group">
                                 <label for="recipeCarbs">Carbs</label>
                                 <input type="number" step="0.1" id="recipeCarbs" placeholder="g">
                             </div>
+                        </div>
+                        <div class="form-row">
                             <div class="form-group">
-                                <label for="recipeFat">Fat</label>
-                                <input type="number" step="0.1" id="recipeFat" placeholder="g">
+                                <label for="recipeFiber">Fiber</label>
+                                <input type="number" step="0.1" id="recipeFiber" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="recipeSugars">Sugars</label>
+                                <input type="number" step="0.1" id="recipeSugars" placeholder="g">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipeAddedSugars">Added Sugars</label>
+                                <input type="number" step="0.1" id="recipeAddedSugars" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="recipeVitaminD">Vitamin D</label>
+                                <input type="number" step="0.1" id="recipeVitaminD" placeholder="mcg">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipeCalcium">Calcium</label>
+                                <input type="number" step="0.1" id="recipeCalcium" placeholder="mg">
+                            </div>
+                            <div class="form-group">
+                                <label for="recipeIron">Iron</label>
+                                <input type="number" step="0.1" id="recipeIron" placeholder="mg">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recipePotassium">Potassium</label>
+                                <input type="number" step="0.1" id="recipePotassium" placeholder="mg">
                             </div>
                         </div>
                     </div>
                     <div class="modal-actions">
-                        <button type="submit" class="btn btn-primary">Save Recipe</button>
+                        <button type="submit" class="btn btn-primary" id="saveRecipeBtn">Save Recipe</button>
                         <button type="button" class="btn btn-secondary" id="cancelRecipeBtn">Cancel</button>
                     </div>
                 </form>
@@ -356,6 +424,7 @@
                     <h1>Pantry</h1>
                     <div class="header-actions">
                         <button class="btn btn-secondary" id="scanBarcodeBtn">📷 Scan Barcode</button>
+                        <button class="btn btn-secondary" id="scanNutritionLabelPageBtn">📷 Scan Nutrition</button>
                         <button class="btn btn-primary" id="addPantryItemBtn">+ Add Item</button>
                     </div>
                 </div>
@@ -380,6 +449,42 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
+                            <label for="pantryCategory">Category</label>
+                            <select id="pantryCategory">
+                                <option value="">Auto-assign</option>
+                                <option value="Produce">Produce</option>
+                                <option value="Meat & Poultry">Meat &amp; Poultry</option>
+                                <option value="Seafood">Seafood</option>
+                                <option value="Dairy & Eggs">Dairy &amp; Eggs</option>
+                                <option value="Grains & Bread">Grains &amp; Bread</option>
+                                <option value="Canned Goods">Canned Goods</option>
+                                <option value="Snacks">Snacks</option>
+                                <option value="Beverages">Beverages</option>
+                                <option value="Frozen">Frozen</option>
+                                <option value="Condiments & Sauces">Condiments &amp; Sauces</option>
+                                <option value="Baking">Baking</option>
+                                <option value="Spices & Seasonings">Spices &amp; Seasonings</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="pantryContainerType">Container type</label>
+                            <select id="pantryContainerType">
+                                <option value="">None</option>
+                                <option value="box">Box</option>
+                                <option value="can">Can</option>
+                                <option value="bottle">Bottle</option>
+                                <option value="bag">Bag</option>
+                                <option value="jar">Jar</option>
+                                <option value="tub">Tub</option>
+                                <option value="wrap">Wrap</option>
+                                <option value="tube">Tube</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
                             <label for="pantryQuantity">Quantity</label>
                             <input type="number" step="0.01" id="pantryQuantity">
                         </div>
@@ -398,16 +503,19 @@
                             <input type="text" id="pantryServingSize" placeholder="e.g., 1 tbsp (15g)">
                         </div>
                         <div class="form-group">
-                            <label for="pantryServingsPerItem">Servings in this item</label>
-                            <input type="number" step="0.1" id="pantryServingsPerItem" placeholder="e.g., 12">
+                            <label for="pantryServingsPerContainer">Servings per container</label>
+                            <input type="number" step="0.1" id="pantryServingsPerContainer" placeholder="e.g., 12">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Nutrition (per serving)</label>
+                        <div style="margin-bottom: 0.75rem;">
+                            <button type="button" class="btn btn-secondary" id="scanNutritionLabelBtn">📷 Scan Nutrition Label</button>
+                        </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="pantryCalories">Calories</label>
-                                <input type="number" step="0.1" id="pantryCalories" placeholder="Calories">
+                                <input type="number" step="0.1" id="pantryCalories" placeholder="kcal">
                             </div>
                             <div class="form-group">
                                 <label for="pantryProtein">Protein</label>
@@ -416,12 +524,68 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
+                                <label for="pantryFat">Total Fat</label>
+                                <input type="number" step="0.1" id="pantryFat" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="pantrySatFat">Saturated Fat</label>
+                                <input type="number" step="0.1" id="pantrySatFat" placeholder="g">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pantryTransFat">Trans Fat</label>
+                                <input type="number" step="0.1" id="pantryTransFat" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="pantryCholesterol">Cholesterol</label>
+                                <input type="number" step="0.1" id="pantryCholesterol" placeholder="mg">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pantrySodium">Sodium</label>
+                                <input type="number" step="0.1" id="pantrySodium" placeholder="mg">
+                            </div>
+                            <div class="form-group">
                                 <label for="pantryCarbs">Carbs</label>
                                 <input type="number" step="0.1" id="pantryCarbs" placeholder="g">
                             </div>
+                        </div>
+                        <div class="form-row">
                             <div class="form-group">
-                                <label for="pantryFat">Fat</label>
-                                <input type="number" step="0.1" id="pantryFat" placeholder="g">
+                                <label for="pantryFiber">Fiber</label>
+                                <input type="number" step="0.1" id="pantryFiber" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="pantrySugars">Sugars</label>
+                                <input type="number" step="0.1" id="pantrySugars" placeholder="g">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pantryAddedSugars">Added Sugars</label>
+                                <input type="number" step="0.1" id="pantryAddedSugars" placeholder="g">
+                            </div>
+                            <div class="form-group">
+                                <label for="pantryVitaminD">Vitamin D</label>
+                                <input type="number" step="0.1" id="pantryVitaminD" placeholder="mcg">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pantryCalcium">Calcium</label>
+                                <input type="number" step="0.1" id="pantryCalcium" placeholder="mg">
+                            </div>
+                            <div class="form-group">
+                                <label for="pantryIron">Iron</label>
+                                <input type="number" step="0.1" id="pantryIron" placeholder="mg">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pantryPotassium">Potassium</label>
+                                <input type="number" step="0.1" id="pantryPotassium" placeholder="mg">
                             </div>
                         </div>
                     </div>
@@ -440,6 +604,26 @@
                 <h2>Scan Barcode</h2>
                 <div id="scannerContainer"></div>
                 <div id="scannerResult"></div>
+            </div>
+        </div>
+
+        <!-- Nutrition Label Scanner Modal -->
+        <div id="nutritionScannerModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Scan Nutrition Label</h2>
+                <div id="nutritionScannerPreview" class="nutrition-scanner-preview">
+                    <video id="nutritionScannerVideo" autoplay playsinline muted></video>
+                    <canvas id="nutritionScannerCanvas" hidden></canvas>
+                </div>
+                <div id="nutritionScannerStatus" class="nutrition-scanner-status">
+                    <p>Point camera at a nutrition label...</p>
+                </div>
+                <div class="nutrition-scanner-actions">
+                    <button class="btn btn-primary" id="captureNutritionBtn" type="button">📸 Capture Label</button>
+                    <button class="btn btn-secondary" id="uploadNutritionLibraryBtn" type="button">🖼️ Upload from Library</button>
+                    <input type="file" id="nutritionLibraryInput" accept="image/*" hidden>
+                </div>
             </div>
         </div>
 
@@ -615,33 +799,72 @@
                     </div>
                 </div>
 
-                <div class="social-grid">
-                    <div class="social-card">
-                        <h2>Add a friend</h2>
-                        <p>Send a friend request by username.</p>
-                        <div class="search-input-group friend-search-group">
-                            <input type="text" id="friendUsernameInput" class="search-input friend-search-input" placeholder="Enter username...">
-                            <button class="btn btn-primary" id="sendFriendRequestBtn" type="button">Send Request</button>
+                <div class="social-tabs">
+                    <button class="social-tab active" data-social-tab="activity" type="button">Activity</button>
+                    <button class="social-tab" data-social-tab="friends" type="button">Friends</button>
+                </div>
+
+                <div id="socialActivityTab" class="social-tab-content active">
+                    <div class="social-grid">
+                        <div class="social-card">
+                            <h2>Add a friend</h2>
+                            <p>Send a friend request by username.</p>
+                            <div class="search-input-group friend-search-group">
+                                <input type="text" id="friendUsernameInput" class="search-input friend-search-input" placeholder="Enter username...">
+                                <button class="btn btn-primary" id="sendFriendRequestBtn" type="button">Send Request</button>
+                            </div>
+                            <div id="friendSearchResults" class="friend-search-results"></div>
+                            <div id="friendRequestStatus" class="status-message"></div>
                         </div>
-                        <div id="friendSearchResults" class="friend-search-results"></div>
-                        <div id="friendRequestStatus" class="status-message"></div>
-                    </div>
-                    <div class="social-card">
-                        <h2>Incoming requests</h2>
-                        <div id="incomingRequests" class="social-list">
-                            <p class="empty-state">No pending requests.</p>
+                        <div class="social-card">
+                            <h2>Incoming requests</h2>
+                            <div id="incomingRequests" class="social-list">
+                                <p class="empty-state">No pending requests.</p>
+                            </div>
+                        </div>
+                        <div class="social-card">
+                            <h2>Outgoing requests</h2>
+                            <div id="outgoingRequests" class="social-list">
+                                <p class="empty-state">No outgoing requests.</p>
+                            </div>
+                        </div>
+                        <div class="social-card">
+                            <h2>Your friends</h2>
+                            <div id="friendsList" class="social-list">
+                                <p class="empty-state">No friends added yet.</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="social-card">
-                        <h2>Outgoing requests</h2>
-                        <div id="outgoingRequests" class="social-list">
-                            <p class="empty-state">No outgoing requests.</p>
+                </div>
+
+                <div id="socialFriendsTab" class="social-tab-content">
+                    <div class="friends-layout">
+                        <div class="friends-panel">
+                            <div class="friends-panel-header">
+                                <h2>Your friends</h2>
+                                <button class="btn btn-secondary" id="refreshFriendsBtn" type="button">🔄 Refresh</button>
+                            </div>
+                            <div id="friendsListPanel" class="friends-list-panel">
+                                <p class="empty-state">Loading friends...</p>
+                            </div>
                         </div>
-                    </div>
-                    <div class="social-card">
-                        <h2>Your friends</h2>
-                        <div id="friendsList" class="social-list">
-                            <p class="empty-state">No friends added yet.</p>
+                        <div class="friends-detail">
+                            <div class="friends-detail-header">
+                                <h2 id="friendDetailTitle">Select a friend</h2>
+                                <p id="friendDetailSubtitle">Choose a friend to view their recipes and meal prep plans.</p>
+                            </div>
+                            <div class="friends-detail-section">
+                                <h3>Recipes</h3>
+                                <div id="friendRecipes" class="recipe-grid friends-recipe-grid">
+                                    <p class="empty-state">No friend selected.</p>
+                                </div>
+                            </div>
+                            <div class="friends-detail-section">
+                                <h3>Meal prep plan</h3>
+                                <div id="friendMealPlan" class="friends-mealplan-list">
+                                    <p class="empty-state">No friend selected.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -649,7 +872,7 @@
         </div>
 
         <!-- Friends Page -->
-        <div id="friendsPage" class="page">
+        <div id="friendsPage" class="page" style="display:none">
             <div class="container">
                 <div class="page-header">
                     <div>
@@ -728,7 +951,16 @@
                         <form id="accountProfileForm">
                             <div class="form-group">
                                 <label for="accountAvatarUrl">Avatar URL</label>
-                                <input type="url" id="accountAvatarUrl" placeholder="https://...">
+                                <input type="url" id="accountAvatarUrl" placeholder="https://..." style="opacity: 0.5; font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group">
+                                <label>Profile Photo</label>
+                                <div class="image-source-buttons">
+                                    <button type="button" class="btn btn-secondary" id="accountTakePhotoBtn">📸 Take Photo</button>
+                                    <button type="button" class="btn btn-secondary" id="accountChoosePhotoBtn">🖼️ Choose Photo</button>
+                                </div>
+                                <input type="file" id="accountPhotoCamera" accept="image/*" capture="environment" hidden>
+                                <input type="file" id="accountPhotoLibrary" accept="image/*" hidden>
                             </div>
                             <div class="form-group">
                                 <label for="accountBio">Bio</label>
@@ -1147,6 +1379,32 @@
             </div>
         </div>
 
+        <!-- Quick Add Recipe Modal -->
+        <div id="quickAddRecipeModal" class="modal">
+            <div class="modal-content" style="max-width:420px;">
+                <span class="close">&times;</span>
+                <h2>Quick Add Recipe</h2>
+                <div class="quick-add-options">
+                    <button class="btn btn-primary quick-add-option" id="quickPasteLinkBtn" type="button">
+                        <span style="font-size:1.5rem;">&#128279;</span>
+                        <span>Paste Link</span>
+                    </button>
+                    <button class="btn btn-secondary quick-add-option" id="quickManualRecipeBtn" type="button">
+                        <span style="font-size:1.5rem;">&#9997;</span>
+                        <span>Add Manually</span>
+                    </button>
+                </div>
+                <div id="quickPasteLinkForm" style="display:none;margin-top:1rem;">
+                    <div class="form-group">
+                        <label for="quickRecipeUrl">Recipe URL</label>
+                        <input type="url" id="quickRecipeUrl" placeholder="https://example.com/recipe">
+                    </div>
+                    <button class="btn btn-primary" id="quickImportUrlBtn" type="button" style="width:100%;">Import Recipe</button>
+                    <div id="quickImportResult" style="margin-top:0.75rem;"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Day Detail Modal (Calendar) -->
         <div id="dayDetailModal" class="modal">
             <div class="modal-content" style="max-width: 800px;">
@@ -1161,6 +1419,56 @@
             </div>
         </div>
     </div>
+
+        <!-- Tutorial / Help Modal -->
+        <div id="tutorialModal" class="modal">
+            <div class="modal-content tutorial-modal">
+                <span class="close" onclick="document.getElementById('tutorialModal').classList.remove('active')">&times;</span>
+                <div class="tutorial-slides" id="tutorialSlides">
+                    <div class="tutorial-slide active" data-slide="0">
+                        <div class="tutorial-icon">&#127869;</div>
+                        <h2>Welcome to Modo Gusto!</h2>
+                        <p>Your personal food management app for recipes, pantry tracking, and meal planning.</p>
+                        <p style="color:var(--muted);font-size:0.9rem;">Swipe or tap the arrows to learn the basics.</p>
+                    </div>
+                    <div class="tutorial-slide" data-slide="1">
+                        <div class="tutorial-icon">&#128214;</div>
+                        <h2>Recipes</h2>
+                        <p>Add recipes manually, import from a URL, scan a QR code, or snap a photo of a recipe page. Use <strong>+ Quick Recipe</strong> in the top bar for fast access.</p>
+                    </div>
+                    <div class="tutorial-slide" data-slide="2">
+                        <div class="tutorial-icon">&#129472;</div>
+                        <h2>Pantry</h2>
+                        <p>Track your ingredients with barcode scanning. Point your camera at a barcode to auto-fill product info and nutrition. You can also scan a nutrition label photo.</p>
+                    </div>
+                    <div class="tutorial-slide" data-slide="3">
+                        <div class="tutorial-icon">&#128197;</div>
+                        <h2>Meal Planning</h2>
+                        <p>Drag recipes onto your calendar to plan breakfast, lunch, dinner, and snacks for the week ahead.</p>
+                    </div>
+                    <div class="tutorial-slide" data-slide="4">
+                        <div class="tutorial-icon">&#11088;</div>
+                        <h2>Discover &amp; Review</h2>
+                        <p>Find other users' recipes, copy them to your collection, and leave star ratings and reviews.</p>
+                    </div>
+                    <div class="tutorial-slide" data-slide="5">
+                        <div class="tutorial-icon">&#128587;</div>
+                        <h2>Social &amp; Friends</h2>
+                        <p>Add friends, share recipes via QR code or link, and see what others are cooking.</p>
+                    </div>
+                    <div class="tutorial-slide" data-slide="6">
+                        <div class="tutorial-icon">&#9989;</div>
+                        <h2>You're All Set!</h2>
+                        <p>Tap the <strong>?</strong> button in the top bar anytime to revisit this guide. Happy cooking!</p>
+                    </div>
+                </div>
+                <div class="tutorial-nav">
+                    <button class="btn btn-secondary" id="tutorialPrev" type="button">Back</button>
+                    <div class="tutorial-dots" id="tutorialDots"></div>
+                    <button class="btn btn-primary" id="tutorialNext" type="button">Next</button>
+                </div>
+            </div>
+        </div>
 
     <script src="/js/api.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>

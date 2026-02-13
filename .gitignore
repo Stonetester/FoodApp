@@ -1,37 +1,19 @@
-# Environment files
+# Env / secrets
 .env
-.env.*
-
-# Secrets & keys
-*.key
-*.pem
-*.p12
-
-# Logs
-*.log
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Dependency directories
-node_modules/
+backend/.env
+frontend/.env
 
 # Python
 __pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.venv/
+*.pyc
+venv/
 
-# Build artifacts
-/dist/
-/build/
+# Node
+node_modules/
+dist/
+build/
 
-# Database files
-*.sqlite
-*.sqlite3
-*.db
+# OS
+.DS_Store
+Thumbs.db
 
-# Cookies or session exports
-cookies.txt
