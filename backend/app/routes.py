@@ -301,13 +301,22 @@ def update_recipe(recipe_id):
 def delete_recipe(recipe_id):
     """Delete a recipe"""
     recipe = Recipe.query.filter_by(id=recipe_id, user_id=current_user.id).first()
-    
+
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
-    MealPlan.query.filter_by(user_id=current_user.id, recipe_id=recipe_id).delete()
-    db.session.delete(recipe)
-    db.session.commit()
-    
+
+    try:
+        # Delete all records referencing this recipe (from ANY user)
+        RecipeReview.query.filter_by(recipe_id=recipe_id).delete()
+        MealHistory.query.filter_by(recipe_id=recipe_id).delete()
+        MealPlan.query.filter_by(recipe_id=recipe_id).delete()
+        db.session.delete(recipe)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error("Failed to delete recipe %s: %s", recipe_id, e)
+        return jsonify({'error': 'Failed to delete recipe'}), 500
+
     return jsonify({'message': 'Recipe deleted'}), 200
 
 @api_bp.route('/recipes/<int:recipe_id>/qr', methods=['GET'])
