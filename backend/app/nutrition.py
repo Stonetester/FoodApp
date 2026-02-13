@@ -44,7 +44,7 @@ def lookup_ingredient_nutrition(name):
             'page_size': 3,
             'fields': 'product_name,nutriments',
         }
-        response = requests.get(url, params=params, timeout=5)
+        response = requests.get(url, params=params, timeout=(3, 4))
         if response.status_code != 200:
             return None
 
