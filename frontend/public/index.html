@@ -26,6 +26,15 @@
                 We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.
             </span>
         </div>
+        <div class="mobile-fab-container" id="mobileFabContainer">
+            <button class="mobile-fab" id="mobileFabRecipe" type="button" aria-label="Quick Add Recipe" title="Add Recipe">
+                <i data-lucide="book-plus"></i>
+            </button>
+            <button class="mobile-fab" id="mobileFabPantry" type="button" aria-label="Quick Add Pantry" title="Add Pantry Item">
+                <i data-lucide="shopping-bag"></i>
+            </button>
+        </div>
+
         <!-- Navigation -->
         <nav class="navbar" id="navbar">
             <div class="nav-container">
@@ -69,29 +78,25 @@
         </nav>
 
         <nav class="bottom-nav" id="bottomNav" aria-label="Primary mobile navigation">
-            <button class="bottom-nav__link" type="button" data-page="dashboard" aria-label="Dashboard">
-                <span class="bottom-nav__icon" aria-hidden="true"><i data-lucide="home"></i></span>
-                <span class="bottom-nav__label">Dashboard</span>
-            </button>
             <button class="bottom-nav__link" type="button" data-page="recipes" aria-label="Recipes">
                 <span class="bottom-nav__icon" aria-hidden="true"><i data-lucide="book-open"></i></span>
                 <span class="bottom-nav__label">Recipes</span>
+            </button>
+            <button class="bottom-nav__link" type="button" data-page="pantry" aria-label="Pantry">
+                <span class="bottom-nav__icon" aria-hidden="true"><i data-lucide="shopping-bag"></i></span>
+                <span class="bottom-nav__label">Pantry</span>
+            </button>
+            <button class="bottom-nav__link bottom-nav__link--center" type="button" data-page="dashboard" aria-label="Dashboard">
+                <span class="bottom-nav__icon" aria-hidden="true"><i data-lucide="home"></i></span>
+                <span class="bottom-nav__label">Home</span>
             </button>
             <button class="bottom-nav__link" type="button" data-page="mealplan" aria-label="Meal Plan">
                 <span class="bottom-nav__icon" aria-hidden="true"><i data-lucide="calendar-days"></i></span>
                 <span class="bottom-nav__label">Meal Plan</span>
             </button>
-            <button class="bottom-nav__link" type="button" data-page="pantry" aria-label="Pantry">
-                <span class="bottom-nav__icon" aria-hidden="true"><i data-lucide="basket"></i></span>
-                <span class="bottom-nav__label">Pantry</span>
-            </button>
             <button class="bottom-nav__link" type="button" data-page="social" aria-label="Social">
                 <span class="bottom-nav__icon" aria-hidden="true"><i data-lucide="users"></i></span>
                 <span class="bottom-nav__label">Social</span>
-            </button>
-            <button class="bottom-nav__link" type="button" data-page="account" aria-label="Account">
-                <span class="bottom-nav__icon" aria-hidden="true"><i data-lucide="users"></i></span>
-                <span class="bottom-nav__label">Account</span>
             </button>
             <button class="bottom-nav__link bottom-nav__more" type="button" id="moreTabBtn" aria-label="More" aria-controls="moreSheet" aria-expanded="false">
                 <span class="bottom-nav__icon" aria-hidden="true"><i data-lucide="more-horizontal"></i></span>
@@ -107,8 +112,10 @@
                 <button class="btn btn-ghost" type="button" id="moreSheetClose" aria-label="Close menu">✕</button>
             </div>
             <div class="bottom-sheet__content">
+                <button class="sheet-link" type="button" data-page="account" aria-label="Open account page">👤 Account</button>
                 <button class="sheet-link" type="button" data-page="history" aria-label="Open history page">🕒 History</button>
                 <button class="sheet-link" type="button" data-page="userSearch" aria-label="Open discover recipes page">🔍 Discover</button>
+                <button class="sheet-link" type="button" data-page="settings" aria-label="Open settings page">⚙️ Settings</button>
                 <button class="sheet-link sheet-link--danger" type="button" id="logoutBtnSheet" aria-label="Log out">🚪 Logout</button>
             </div>
         </div>
@@ -117,7 +124,10 @@
         <div id="loginPage" class="page active">
             <div class="login-container">
                 <div class="login-card">
-                    <h1 class="login-title">👨‍🍳 Modo Gusto</h1>
+                    <div class="login-logo">
+                        <img src="/images/logo-chef-hat.png" alt="Modo Gusto" class="login-logo-img">
+                    </div>
+                    <h1 class="login-title">Modo Gusto</h1>
                     <div class="login-tabs">
                         <button class="tab-btn active" data-tab="login">Login</button>
                         <button class="tab-btn" data-tab="register">Register</button>
@@ -1434,7 +1444,7 @@
                     <div class="tutorial-slide" data-slide="1">
                         <div class="tutorial-icon">&#128214;</div>
                         <h2>Recipes</h2>
-                        <p>Add recipes manually, import from a URL, scan a QR code, or snap a photo of a recipe page. Use <strong>+ Quick Recipe</strong> in the top bar for fast access.</p>
+                        <p>Add recipes manually, import from a URL, scan a QR code, or snap a photo of a recipe page. Tap the <strong>book (+)</strong> icon in the top-right corner to quickly add a recipe, or the <strong>bag (+)</strong> icon to add a pantry item.</p>
                     </div>
                     <div class="tutorial-slide" data-slide="2">
                         <div class="tutorial-icon">&#129472;</div>
