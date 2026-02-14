@@ -171,3 +171,31 @@ def send_weekly_digest(user, stats):
     """
     html = _base_template("Your Weekly Digest", body)
     _send(user.email, "Your Modo Gusto Weekly Digest", html)
+
+
+def send_test_email(user):
+    """Send a test email so the user can verify email delivery is working."""
+    body = f"""
+    <p>Hi <strong>{user.username}</strong>,</p>
+    <p>This is a test email from <strong>Modo Gusto</strong>. If you can read this, your email configuration is working correctly!</p>
+    <p style="text-align:center;margin:24px 0;">
+      <a href="{_base_url()}" style="display:inline-block;padding:12px 32px;background:#2BAF90;color:#F4FFFC;border-radius:8px;text-decoration:none;font-weight:bold;">Open Modo Gusto</a>
+    </p>
+    <p style="font-size:13px;color:#8a6b52;">Sent to: {user.email}</p>
+    """
+    html = _base_template("Test Email", body)
+    _send(user.email, "Modo Gusto - Test Email", html)
+
+
+def send_password_reset_email(user, reset_url):
+    """Send a password reset email with a time-limited link."""
+    body = f"""
+    <p>Hi <strong>{user.username}</strong>,</p>
+    <p>We received a request to reset your password. Click the button below to set a new password:</p>
+    <p style="text-align:center;margin:24px 0;">
+      <a href="{reset_url}" style="display:inline-block;padding:12px 32px;background:#c0672d;color:#F4FFFC;border-radius:8px;text-decoration:none;font-weight:bold;">Reset Password</a>
+    </p>
+    <p style="font-size:13px;color:#8a6b52;">This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+    """
+    html = _base_template("Reset Your Password", body)
+    _send(user.email, "Modo Gusto - Password Reset", html)

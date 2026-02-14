@@ -3670,6 +3670,38 @@ button {
 /* ==================== MOBILE FAB BUTTONS ==================== */
 .mobile-fab-container {
     display: none;
+    flex-direction: column;
+    gap: 8px;
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    right: calc(env(safe-area-inset-right, 0px) + 12px);
+    z-index: 1100;
+}
+
+.mobile-fab {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: #1B3A5C;
+    color: var(--accent-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 2px 0 var(--border), 0 4px 8px rgba(0, 0, 0, 0.15);
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-fab svg {
+    width: 20px;
+    height: 20px;
+}
+
+.mobile-fab:active {
+    transform: scale(0.92);
+    box-shadow: 1px 1px 0 var(--border);
 }
 
 /* ==================== MOBILE UX FIXES ==================== */
@@ -3700,40 +3732,9 @@ button {
     /* Mobile FABs - visible when authenticated */
     .app-authenticated .mobile-fab-container {
         display: flex;
-        flex-direction: column;
-        gap: 8px;
-        position: fixed;
-        top: 12px;
-        right: 12px;
-        z-index: 1100;
     }
 
     body.has-maintenance-banner .mobile-fab-container {
-        top: calc(var(--maintenance-banner-height) + 12px);
-    }
-
-    .mobile-fab {
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        border: 2px solid var(--border);
-        background: #1B3A5C;
-        color: var(--accent-gold);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 2px 2px 0 var(--border), 0 4px 8px rgba(0, 0, 0, 0.15);
-        padding: 0;
-        cursor: pointer;
-    }
-
-    .mobile-fab svg {
-        width: 20px;
-        height: 20px;
-    }
-
-    .mobile-fab:active {
-        transform: scale(0.92);
-        box-shadow: 1px 1px 0 var(--border);
+        top: calc(var(--maintenance-banner-height) + env(safe-area-inset-top, 0px) + 12px);
     }
 }
