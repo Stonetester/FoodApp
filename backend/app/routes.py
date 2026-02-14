@@ -150,15 +150,23 @@ def get_recipes():
 @api_bp.route('/recipes/<int:recipe_id>', methods=['GET'])
 @login_required
 def get_recipe(recipe_id):
-    """Get a specific recipe"""
-    recipe = Recipe.query.filter_by(id=recipe_id, user_id=current_user.id).first()
-    
+    """Get a specific recipe (any user's recipe is viewable)"""
+    recipe = Recipe.query.get(recipe_id)
+
     if not recipe:
         return jsonify({'error': 'Recipe not found'}), 404
-    
+
     if ensure_recipe_image_url(recipe):
         db.session.commit()
-    return jsonify(recipe.to_dict()), 200
+
+    recipe_dict = recipe.to_dict()
+    recipe_dict['is_owner'] = recipe.user_id == current_user.id
+    if recipe.user_id != current_user.id:
+        recipe_dict['owner'] = {
+            'id': recipe.user_id,
+            'username': recipe.user.username
+        }
+    return jsonify(recipe_dict), 200
 
 @api_bp.route('/recipes', methods=['POST'])
 @login_required
@@ -1390,3 +1398,15 @@ def admin_broadcast():
         return jsonify({'message': f'Broadcast sent to {len(users)} users'}), 200
     except Exception as e:
         return jsonify({'error': f'Broadcast failed: {str(e)}'}), 500
+
+
+@api_bp.route('/test-email', methods=['POST'])
+@login_required
+def test_email():
+    """Send a test email to the current user to verify email delivery."""
+    try:
+        from app.email_service import send_test_email
+        send_test_email(current_user)
+        return jsonify({'message': f'Test email sent to {current_user.email}'}), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to send test email: {str(e)}'}), 500

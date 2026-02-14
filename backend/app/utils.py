@@ -5,7 +5,41 @@ import base64
 import requests
 import json
 import re
+import html as html_module
+import unicodedata
 from bs4 import BeautifulSoup
+
+def _clean_parsed_text(text):
+    """Clean text extracted from HTML/JSON-LD: decode entities, normalize unicode, strip junk."""
+    if not isinstance(text, str):
+        return text
+    # 1. Decode HTML entities (e.g. &amp; -> &, &#39; -> ', &nbsp; -> space)
+    text = html_module.unescape(text)
+    # 2. Replace common smart/curly quotes and dashes with ASCII equivalents
+    replacements = {
+        '\u2018': "'",   # left single curly quote
+        '\u2019': "'",   # right single curly quote / apostrophe
+        '\u201C': '"',   # left double curly quote
+        '\u201D': '"',   # right double curly quote
+        '\u2013': '-',   # en dash
+        '\u2014': '-',   # em dash
+        '\u2026': '...',  # ellipsis
+        '\u00A0': ' ',   # non-breaking space
+        '\u200B': '',    # zero-width space
+        '\u200C': '',    # zero-width non-joiner
+        '\u200D': '',    # zero-width joiner
+        '\uFEFF': '',    # byte order mark
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    # 3. Strip HTML tags that slipped through
+    text = re.sub(r'<[^>]+>', '', text)
+    # 4. Normalize whitespace (collapse multiple spaces/tabs, strip leading/trailing)
+    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r'\n[ \t]+', '\n', text)
+    text = text.strip()
+    return text
+
 
 def parse_nutrition_value(value):
     if value is None:
@@ -779,6 +813,14 @@ def extract_recipe_from_url(url):
             ing.get('ingredient_name', '') for ing in result['ingredients']
         )
         result['tags'] = _detect_dietary_tags(recipe_data, all_ingredient_text)
+
+        # ---- Clean all text fields to remove HTML entities, smart quotes, etc. ----
+        for key in ('title', 'description', 'instructions'):
+            if result.get(key):
+                result[key] = _clean_parsed_text(result[key])
+        for ing in result.get('ingredients', []):
+            if ing.get('ingredient_name'):
+                ing['ingredient_name'] = _clean_parsed_text(ing['ingredient_name'])
 
         return result
 

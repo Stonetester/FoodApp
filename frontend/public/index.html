@@ -144,6 +144,39 @@
                             </div>
                             <button type="submit" class="btn btn-primary">Login</button>
                         </form>
+                        <p style="text-align:center;margin-top:0.75rem;">
+                            <a href="#" id="showForgotPassword" style="color:var(--primary);font-size:0.9rem;">Forgot Password?</a>
+                        </p>
+                    </div>
+                    <div id="forgotPasswordForm" class="form-container">
+                        <form id="forgotPasswordFormElement">
+                            <p style="font-size:0.9rem;color:var(--text);margin-bottom:1rem;">Enter your email address and we'll send you a link to reset your password.</p>
+                            <div class="form-group">
+                                <label for="forgotEmail">Email</label>
+                                <input type="email" id="forgotEmail" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Send Reset Link</button>
+                        </form>
+                        <p style="text-align:center;margin-top:0.75rem;">
+                            <a href="#" id="backToLogin" style="color:var(--primary);font-size:0.9rem;">Back to Login</a>
+                        </p>
+                    </div>
+                    <div id="resetPasswordForm" class="form-container">
+                        <form id="resetPasswordFormElement">
+                            <p style="font-size:0.9rem;color:var(--text);margin-bottom:1rem;">Enter your new password.</p>
+                            <div class="form-group">
+                                <label for="resetNewPassword">New Password</label>
+                                <input type="password" id="resetNewPassword" required minlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label for="resetConfirmPassword">Confirm Password</label>
+                                <input type="password" id="resetConfirmPassword" required minlength="8">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Reset Password</button>
+                        </form>
+                        <p style="text-align:center;margin-top:0.75rem;">
+                            <a href="#" id="backToLoginFromReset" style="color:var(--primary);font-size:0.9rem;">Back to Login</a>
+                        </p>
                     </div>
                     <div id="registerForm" class="form-container">
                         <form id="registerFormElement">
