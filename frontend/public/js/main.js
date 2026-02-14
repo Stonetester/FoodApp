@@ -28,6 +28,13 @@ async function initializeApp() {
     }
 
     setupEventListeners();
+
+    // Check for password reset token in URL
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reset_token')) {
+        showLogin();
+        showResetPasswordForm();
+    }
 }
 
 // Fallback: If API is not available, show login page
@@ -61,6 +68,28 @@ function setupEventListeners() {
     document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
         e.preventDefault();
         await handleRegister();
+    });
+
+    // Forgot password
+    document.getElementById('showForgotPassword')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showForgotPasswordForm();
+    });
+    document.getElementById('backToLogin')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchTab('login');
+    });
+    document.getElementById('backToLoginFromReset')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchTab('login');
+    });
+    document.getElementById('forgotPasswordFormElement')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleForgotPassword();
+    });
+    document.getElementById('resetPasswordFormElement')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleResetPassword();
     });
 
     // Logout
@@ -446,6 +475,106 @@ async function handleRegister() {
         }, 3000);
     } catch (error) {
         errorDiv.textContent = error.message || 'Registration failed';
+        errorDiv.classList.add('show');
+    }
+}
+
+function showForgotPasswordForm() {
+    document.querySelectorAll('.form-container').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('forgotPasswordForm').classList.add('active');
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('loginError').classList.remove('show');
+}
+
+function showResetPasswordForm() {
+    document.querySelectorAll('.form-container').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('resetPasswordForm').classList.add('active');
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('loginError').classList.remove('show');
+}
+
+async function handleForgotPassword() {
+    const email = document.getElementById('forgotEmail').value.trim();
+    const errorDiv = document.getElementById('loginError');
+
+    if (!email) {
+        errorDiv.textContent = 'Please enter your email address.';
+        errorDiv.classList.add('show');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        const data = await response.json();
+        errorDiv.textContent = data.message || 'If an account with that email exists, a reset link has been sent.';
+        errorDiv.classList.add('show');
+        errorDiv.style.color = 'var(--primary)';
+        setTimeout(() => {
+            errorDiv.style.color = '';
+        }, 5000);
+    } catch (error) {
+        errorDiv.textContent = 'Failed to send reset email. Please try again.';
+        errorDiv.classList.add('show');
+    }
+}
+
+async function handleResetPassword() {
+    const newPassword = document.getElementById('resetNewPassword').value;
+    const confirmPassword = document.getElementById('resetConfirmPassword').value;
+    const errorDiv = document.getElementById('loginError');
+
+    if (newPassword !== confirmPassword) {
+        errorDiv.textContent = 'Passwords do not match.';
+        errorDiv.classList.add('show');
+        return;
+    }
+
+    if (newPassword.length < 8) {
+        errorDiv.textContent = 'Password must be at least 8 characters long.';
+        errorDiv.classList.add('show');
+        return;
+    }
+
+    // Get token from URL
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('reset_token');
+
+    if (!token) {
+        errorDiv.textContent = 'Invalid reset link. Please request a new one.';
+        errorDiv.classList.add('show');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, new_password: newPassword }),
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            // Clear the token from URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            errorDiv.textContent = data.message || 'Password reset successfully! You can now log in.';
+            errorDiv.classList.add('show');
+            errorDiv.style.color = 'var(--primary)';
+            setTimeout(() => {
+                switchTab('login');
+                errorDiv.style.color = '';
+            }, 3000);
+        } else {
+            errorDiv.textContent = data.error || 'Failed to reset password.';
+            errorDiv.classList.add('show');
+        }
+    } catch (error) {
+        errorDiv.textContent = 'Failed to reset password. Please try again.';
         errorDiv.classList.add('show');
     }
 }
