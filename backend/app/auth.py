@@ -1,14 +1,21 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.models import db, User, Friendship, FriendRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+import os
 import re
 from app.account_profile import get_account_profile, save_account_profile, ensure_account_profiles_table
 
 auth_bp = Blueprint('auth', __name__)
+
+
+def _get_reset_serializer():
+    secret = current_app.config.get('SECRET_KEY', 'fallback-key')
+    return URLSafeTimedSerializer(secret, salt='password-reset')
 
 # Email validation regex
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
@@ -321,3 +328,64 @@ def check_auth():
         }), 200
     else:
         return jsonify({'authenticated': False}), 200
+
+
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    """Request a password reset email. Always returns success to prevent user enumeration."""
+    data = request.get_json() or {}
+    email = data.get('email', '').strip()
+
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+
+    # Always return success message regardless of whether user exists (security best practice)
+    user = User.query.filter_by(email=email).first()
+    if user:
+        try:
+            s = _get_reset_serializer()
+            token = s.dumps(user.id)
+            base_url = os.environ.get('APP_BASE_URL', 'http://localhost:5000')
+            reset_url = f"{base_url}?reset_token={token}"
+
+            from app.email_service import send_password_reset_email
+            send_password_reset_email(user, reset_url)
+        except Exception as e:
+            print(f"Password reset email failed: {e}")
+
+    return jsonify({'message': 'If an account with that email exists, a reset link has been sent.'}), 200
+
+
+@auth_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    """Reset password using a valid token from the forgot-password email."""
+    data = request.get_json() or {}
+    token = data.get('token', '').strip()
+    new_password = data.get('new_password', '')
+
+    if not token or not new_password:
+        return jsonify({'error': 'Token and new password are required'}), 400
+
+    valid, message = validate_password(new_password)
+    if not valid:
+        return jsonify({'error': message}), 400
+
+    try:
+        s = _get_reset_serializer()
+        user_id = s.loads(token, max_age=3600)  # 1 hour expiry
+    except SignatureExpired:
+        return jsonify({'error': 'Reset link has expired. Please request a new one.'}), 400
+    except BadSignature:
+        return jsonify({'error': 'Invalid reset link.'}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found.'}), 404
+
+    try:
+        user.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+        return jsonify({'message': 'Password reset successfully. You can now log in.'}), 200
+    except Exception:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to reset password.'}), 500
