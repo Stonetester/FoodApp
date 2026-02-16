@@ -147,8 +147,8 @@ function createDiscoverRecipeCard(recipe) {
 
 async function viewDiscoverRecipeDetail(recipeId) {
     try {
-        const recipe = await api.getDiscoverRecipe(recipeId);
-        const isOtherUser = recipe.owner && !recipe.is_owner;
+        const recipe = await api.getRecipe(recipeId);
+        const isOtherUser = recipe.is_owner === false;
         showRecipeDetailModal(recipe, isOtherUser);
     } catch (error) {
         console.error('Error loading discover recipe details:', error);
@@ -342,22 +342,17 @@ function createUserRecipeCard(recipe) {
 async function viewRecipeDetail(recipeId, isOtherUser = false) {
     // Close user recipes modal if open
     if (isOtherUser) {
-        document.getElementById('userRecipesModal').classList.remove('active');
+        const userRecipesModal = document.getElementById('userRecipesModal');
+        if (userRecipesModal) userRecipesModal.classList.remove('active');
     }
-    
+
     try {
-        const response = await fetch(`/api/recipes/${recipeId}`, {
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Failed to load recipe: ${response.status}`);
-        }
-        
-        const recipe = await response.json();
-        
-        // Show recipe detail modal
-        showRecipeDetailModal(recipe, isOtherUser);
+        // Use the general recipe endpoint (backend now allows viewing any recipe)
+        const recipe = await api.getRecipe(recipeId);
+
+        // Detect ownership from backend response
+        const otherUser = isOtherUser || recipe.is_owner === false;
+        showRecipeDetailModal(recipe, otherUser);
     } catch (error) {
         console.error('Error loading recipe details:', error);
         alert('Failed to load recipe details');

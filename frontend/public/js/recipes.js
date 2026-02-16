@@ -765,8 +765,9 @@ function showSaveConfirmation(recipeName) {
 async function viewRecipeDetail(id) {
     try {
         const recipe = await api.getRecipe(id);
+        const isOtherUser = recipe.is_owner === false;
         if (typeof showRecipeDetailModal === 'function') {
-            showRecipeDetailModal(recipe, false);
+            showRecipeDetailModal(recipe, isOtherUser);
         } else {
             openRecipeModal(recipe);
         }
