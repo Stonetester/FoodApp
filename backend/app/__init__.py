@@ -488,7 +488,11 @@ def create_app(config_class=Config):
     # --- Health-check endpoint (used by Cloudflare, uptime monitors, etc.) ---
     @app.route('/health')
     def health_check():
-        return jsonify({'status': 'ok'}), 200
+        try:
+            db.session.execute(text('SELECT 1'))
+            return jsonify({'status': 'ok'}), 200
+        except Exception:
+            return jsonify({'status': 'error', 'detail': 'database'}), 503
 
     # --- Keep-alive / proxy-friendly response headers ---
     @app.after_request

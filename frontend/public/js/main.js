@@ -9,10 +9,11 @@ const maintenanceAnnouncement = {
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
+    setupLoginListeners();
     setupResponsiveClass();
     applyMaintenanceBanners();
     initializeLucideIcons();
+    initializeApp();
 });
 
 async function initializeApp() {
@@ -35,6 +36,31 @@ async function initializeApp() {
         showLogin();
         showResetPasswordForm();
     }
+}
+
+// Attach login-page handlers synchronously so they work even while the
+// async initializeApp() is still waiting on the API.
+function setupLoginListeners() {
+    document.getElementById('showForgotPassword')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showForgotPasswordForm();
+    });
+    document.getElementById('backToLogin')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchTab('login');
+    });
+    document.getElementById('backToLoginFromReset')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchTab('login');
+    });
+    document.getElementById('forgotPasswordFormElement')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleForgotPassword();
+    });
+    document.getElementById('resetPasswordFormElement')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleResetPassword();
+    });
 }
 
 // Fallback: If API is not available, show login page
@@ -68,28 +94,6 @@ function setupEventListeners() {
     document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
         e.preventDefault();
         await handleRegister();
-    });
-
-    // Forgot password
-    document.getElementById('showForgotPassword')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        showForgotPasswordForm();
-    });
-    document.getElementById('backToLogin')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        switchTab('login');
-    });
-    document.getElementById('backToLoginFromReset')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        switchTab('login');
-    });
-    document.getElementById('forgotPasswordFormElement')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await handleForgotPassword();
-    });
-    document.getElementById('resetPasswordFormElement')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await handleResetPassword();
     });
 
     // Logout
@@ -887,20 +891,28 @@ function updateActiveNav(pageName) {
 function applyMaintenanceBanners() {
     const banners = document.querySelectorAll('[data-maintenance-banner]');
     const isEnabled = maintenanceAnnouncement.enabled;
-    const wasDismissed = sessionStorage.getItem('mg_banner_dismissed') === '1';
+    let wasDismissed = false;
+    try { wasDismissed = sessionStorage.getItem('mg_banner_dismissed') === '1'; } catch (_) {}
     banners.forEach((banner) => {
         const messageEl = banner.querySelector('[data-maintenance-message]');
         if (messageEl) {
             messageEl.textContent = maintenanceAnnouncement.message;
         }
-        banner.classList.toggle('is-hidden', !isEnabled || wasDismissed);
-        banner.addEventListener('click', () => {
-            banner.classList.add('is-hidden');
-            document.body.classList.remove('has-maintenance-banner');
-            sessionStorage.setItem('mg_banner_dismissed', '1');
-        });
+        if (!isEnabled || wasDismissed) {
+            banner.style.display = 'none';
+        } else {
+            banner.style.display = '';
+        }
+        banner.addEventListener('click', dismissBanner);
     });
     document.body.classList.toggle('has-maintenance-banner', isEnabled && !wasDismissed);
+}
+
+function dismissBanner() {
+    const banners = document.querySelectorAll('[data-maintenance-banner]');
+    banners.forEach((b) => { b.style.display = 'none'; });
+    document.body.classList.remove('has-maintenance-banner');
+    try { sessionStorage.setItem('mg_banner_dismissed', '1'); } catch (_) {}
 }
 
 
