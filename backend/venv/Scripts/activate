@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\keato\FoodApp_Claude\FoodApp_Windows\backend\venv"
+VIRTUAL_ENV="C:\serverApps\FoodApp\backend\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

@@ -4,7 +4,12 @@ let currentUser = null;
 
 const maintenanceAnnouncement = {
     enabled: true,
-    message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
+    // Maintenance message
+    //message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
+    // Email Spam message
+    message: 'IMPORTANT: Check spam folder in email for notifications!'
+    // Updated features message
+    //    message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
 };
 
 // Initialize app
