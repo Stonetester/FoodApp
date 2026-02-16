@@ -14,7 +14,7 @@ class Config:
     SQLALCHEMY_ECHO = False  # Set to True for SQL query debugging
     
     # Session configuration
-    SESSION_COOKIE_SECURE = (os.getenv("SESSION_COOKIE_SECURE", "1") == "1")  # Set to True in production with HTTPS
+    SESSION_COOKIE_SECURE = (os.getenv("SESSION_COOKIE_SECURE", "0") == "1")  # Only True when explicitly set (production w/ HTTPS)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
     PERMANENT_SESSION_LIFETIME = timedelta(days=1)      
@@ -34,6 +34,7 @@ class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     SQLALCHEMY_ECHO = True
+    SESSION_COOKIE_SECURE = False  # Allow cookies over HTTP in dev
 
 class ProductionConfig(Config):
     """Production configuration"""

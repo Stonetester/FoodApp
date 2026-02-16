@@ -24,19 +24,22 @@ app = create_app(config)
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🏡 Cosy Cottage Food App")
+    print("  Cosy Cottage Food App")
     print("=" * 60)
-    print(f"Environment: {config_name}")
-    print(f"Debug mode: {app.config['DEBUG']}")
-    print(f"Database: {app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1] if '@' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite'}")
+    print(f"  Environment: {config_name}")
+    print(f"  Debug mode:  {app.config['DEBUG']}")
+    print(f"  Database:    {app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1] if '@' in app.config['SQLALCHEMY_DATABASE_URI'] else 'SQLite'}")
     print("=" * 60)
-    print("\n🚀 Starting server...")
-    print("📱 Access the app at: http://localhost:5000")
-    print("🛑 Press CTRL+C to stop\n")
+    print("\n  Starting server...")
+    print("  Access the app at: http://localhost:5000")
+    print("  Press CTRL+C to stop\n")
     
     # Run the development server
+    # Bind to 127.0.0.1 (not 0.0.0.0) so 'localhost' works instantly.
+    # 0.0.0.0 only binds IPv4, but localhost resolves to IPv6 ::1 first
+    # on Windows, causing a ~2s hang on every request in the browser.
     app.run(
-        host='0.0.0.0',  # Listen on all interfaces
+        host='127.0.0.1',
         port=5000,
         debug=app.config['DEBUG']
     )
