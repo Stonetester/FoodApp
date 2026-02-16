@@ -48,6 +48,7 @@ class DevelopmentConfig(Config):
     """Development configuration"""
     DEBUG = True
     SQLALCHEMY_ECHO = True
+    SESSION_COOKIE_SECURE = False  # Allow cookies over HTTP in dev
 
 class ProductionConfig(Config):
     """Production configuration"""

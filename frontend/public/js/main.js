@@ -7,13 +7,19 @@ const maintenanceAnnouncement = {
     message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
 };
 
-// Initialize app
+// All handlers run immediately — the DOM is already available since this
+// script is at the bottom of <body>, AFTER all HTML elements.
+// Do NOT wait for DOMContentLoaded — it fires only after ALL deferred CDN
+// scripts (FullCalendar, Lucide, html5-qrcode) finish downloading, which
+// can take seconds on a slow connection and blocks the entire app.
+setupLoginListeners();
+setupResponsiveClass();
+applyMaintenanceBanners();
+initializeApp();
+
+// Only Lucide icon rendering needs the deferred CDN script to be loaded.
 document.addEventListener('DOMContentLoaded', () => {
-    setupLoginListeners();
-    setupResponsiveClass();
-    applyMaintenanceBanners();
     initializeLucideIcons();
-    initializeApp();
 });
 
 async function initializeApp() {
@@ -41,6 +47,27 @@ async function initializeApp() {
 // Attach login-page handlers synchronously so they work even while the
 // async initializeApp() is still waiting on the API.
 function setupLoginListeners() {
+    // Login/Register tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tab = e.target.dataset.tab;
+            switchTab(tab);
+        });
+    });
+
+    // Login form
+    document.getElementById('loginFormElement')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleLogin();
+    });
+
+    // Register form
+    document.getElementById('registerFormElement')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleRegister();
+    });
+
+    // Forgot password
     document.getElementById('showForgotPassword')?.addEventListener('click', (e) => {
         e.preventDefault();
         showForgotPasswordForm();
@@ -76,26 +103,6 @@ if (typeof api === 'undefined') {
 }
 
 function setupEventListeners() {
-    // Login/Register tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const tab = e.target.dataset.tab;
-            switchTab(tab);
-        });
-    });
-
-    // Login form
-    document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await handleLogin();
-    });
-
-    // Register form
-    document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await handleRegister();
-    });
-
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await handleLogout();
@@ -898,21 +905,14 @@ function applyMaintenanceBanners() {
         if (messageEl) {
             messageEl.textContent = maintenanceAnnouncement.message;
         }
-        if (!isEnabled || wasDismissed) {
-            banner.style.display = 'none';
-        } else {
-            banner.style.display = '';
-        }
-        banner.addEventListener('click', dismissBanner);
+        banner.classList.toggle('is-hidden', !isEnabled || wasDismissed);
+        banner.addEventListener('click', () => {
+            banner.classList.add('is-hidden');
+            document.body.classList.remove('has-maintenance-banner');
+            try { sessionStorage.setItem('mg_banner_dismissed', '1'); } catch (_) {}
+        });
     });
     document.body.classList.toggle('has-maintenance-banner', isEnabled && !wasDismissed);
-}
-
-function dismissBanner() {
-    const banners = document.querySelectorAll('[data-maintenance-banner]');
-    banners.forEach((b) => { b.style.display = 'none'; });
-    document.body.classList.remove('has-maintenance-banner');
-    try { sessionStorage.setItem('mg_banner_dismissed', '1'); } catch (_) {}
 }
 
 
