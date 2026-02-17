@@ -480,6 +480,6 @@ def create_app(config_class=Config):
         db.create_all()
         ensure_social_schema()
         _ensure_pantry_and_recipe_schema()
-        print("✅ Database tables created successfully")
+        print("Database tables created successfully")
     
     return app
