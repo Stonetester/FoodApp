@@ -115,17 +115,18 @@ function setupRecipeListeners() {
         loadRecipes();
     });
 
-    // Tag filters
-    document.querySelectorAll('.tag-filters input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
+    // Tag chip filter buttons (horizontal strip)
+    document.querySelectorAll('.tag-chip-strip .tag-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            chip.classList.toggle('is-active');
             updateTagFilters();
         });
     });
 }
 
 function updateTagFilters() {
-    currentFilters.tags = Array.from(document.querySelectorAll('.tag-filters input[type="checkbox"]:checked'))
-        .map(cb => cb.value);
+    currentFilters.tags = Array.from(document.querySelectorAll('.tag-chip-strip .tag-chip.is-active'))
+        .map(btn => btn.dataset.tag);
     loadRecipes();
 }
 
@@ -163,12 +164,19 @@ function createRecipeCard(recipe) {
         `<span class="recipe-tag">${tag}</span>`
     ).join('');
 
+    // Build time pills
+    const timePills = [];
+    if (recipe.prep_time) timePills.push(`<span class="recipe-card-time-pill">&#9201; ${recipe.prep_time}m prep</span>`);
+    if (recipe.cook_time) timePills.push(`<span class="recipe-card-time-pill">&#127859; ${recipe.cook_time}m cook</span>`);
+    const timePillsHtml = timePills.length > 0 ? `<div class="recipe-card-times">${timePills.join('')}</div>` : '';
+
     card.innerHTML = `
         ${recipe.image_url ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="recipe-card-image" onerror="this.style.display='none'">` : ''}
         <div class="recipe-card-content">
             <h3 class="recipe-card-title">${recipe.title}</h3>
+            ${timePillsHtml}
             <p class="recipe-card-description">${recipe.description || ''}</p>
-            ${recipe.source_url ? `<p class="recipe-card-source"><a href="${recipe.source_url}" target="_blank" rel="noopener noreferrer">🔗 Original recipe</a></p>` : ''}
+            ${recipe.source_url ? `<p class="recipe-card-source"><a href="${recipe.source_url}" target="_blank" rel="noopener noreferrer">&#128279; Original recipe</a></p>` : ''}
             <div class="recipe-card-meta">${buildRecipeServingAndNutritionMeta(recipe)}</div>
             <div class="recipe-card-rating">
                 ${buildRecipeRatingDisplay(recipe)}

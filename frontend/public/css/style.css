@@ -3738,3 +3738,456 @@ button {
         top: calc(var(--maintenance-banner-height) + env(safe-area-inset-top, 0px) + 12px);
     }
 }
+
+/* =================================================================
+   MOBILE RECIPE DETAIL v2 — Mealie-inspired, Modo Gusto branded
+   Preserves: all --var() tokens, Playfair Display + DM Sans fonts,
+   neo-brutalist borders & shadows, 70s color palette
+   ================================================================= */
+
+/* Hero image with gradient overlay */
+.rd-hero-wrap { position: relative; background: var(--surface); }
+.rd-hero {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    display: block;
+}
+.rd-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent 35%, rgba(59,36,22,0.82) 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.25rem;
+}
+.rd-hero-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: var(--white);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    margin-bottom: 0.35rem;
+    line-height: 1.2;
+}
+.rd-hero-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--accent-gold);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.rd-hero-placeholder {
+    height: 5px;
+    background: linear-gradient(
+        to right,
+        var(--70s-burnt-orange),
+        var(--70s-harvest-gold),
+        var(--accent-teal)
+    );
+}
+
+/* Quick-info pills bar */
+.rd-info-bar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.85rem 1.1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    -webkit-overflow-scrolling: touch;
+}
+.rd-info-bar::-webkit-scrollbar { display: none; }
+.rd-info-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.65rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text);
+    box-shadow: 2px 2px 0 var(--border);
+    min-height: 32px;
+}
+
+/* Horizontal tag chip strip */
+.rd-tag-strip {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.65rem 1.1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    -webkit-overflow-scrolling: touch;
+}
+.rd-tag-strip::-webkit-scrollbar { display: none; }
+.rd-tag-chip {
+    flex-shrink: 0;
+    background: var(--highlight);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 0.2rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    box-shadow: 2px 2px 0 var(--border);
+    white-space: nowrap;
+}
+
+/* Recipe detail body */
+.rd-body { padding: 1rem 1.1rem; }
+.rd-section { margin-bottom: 1.5rem; }
+.rd-section-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--border);
+}
+
+/* Owner / byline */
+.rd-byline {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+}
+
+/* Description callout */
+.rd-description {
+    font-size: 0.92rem;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+    padding: 0.65rem 0.9rem;
+    background: var(--bg);
+    border-left: 4px solid var(--primary);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* Ingredient checklist */
+.rd-ingredient-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(201,164,129,0.25);
+    cursor: pointer;
+    min-height: 44px;
+    transition: opacity 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+.rd-ingredient-row:last-child { border-bottom: none; }
+.rd-ingredient-check {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: 2.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+    font-size: 0.75rem;
+    color: transparent;
+    font-weight: 700;
+}
+.rd-ingredient-row.is-checked { opacity: 0.45; }
+.rd-ingredient-row.is-checked .rd-ingredient-check {
+    background: var(--accent-teal);
+    border-color: var(--accent-teal);
+    color: var(--white);
+}
+.rd-ingredient-text {
+    font-size: 0.92rem;
+    color: var(--text);
+    line-height: 1.4;
+}
+.rd-ingredient-row.is-checked .rd-ingredient-text {
+    text-decoration: line-through;
+    color: var(--muted);
+}
+
+/* Start Cooking button */
+.rd-start-cooking-btn {
+    width: 100%;
+    margin-top: 0.85rem;
+    background: var(--primary);
+    color: var(--white);
+    border: 2px solid var(--primary-dark);
+    border-radius: var(--radius-md);
+    padding: 0.85rem;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'DM Sans', inherit;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--primary-dark);
+    min-height: 48px;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.rd-start-cooking-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--primary-dark);
+}
+
+/* Numbered instruction steps */
+.rd-step {
+    display: flex;
+    gap: 0.85rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(201,164,129,0.25);
+    align-items: flex-start;
+}
+.rd-step:last-child { border-bottom: none; }
+.rd-step-num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    background: var(--primary);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 2px 2px 0 var(--primary-dark);
+    margin-top: 0.1rem;
+}
+.rd-step-text {
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--text);
+}
+
+/* Collapsible nutrition panel */
+.rd-nutrition-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--highlight);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: 'DM Sans', inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--border);
+    min-height: 48px;
+    transition: background 0.15s;
+}
+.rd-nutrition-toggle:active { background: var(--secondary); }
+.rd-nutrition-chevron {
+    transition: transform 0.25s ease;
+    font-size: 0.75rem;
+}
+.rd-nutrition-panel.is-open .rd-nutrition-chevron { transform: rotate(180deg); }
+.rd-nutrition-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0 0.85rem;
+}
+.rd-nutrition-panel.is-open .rd-nutrition-grid {
+    max-height: 500px;
+    padding: 0.85rem;
+}
+.rd-nutrition-item {
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.65rem;
+    box-shadow: 2px 2px 0 var(--border);
+}
+.rd-nutrition-label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    font-family: 'DM Sans', inherit;
+}
+.rd-nutrition-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* Action bar */
+.rd-action-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.1rem;
+    border-top: 2px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    background: var(--surface);
+    margin-bottom: 0;
+}
+.rd-action-bar .btn { flex: 1; min-width: 100px; font-size: 0.88rem; }
+
+/* Cooking mode full-screen overlay */
+.cooking-mode-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1.25rem;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+.cooking-mode-overlay.is-active { transform: translateY(0); }
+.cooking-mode-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border);
+}
+.cooking-mode-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--primary);
+    max-width: 70%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.cooking-mode-exit {
+    background: none;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.3rem 0.75rem;
+    font-family: 'DM Sans', inherit;
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    min-height: 36px;
+    transition: background 0.15s;
+}
+.cooking-mode-exit:active { background: var(--highlight); }
+.cooking-mode-step-area {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.cooking-mode-step-num {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+}
+.cooking-mode-step-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.45rem;
+    line-height: 1.65;
+    color: var(--text);
+}
+.cooking-mode-nav {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+.cooking-mode-nav .btn {
+    flex: 1;
+    min-height: 52px;
+    font-size: 1rem;
+    box-shadow: 4px 4px 0 var(--border);
+}
+
+/* Horizontal chip filter strip (Recipes page) */
+.tag-chip-strip {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 0.75rem;
+    -webkit-overflow-scrolling: touch;
+}
+.tag-chip-strip::-webkit-scrollbar { display: none; }
+.tag-chip {
+    flex-shrink: 0;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 var(--border);
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+    white-space: nowrap;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    font-family: 'DM Sans', inherit;
+}
+.tag-chip.is-active {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary-dark);
+    box-shadow: 3px 3px 0 var(--primary-dark);
+}
+.tag-chip:active { transform: scale(0.95); }
+
+/* Recipe card time pills */
+.recipe-card-times {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+}
+.recipe-card-time-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.15rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text);
+    box-shadow: 1px 1px 0 var(--border);
+}

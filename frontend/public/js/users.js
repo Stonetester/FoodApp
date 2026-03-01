@@ -428,106 +428,138 @@ function buildRecipeNutritionSection(nutrition, servings) {
 function showRecipeDetailModal(recipe, isOtherUser) {
     const modal = document.getElementById('recipeDetailModal');
     const content = document.getElementById('recipeDetailContent');
-    
-    // Rating display
-    let ratingSection = '';
-    if (recipe.average_rating) {
-        ratingSection = `
-            <div class="detail-rating">
-                <h3>⭐ Rating: ${recipe.average_rating} / 5</h3>
-                <p>${recipe.rating_count} people have tried this recipe</p>
-            </div>
-        `;
-    }
-    
-    // Format ingredients
-    const filteredIngredients = (recipe.ingredients || []).filter(ing => ing.ingredient_name !== '__nutrition__');
-    const ingredientsHtml = filteredIngredients.length > 0
-        ? `<ul class="ingredients-list">
-            ${filteredIngredients.map(ing => {
-                let line = stripTrailingPriceAnnotation(ing.ingredient_name);
-                if (ing.quantity && ing.unit) {
-                    line = `${ing.quantity} ${ing.unit} ${stripTrailingPriceAnnotation(ing.ingredient_name)}`;
-                } else if (ing.quantity) {
-                    line = `${ing.quantity} ${stripTrailingPriceAnnotation(ing.ingredient_name)}`;
-                }
-                return `<li>${line}</li>`;
-            }).join('')}
-           </ul>`
-        : '<p>No ingredients listed</p>';
 
+    const filteredIngredients = (recipe.ingredients || []).filter(ing => ing.ingredient_name !== '__nutrition__');
     const nutritionMeta = (recipe.ingredients || []).find(ing => ing.ingredient_name === '__nutrition__')?.nutritional_info;
     const nutrition = nutritionMeta || (typeof getNutritionFromIngredients === 'function' ? getNutritionFromIngredients(recipe.ingredients || []) : null);
     const servings = parseInt(recipe.servings) || 1;
-    const hasNutrition = nutrition && Object.keys(nutrition).length > 0;
-    const nutritionHtml = hasNutrition ? buildRecipeNutritionSection(nutrition, servings) : '';
-    
-    // Format instructions
-    const instructionsHtml = recipe.instructions
-        ? `<div class="instructions-text">${recipe.instructions.replace(/\n/g, '<br>')}</div>`
-        : '<p>No instructions provided</p>';
-    
-    content.innerHTML = `
-        <div class="recipe-detail">
-            ${recipe.image_url ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="recipe-detail-image">` : ''}
-            
-            <h2>${recipe.title}</h2>
-            
-            ${isOtherUser && recipe.owner ? `<p class="recipe-owner">By: ${recipe.owner.username}</p>` : ''}
-            
-            ${recipe.description ? `<p class="recipe-description">${recipe.description}</p>` : ''}
-            
-            <div class="recipe-meta">
-                ${recipe.prep_time ? `<span class="meta-item">⏱️ Prep: ${recipe.prep_time}min</span>` : ''}
-                ${recipe.cook_time ? `<span class="meta-item">🍳 Cook: ${recipe.cook_time}min</span>` : ''}
-                ${recipe.servings ? `<span class="meta-item servings-badge">🍽️ Serves ${recipe.servings}</span>` : ''}
-            </div>
-            
-            ${ratingSection}
-            
-            ${recipe.tags && recipe.tags.length > 0 ? `
-                <div class="recipe-tags-section">
-                    <strong>Tags:</strong>
-                    ${recipe.tags.map(tag => `<span class="recipe-tag">${tag}</span>`).join('')}
-                </div>
-            ` : ''}
-            
-            <div class="recipe-section">
-                <h3>📝 Ingredients</h3>
-                ${ingredientsHtml}
-            </div>
-            
-            <div class="recipe-section">
-                <h3>👩‍🍳 Instructions</h3>
-                ${instructionsHtml}
-            </div>
-            
-            ${nutritionHtml}
-            
-            ${recipe.source_url ? `
-                <div class="recipe-section" style="margin-top: 1rem;">
-                    <p style="font-size: 0.85rem;"><a href="${recipe.source_url}" target="_blank" rel="noopener noreferrer" style="color: var(--primary);">🔗 Original recipe URL</a></p>
-                </div>
-            ` : ''}
 
-            <div class="recipe-actions">
-                <button class="btn btn-secondary" onclick="shareRecipeLink(${recipe.id}, '${recipe.title.replace(/'/g, "\\'")}')">
-                    📤 Share
-                </button>
-                <button class="btn btn-secondary" onclick="shareRecipeQR(${recipe.id})">
-                    📱 QR Code
-                </button>
-                ${isOtherUser ? `
-                    <button class="btn btn-primary" onclick="copyRecipeFromDetail(${recipe.id})">
-                        📥 Copy to My Recipes
-                    </button>
-                ` : ''}
+    // --- Hero section ---
+    const heroHtml = recipe.image_url
+        ? `<div class="rd-hero-wrap">
+               <img src="${recipe.image_url}" alt="${recipe.title}" class="rd-hero" onerror="this.style.display='none'">
+               <div class="rd-hero-overlay">
+                   <h2 class="rd-hero-title">${recipe.title}</h2>
+                   ${recipe.average_rating ? `<div class="rd-hero-rating">&#9733; ${recipe.average_rating} <span style="opacity:.75;font-weight:400;">(${recipe.rating_count || 0} reviews)</span></div>` : ''}
+               </div>
+           </div>`
+        : `<div class="rd-hero-placeholder"></div>`;
+
+    // --- Quick-info pills ---
+    const pills = [];
+    if (recipe.prep_time) pills.push(`<span class="rd-info-pill">&#9201; ${recipe.prep_time} min prep</span>`);
+    if (recipe.cook_time) pills.push(`<span class="rd-info-pill">&#127859; ${recipe.cook_time} min cook</span>`);
+    if (recipe.servings) pills.push(`<span class="rd-info-pill">&#127869; ${recipe.servings} servings</span>`);
+    const infoBarHtml = pills.length > 0
+        ? `<div class="rd-info-bar">${pills.join('')}</div>`
+        : '';
+
+    // --- Tag chip strip ---
+    const tagsHtml = recipe.tags && recipe.tags.length > 0
+        ? `<div class="rd-tag-strip">${recipe.tags.map(t => `<span class="rd-tag-chip">${t}</span>`).join('')}</div>`
+        : '';
+
+    // --- Ingredient checklist ---
+    const ingredientsListHtml = filteredIngredients.length > 0
+        ? filteredIngredients.map((ing, i) => {
+            let line = stripTrailingPriceAnnotation(ing.ingredient_name);
+            if (ing.quantity && ing.unit) {
+                line = `${ing.quantity} ${ing.unit} ${stripTrailingPriceAnnotation(ing.ingredient_name)}`;
+            } else if (ing.quantity) {
+                line = `${ing.quantity} ${stripTrailingPriceAnnotation(ing.ingredient_name)}`;
+            }
+            return `<div class="rd-ingredient-row" data-idx="${i}" role="checkbox" aria-checked="false" tabindex="0">
+                        <div class="rd-ingredient-check" aria-hidden="true">&#10003;</div>
+                        <span class="rd-ingredient-text">${line}</span>
+                    </div>`;
+        }).join('')
+        : '<p style="color:var(--muted);font-size:.9rem;">No ingredients listed.</p>';
+
+    // --- Numbered steps ---
+    const stepsHtml = recipe.instructions
+        ? buildRecipeSteps(recipe.instructions)
+        : '<p style="color:var(--muted);font-size:.9rem;">No instructions provided.</p>';
+
+    // --- Collapsible nutrition ---
+    let nutritionPanelHtml = '';
+    if (nutrition) {
+        const items = [
+            ['Calories', nutrition.energy_kcal, ''],
+            ['Protein', nutrition.proteins, 'g'],
+            ['Carbs', nutrition.carbohydrates, 'g'],
+            ['Fat', nutrition.fat, 'g'],
+            ['Sat. Fat', nutrition.saturated_fat, 'g'],
+            ['Fiber', nutrition.fiber, 'g'],
+            ['Sugars', nutrition.sugars, 'g'],
+            ['Sodium', nutrition.sodium, 'mg'],
+            ['Cholesterol', nutrition.cholesterol, 'mg'],
+        ].filter(([, val]) => val !== undefined && val !== null && val !== 0);
+
+        if (items.length > 0) {
+            const fmt = (val, unit) => val !== undefined && val !== null ? `${Math.round(val * 10) / 10}${unit}` : '—';
+            nutritionPanelHtml = `
+                <div class="rd-section">
+                    <div class="rd-nutrition-panel" id="rdNutritionPanel">
+                        <button class="rd-nutrition-toggle" id="rdNutritionToggle" type="button" aria-expanded="false">
+                            <span>&#129789; Nutrition (per serving)</span>
+                            <span class="rd-nutrition-chevron">&#9660;</span>
+                        </button>
+                        <div class="rd-nutrition-grid" id="rdNutritionGrid" aria-hidden="true">
+                            ${items.map(([label, val, unit]) => `
+                                <div class="rd-nutrition-item">
+                                    <div class="rd-nutrition-label">${label}</div>
+                                    <div class="rd-nutrition-value">${fmt(val, unit)}</div>
+                                </div>`).join('')}
+                        </div>
+                    </div>
+                </div>`;
+        }
+    }
+
+    content.innerHTML = `
+        ${heroHtml}
+        ${infoBarHtml}
+        ${tagsHtml}
+        <div class="rd-body">
+            ${!recipe.image_url ? `<h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--primary);margin-bottom:.35rem;">${recipe.title}</h2>` : ''}
+            ${!recipe.image_url && recipe.average_rating ? `<div style="color:var(--accent-gold);font-size:.9rem;margin-bottom:.5rem;">&#9733; ${recipe.average_rating} (${recipe.rating_count || 0} reviews)</div>` : ''}
+            ${isOtherUser && recipe.owner ? `<p class="rd-byline">By ${recipe.owner.username}</p>` : ''}
+            ${recipe.description ? `<p class="rd-description">${recipe.description}</p>` : ''}
+
+            <div class="rd-section">
+                <div class="rd-section-title">&#128221; Ingredients</div>
+                <div id="rdIngredients">${ingredientsListHtml}</div>
+                ${filteredIngredients.length > 0
+                    ? `<button class="rd-start-cooking-btn" id="rdStartCookingBtn" type="button">&#9654; Start Cooking Mode</button>`
+                    : ''}
             </div>
+
+            <div class="rd-section">
+                <div class="rd-section-title">&#128104;&#8205;&#127859; Instructions</div>
+                ${stepsHtml}
+            </div>
+
+            ${nutritionPanelHtml}
+
+            ${recipe.source_url
+                ? `<div class="rd-section"><p style="font-size:.82rem;"><a href="${recipe.source_url}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);">&#128279; Original recipe</a></p></div>`
+                : ''}
+        </div>
+
+        <div class="rd-action-bar">
+            <button class="btn btn-secondary" id="rdShareBtn" type="button">&#128228; Share</button>
+            <button class="btn btn-secondary" onclick="shareRecipeQR(${recipe.id})" type="button">&#128241; QR Code</button>
+            ${isOtherUser
+                ? `<button class="btn btn-primary" onclick="copyRecipeFromDetail(${recipe.id})" type="button">&#128229; Copy Recipe</button>`
+                : ''}
+        </div>
+
+        <div class="rd-body">
             <div class="review-section" id="reviewSection" data-recipe-id="${recipe.id}">
-                <h3>Reviews</h3>
+                <h3 style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--primary);margin-bottom:.75rem;">&#11088; Reviews</h3>
                 <div class="review-form">
                     <div class="star-picker" id="starPicker">
-                        ${[1,2,3,4,5].map(n => `<button type="button" class="star" data-rating="${n}" title="${n} star${n>1?'s':''}">&#9733;</button>`).join('')}
+                        ${[1,2,3,4,5].map(n => `<button type="button" class="star" data-rating="${n}" title="${n} star${n > 1 ? 's' : ''}">&#9733;</button>`).join('')}
                     </div>
                     <textarea id="reviewText" placeholder="Write a review (optional)..." rows="2"></textarea>
                     <button class="btn btn-primary" id="submitReviewBtn" type="button">Submit Review</button>
@@ -538,11 +570,115 @@ function showRecipeDetailModal(recipe, isOtherUser) {
             </div>
         </div>
     `;
-    
+
     modal.classList.add('active');
 
-    // Initialize reviews
+    // Wire up all interactive features
     initReviewSection(recipe.id);
+    initIngredientChecklist();
+    initNutritionToggle();
+    initStartCooking(recipe);
+
+    const shareBtn = document.getElementById('rdShareBtn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', () => shareRecipeLink(recipe.id, recipe.title));
+    }
+}
+
+/* Split instructions into numbered steps */
+function buildRecipeSteps(instructions) {
+    const lines = instructions.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return '<p style="color:var(--muted);font-size:.9rem;">No instructions provided.</p>';
+    return lines.map((line, i) => {
+        const cleaned = line.replace(/^(step\s+)?\d+[\.\:\)]\s*/i, '').trim() || line;
+        return `<div class="rd-step">
+                    <div class="rd-step-num">${i + 1}</div>
+                    <div class="rd-step-text">${cleaned}</div>
+                </div>`;
+    }).join('');
+}
+
+/* Ingredient checklist — tap to cross off */
+function initIngredientChecklist() {
+    document.querySelectorAll('.rd-ingredient-row').forEach(row => {
+        const toggle = () => {
+            const checked = row.classList.toggle('is-checked');
+            row.setAttribute('aria-checked', String(checked));
+        };
+        row.addEventListener('click', toggle);
+        row.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
+    });
+}
+
+/* Collapsible nutrition panel */
+function initNutritionToggle() {
+    const toggle = document.getElementById('rdNutritionToggle');
+    const panel = document.getElementById('rdNutritionPanel');
+    const grid = document.getElementById('rdNutritionGrid');
+    if (!toggle || !panel) return;
+    toggle.addEventListener('click', () => {
+        const isOpen = panel.classList.toggle('is-open');
+        toggle.setAttribute('aria-expanded', String(isOpen));
+        if (grid) grid.setAttribute('aria-hidden', String(!isOpen));
+    });
+}
+
+/* Cooking mode — full-screen step-by-step */
+function initStartCooking(recipe) {
+    const btn = document.getElementById('rdStartCookingBtn');
+    if (!btn || !recipe.instructions) return;
+    btn.addEventListener('click', () => startCookingMode(recipe));
+}
+
+function startCookingMode(recipe) {
+    const rawLines = (recipe.instructions || '').split(/\n+/).map(l => l.trim()).filter(Boolean);
+    const steps = rawLines.map(s => s.replace(/^(step\s+)?\d+[\.\:\)]\s*/i, '').trim() || s);
+    if (steps.length === 0) return;
+
+    let current = 0;
+    let wakeLock = null;
+    if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').then(lock => { wakeLock = lock; }).catch(() => {});
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'cooking-mode-overlay';
+    overlay.innerHTML = `
+        <div class="cooking-mode-header">
+            <div class="cooking-mode-title">${recipe.title}</div>
+            <button class="cooking-mode-exit" id="cmExit" type="button">&#10005; Exit</button>
+        </div>
+        <div class="cooking-mode-step-area">
+            <div class="cooking-mode-step-num" id="cmStepNum">Step 1 of ${steps.length}</div>
+            <div class="cooking-mode-step-text" id="cmStepText">${steps[0]}</div>
+        </div>
+        <div class="cooking-mode-nav">
+            <button class="btn btn-secondary" id="cmPrev" type="button" disabled>&#9664; Prev</button>
+            <button class="btn btn-primary" id="cmNext" type="button">${steps.length === 1 ? '&#10003; Done' : 'Next &#9654;'}</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('is-active'));
+
+    function updateStep() {
+        document.getElementById('cmStepNum').textContent = `Step ${current + 1} of ${steps.length}`;
+        document.getElementById('cmStepText').textContent = steps[current];
+        document.getElementById('cmPrev').disabled = current === 0;
+        document.getElementById('cmNext').innerHTML = current === steps.length - 1 ? '&#10003; Done' : 'Next &#9654;';
+    }
+
+    function closeCookingMode() {
+        overlay.classList.remove('is-active');
+        if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+        setTimeout(() => overlay.remove(), 300);
+    }
+
+    document.getElementById('cmPrev').addEventListener('click', () => { if (current > 0) { current--; updateStep(); } });
+    document.getElementById('cmNext').addEventListener('click', () => {
+        if (current < steps.length - 1) { current++; updateStep(); }
+        else { closeCookingMode(); }
+    });
+    document.getElementById('cmExit').addEventListener('click', closeCookingMode);
 }
 
 async function shareRecipeLink(recipeId, title) {
