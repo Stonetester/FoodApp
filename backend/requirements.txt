@@ -46,6 +46,7 @@ sendgrid==6.11.0
 
 # Production Server (optional, for deployment)
 gunicorn==21.2.0
+waitress==3.0.0
 
 # Testing (optional)
 pytest==7.4.3
