@@ -3,10 +3,23 @@ from flask_login import LoginManager
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import text
 from app.config import Config
 from app.models import db, User
 from app.schema_check import ensure_social_schema
+
+def get_real_client_ip():
+    """Get the real client IP when behind Cloudflare or other reverse proxies."""
+    # Cloudflare sets CF-Connecting-IP to the actual visitor IP
+    cf_ip = request.headers.get('CF-Connecting-IP')
+    if cf_ip:
+        return cf_ip
+    # Fall back to X-Forwarded-For (first entry is the client)
+    forwarded = request.headers.get('X-Forwarded-For')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return get_remote_address()
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -426,18 +439,29 @@ def _ensure_pantry_and_recipe_schema():
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    
+
+    # Apply ProxyFix so Flask trusts X-Forwarded-* headers from Cloudflare /
+    # reverse proxies.  This fixes request.remote_addr, request.scheme, and
+    # request.host when running behind Cloudflare or any L7 proxy.
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=1,       # trust one level of X-Forwarded-For
+        x_proto=1,     # trust X-Forwarded-Proto  (https behind CF)
+        x_host=1,      # trust X-Forwarded-Host
+        x_port=1,      # trust X-Forwarded-Port
+    )
+
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
     CORS(app, supports_credentials=True)
-    
-    # Initialize rate limiter for security
+
+    # Initialize rate limiter using the *real* client IP behind Cloudflare
     limiter = Limiter(
-       key_func=get_remote_address,
-       default_limits=["200 per day", "50 per hour"],
-       storage_uri="memory://"
-     )
+        key_func=get_real_client_ip,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri="memory://",
+    )
 
     # DEV MODE: disable limiter so it doesn't spam 429 while you're building
     if app.debug:
@@ -445,11 +469,10 @@ def create_app(config_class=Config):
     else:
         limiter.init_app(app)
 
-    
     # Register blueprints
     from app.routes import main_bp, api_bp
     from app.auth import auth_bp
-    
+
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(main_bp)  # Register main blueprint last for catch-all route
@@ -461,25 +484,44 @@ def create_app(config_class=Config):
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-    
+
+    # --- Health-check endpoint (used by Cloudflare, uptime monitors, etc.) ---
+    @app.route('/health')
+    def health_check():
+        try:
+            db.session.execute(text('SELECT 1'))
+            return jsonify({'status': 'ok'}), 200
+        except Exception:
+            return jsonify({'status': 'error', 'detail': 'database'}), 503
+
+    # --- Keep-alive / proxy-friendly response headers ---
+    @app.after_request
+    def add_proxy_headers(response):
+        # Tell Cloudflare & browsers the connection can be reused
+        response.headers.setdefault('Connection', 'keep-alive')
+        # Prevent Cloudflare from caching authenticated API responses
+        if request.path.startswith('/api/'):
+            response.headers['Cache-Control'] = 'no-store'
+        return response
+
     # Error handler for API routes to always return JSON
     @app.errorhandler(404)
     def not_found(error):
         if request.path.startswith('/api/'):
             return jsonify({'error': 'Endpoint not found'}), 404
         return error
-    
+
     @app.errorhandler(500)
     def internal_error(error):
         if request.path.startswith('/api/'):
             return jsonify({'error': 'Internal server error'}), 500
         return error
-    
+
     # Create tables
     with app.app_context():
         db.create_all()
         ensure_social_schema()
         _ensure_pantry_and_recipe_schema()
         print("Database tables created successfully")
-    
+
     return app
