@@ -41,6 +41,7 @@ def _clean_parsed_text(text):
     return text
 
 
+
 def parse_nutrition_value(value):
     if value is None:
         return None
@@ -61,6 +62,7 @@ def strip_trailing_price_annotation(text):
     if not isinstance(text, str):
         return text
     return re.sub(r'\s*\(\s*\$\s*\d+(?:\.\d{1,2})?\s*\)\s*$', '', text).strip()
+
 
 def generate_qr_code(data):
     """Generate QR code image from data string"""
@@ -647,6 +649,14 @@ def extract_recipe_from_url(url):
             'image_url': None,
             'tags': [],
         }
+        nutrition_data = recipe_data.get('nutrition')
+        if isinstance(nutrition_data, dict):
+            result['nutrition'] = {
+                'energy_kcal': parse_nutrition_value(nutrition_data.get('calories')),
+                'fat': parse_nutrition_value(nutrition_data.get('fatContent')),
+                'carbohydrates': parse_nutrition_value(nutrition_data.get('carbohydrateContent')),
+                'proteins': parse_nutrition_value(nutrition_data.get('proteinContent'))
+            }
 
         # ---- Extract and parse ingredients with quantity/unit ----
         if 'recipeIngredient' in recipe_data:

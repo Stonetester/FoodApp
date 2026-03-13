@@ -65,6 +65,7 @@
                     <a href="#" class="nav-link" data-page="recipes" id="recipesMenuBtn">Your Recipes</a>
                     <a href="#" class="nav-link" data-page="userSearch">Find Recipes</a>
                     <a href="#" class="nav-link" data-page="social">Social</a>
+                    <a href="#" class="nav-link" data-page="friends">Friends</a>
                     <a href="#" class="nav-link" data-page="pantry">Pantry</a>
                     <a href="#" class="nav-link" data-page="mealplan">Meal Plan</a>
                     <a href="#" class="nav-link" data-page="history">History</a>
@@ -1302,6 +1303,47 @@
                             <div class="icon-tile"><i data-lucide="more-horizontal"></i><span>more-horizontal</span></div>
                         </div>
                     </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Friends Page -->
+        <div id="friendsPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <div>
+                        <h1>👥 Friends</h1>
+                        <p>Browse your friends, their recipes, and upcoming meal plans.</p>
+                    </div>
+                </div>
+                <div class="friends-layout">
+                    <div class="friends-panel">
+                        <div class="friends-panel-header">
+                            <h2>Your friends</h2>
+                            <button class="btn btn-secondary" id="refreshFriendsBtn" type="button">🔄 Refresh</button>
+                        </div>
+                        <div id="friendsListPanel" class="friends-list-panel">
+                            <p class="empty-state">Loading friends...</p>
+                        </div>
+                    </div>
+                    <div class="friends-detail">
+                        <div class="friends-detail-header">
+                            <h2 id="friendDetailTitle">Select a friend</h2>
+                            <p id="friendDetailSubtitle">Choose a friend to view their recipes and meal prep plans.</p>
+                        </div>
+                        <div class="friends-detail-section">
+                            <h3>Recipes</h3>
+                            <div id="friendRecipes" class="recipe-grid friends-recipe-grid">
+                                <p class="empty-state">No friend selected.</p>
+                            </div>
+                        </div>
+                        <div class="friends-detail-section">
+                            <h3>Meal prep plan</h3>
+                            <div id="friendMealPlan" class="friends-mealplan-list">
+                                <p class="empty-state">No friend selected.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
