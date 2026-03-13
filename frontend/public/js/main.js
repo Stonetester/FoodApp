@@ -4,14 +4,26 @@ let currentUser = null;
 
 const maintenanceAnnouncement = {
     enabled: true,
-    message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
+    // Maintenance message
+    //message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
+    // Email Spam message
+    message: 'IMPORTANT: Check spam folder in email for notifications!'
+    // Updated features message
+    //    message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
 };
 
-// Initialize app
+// All handlers run immediately — the DOM is already available since this
+// script is at the bottom of <body>, AFTER all HTML elements.
+// Do NOT wait for DOMContentLoaded — it fires only after ALL deferred CDN
+// scripts (FullCalendar, Lucide, html5-qrcode) finish downloading, which
+// can take seconds on a slow connection and blocks the entire app.
+setupLoginListeners();
+setupResponsiveClass();
+applyMaintenanceBanners();
+initializeApp();
+
+// Only Lucide icon rendering needs the deferred CDN script to be loaded.
 document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
-    setupResponsiveClass();
-    applyMaintenanceBanners();
     initializeLucideIcons();
 });
 
@@ -37,19 +49,9 @@ async function initializeApp() {
     }
 }
 
-// Fallback: If API is not available, show login page
-if (typeof api === 'undefined') {
-    console.error('API service not loaded!');
-    // Show login page as fallback
-    setTimeout(() => {
-        const loginPage = document.getElementById('loginPage');
-        if (loginPage) {
-            loginPage.classList.add('active');
-        }
-    }, 100);
-}
-
-function setupEventListeners() {
+// Attach login-page handlers synchronously so they work even while the
+// async initializeApp() is still waiting on the API.
+function setupLoginListeners() {
     // Login/Register tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -59,13 +61,13 @@ function setupEventListeners() {
     });
 
     // Login form
-    document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
+    document.getElementById('loginFormElement')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         await handleLogin();
     });
 
     // Register form
-    document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
+    document.getElementById('registerFormElement')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         await handleRegister();
     });
@@ -91,7 +93,21 @@ function setupEventListeners() {
         e.preventDefault();
         await handleResetPassword();
     });
+}
 
+// Fallback: If API is not available, show login page
+if (typeof api === 'undefined') {
+    console.error('API service not loaded!');
+    // Show login page as fallback
+    setTimeout(() => {
+        const loginPage = document.getElementById('loginPage');
+        if (loginPage) {
+            loginPage.classList.add('active');
+        }
+    }, 100);
+}
+
+function setupEventListeners() {
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await handleLogout();
@@ -887,7 +903,8 @@ function updateActiveNav(pageName) {
 function applyMaintenanceBanners() {
     const banners = document.querySelectorAll('[data-maintenance-banner]');
     const isEnabled = maintenanceAnnouncement.enabled;
-    const wasDismissed = sessionStorage.getItem('mg_banner_dismissed') === '1';
+    let wasDismissed = false;
+    try { wasDismissed = sessionStorage.getItem('mg_banner_dismissed') === '1'; } catch (_) {}
     banners.forEach((banner) => {
         const messageEl = banner.querySelector('[data-maintenance-message]');
         if (messageEl) {
@@ -897,7 +914,7 @@ function applyMaintenanceBanners() {
         banner.addEventListener('click', () => {
             banner.classList.add('is-hidden');
             document.body.classList.remove('has-maintenance-banner');
-            sessionStorage.setItem('mg_banner_dismissed', '1');
+            try { sessionStorage.setItem('mg_banner_dismissed', '1'); } catch (_) {}
         });
     });
     document.body.classList.toggle('has-maintenance-banner', isEnabled && !wasDismissed);
