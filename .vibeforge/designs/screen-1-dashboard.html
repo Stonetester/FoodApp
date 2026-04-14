@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Gusto - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+4:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #BF5700;
+            --secondary: #568203;
+            --accent: #D67236;
+            --surface: #F1E6D3;
+            --surface-alt: #E8DCC6;
+            --text: #2C1810;
+            --text-muted: #5D4F3A;
+            --border: #C4B5A0;
+            --success: #6B7A42;
+            --warning: #CC7722;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Serif 4', serif;
+            background-color: var(--surface);
+            color: var(--text);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 430px;
+            margin: 0 auto;
+            background: var(--surface);
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            padding: 16px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .main {
+            padding: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 12px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(44, 24, 16, 0.1);
+        }
+
+        .stat-number {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--primary);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .meals-today {
+            margin-bottom: 24px;
+        }
+
+        .meal-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .meal-slot {
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .meal-slot.empty {
+            border-style: dashed;
+            border-color: var(--text-muted);
+        }
+
+        .meal-time {
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.875rem;
+        }
+
+        .meal-name {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .meal-empty {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-style: italic;
+        }
+
+        .add-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 8px 16px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Source Serif 4', serif;
+        }
+
+        .cta-section {
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .cta-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Source Serif 4', serif;
+            width: 100%;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            background: var(--surface-alt);
+            border-top: 1px solid var(--border);
+            display: flex;
+            padding: 12px 0;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px 4px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item.center {
+            background: var(--primary);
+            color: white;
+            border-radius: 20px;
+            margin: 0 8px;
+            padding: 12px 8px;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">Modo Gusto</div>
+            <div class="tagline">Your kitchen companion</div>
+        </header>
+
+        <main class="main">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number">47</span>
+                    <div class="stat-label">Recipes</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">23</span>
+                    <div class="stat-label">Pantry Items</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">12</span>
+                    <div class="stat-label">Meals This Week</div>
+                </div>
+            </div>
+
+            <section class="meals-today">
+                <h2 class="section-title">Today's Meals</h2>
+                <div class="meal-slots">
+                    <div class="meal-slot">
+                        <div>
+                            <div class="meal-time">Breakfast</div>
+                            <div class="meal-name">Overnight Oats with Berries</div>
+                        </div>
+                        <button class="add-btn">View</button>
+                    </div>
+                    <div class="meal-slot empty">
+                        <div>
+                            <div class="meal-time">Lunch</div>
+                            <div class="meal-empty">Not planned yet</div>
+                        </div>
+                        <button class="add-btn">Add</button>
+                    </div>
+                    <div class="meal-slot">
+                        <div>
+                            <div class="meal-time">Dinner</div>
+                            <div class="meal-name">Herb Roasted Chicken</div>
+                        </div>
+                        <button class="add-btn">View</button>
+                    </div>
+                    <div class="meal-slot empty">
+                        <div>
+                            <div class="meal-time">Snack</div>
+                            <div class="meal-empty">Not planned yet</div>
+                        </div>
+                        <button class="add-btn">Add</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="cta-section">
+                <h3 class="section-title">Quick Actions</h3>
+                <button class="cta-button">📅 Plan This Week's Meals</button>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item">
+                <div class="nav-icon">🍳</div>
+                <span>Recipes</span>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">🥫</div>
+                <span>Pantry</span>
+            </a>
+            <a href="#" class="nav-item center active">
+                <div class="nav-icon">🏠</div>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">📅</div>
+                <span>Meal Plan</span>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">⋯</div>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+{
+  "project_root": "C:\\Users\\keato\\FoodApp",
+  "frontend_root": "C:\\Users\\keato\\FoodApp\\frontend\\public",
+  "framework": "vanilla-js",
+  "framework_detail": "Plain HTML + CSS + vanilla JS, no npm, no build step. Flask (Python) serves static files from frontend/public/.",
+  "css_entry_point": "frontend/public/css/style.css",
+  "tailwind": false,
+  "shadcn": false,
+  "token_write_targets": [
+    "frontend/public/css/style.css"
+  ],
+  "mobile_first": true,
+  "pipeline": "FULL",
+  "vibe_summary": "Cozy cabin meets retro 50s homestead meets Wes Anderson film aesthetics. 70s earth-tone stripe palette: burnt orange, avocado green, rust, warm cream, deep brown, dusty rose, sage. Cartoon-like warmth without being childish. No yellow. No bright colours that hurt text readability. Easy on the eyes, strong contrast on important elements.",
+  "do_not": [
+    "No yellow or bright saturated colours",
+    "No white backgrounds — too harsh",
+    "No cold blue tones",
+    "No sharp modern tech aesthetic",
+    "No childish or cutesy cartoon style",
+    "No dark mode (warm light tones only)"
+  ],
+  "aesthetic_refs": [
+    "1970s Retro",
+    "Cottagecore",
+    "Wes Anderson Symmetry",
+    "50s Homestead",
+    "Cabin Core"
+  ],
+  "stitch_configured": true,
+  "skills_installed": false,
+  "created_at": "2026-03-27",
+  "app_type": "food and meal planning app",
+  "primary_flows": [
+    "Quick-add pantry items via barcode/nutrition label camera scan",
+    "Browse community recipe database on mobile",
+    "Meal plan calendar — breakfast/lunch/dinner/snack slots",
+    "Add friends, see friends favourites and reviews",
+    "View nutritional values and allergy info"
+  ],
+  "pain_points": [
+    "Everything too big and bulky on mobile — can't see enough at once",
+    "Small UI glitches make app feel unfinished",
+    "Meal plan calendar hard to use on small screen",
+    "Nutritional info and allergy data hard to see clearly"
+  ]
+}

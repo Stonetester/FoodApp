@@ -2,7 +2,7 @@
 
 let calendar = null;
 let mealPlans = [];
-let currentCalendarView = 'dayGridMonth';
+let currentCalendarView = window.innerWidth < 768 ? 'mealWeek' : 'dayGridMonth';
 let sectionFocusDate = new Date();
 const snackSlots = [
     { key: 'before-breakfast', label: 'Snacks before breakfast', note: 'Before breakfast' },
@@ -83,7 +83,7 @@ async function loadMealPlan() {
         initializeCalendar();
     } catch (error) {
         console.error('Error loading meal plan:', error);
-        alert('Failed to load meal plan');
+        if (window.showToast) window.showToast('Failed to load meal plan', 'error');
     }
 }
 
@@ -126,7 +126,7 @@ function initializeCalendar() {
     const isMobile = window.innerWidth < 768;
 
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+        initialView: window.innerWidth < 768 ? 'mealWeek' : 'dayGridMonth',
         headerToolbar: isMobile ? {
             left: '',
             center: 'title',
@@ -275,7 +275,7 @@ async function openMealPlanModal(plan = null, date = null, mealType = null, defa
         }
     } catch (error) {
         console.error('Error loading recipes:', error);
-        alert('Failed to load recipes');
+        if (window.showToast) window.showToast('Failed to load recipes', 'error');
         return;
     }
 
@@ -313,7 +313,7 @@ async function saveMealPlan() {
         }
     } catch (error) {
         console.error('Error saving meal plan:', error);
-        alert('Failed to save meal plan: ' + error.message);
+        if (window.showToast) window.showToast('Failed to save meal plan: ' + error.message, 'error');
     }
 }
 
@@ -329,7 +329,7 @@ async function updateMealPlanDate(planId, newDate) {
         }
     } catch (error) {
         console.error('Error updating meal plan date:', error);
-        alert('Failed to update meal plan');
+        if (window.showToast) window.showToast('Failed to update meal plan', 'error');
         loadMealPlan(); // Reload to revert change
     }
 }
@@ -388,36 +388,35 @@ async function showDayDetail(dateStr) {
     
     mealTypes.forEach(mealType => {
         const slotDiv = document.createElement('div');
-        slotDiv.className = 'meal-slot';
-        slotDiv.style.cssText = 'margin-bottom: 1.5rem; padding: 1rem; background: var(--light-cream); border-radius: 8px;';
-        
-        const meals = mealType.multiple 
+        slotDiv.className = 'meal-slot day-detail-slot';
+
+        const meals = mealType.multiple
             ? mealsByType[mealType.key] || []
             : mealsByType[mealType.key] ? [mealsByType[mealType.key]] : [];
-        
+
         let slotContent = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <h3 style="margin: 0; color: var(--primary);">${mealType.label}</h3>
-                <button class="btn btn-secondary" onclick="quickAddRecipe('${dateStr}', '${mealType.key}')" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+            <div class="day-detail-slot-header">
+                <h3 class="day-detail-slot-title">${mealType.label}</h3>
+                <button class="btn btn-secondary day-detail-add-btn" onclick="quickAddRecipe('${dateStr}', '${mealType.key}')">
                     + Add Recipe
                 </button>
             </div>
         `;
-        
+
         if (meals.length === 0) {
-            slotContent += '<p style="color: var(--text); opacity: 0.6; margin: 0.5rem 0;">No meal planned</p>';
+            slotContent += '<p class="day-detail-empty">No meal planned</p>';
         } else {
             meals.forEach(meal => {
                 if (meal && meal.recipe) {
                     slotContent += `
-                        <div class="meal-item" style="background: var(--surface); padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid ${getMealTypeColor(meal.meal_type)};">
-                            <div style="display: flex; justify-content: space-between; align-items: start;">
-                                <div style="flex: 1;">
-                                    <h4 style="margin: 0 0 0.5rem 0; color: var(--primary);">${meal.recipe.title}</h4>
-                                    ${meal.recipe.description ? `<p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text);">${meal.recipe.description}</p>` : ''}
-                                    ${meal.notes ? `<p style="margin: 0; font-size: 0.85rem; color: var(--text); opacity: 0.8;"><em>${meal.notes}</em></p>` : ''}
+                        <div class="day-detail-meal-item" style="border-left-color: ${getMealTypeColor(meal.meal_type)}">
+                            <div class="day-detail-meal-row">
+                                <div class="day-detail-meal-info">
+                                    <h4 class="day-detail-meal-title">${meal.recipe.title}</h4>
+                                    ${meal.recipe.description ? `<p class="day-detail-meal-desc">${meal.recipe.description}</p>` : ''}
+                                    ${meal.notes ? `<p class="day-detail-meal-notes"><em>${meal.notes}</em></p>` : ''}
                                     ${meal.recipe.prep_time || meal.recipe.cook_time ? `
-                                        <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: var(--text);">
+                                        <p class="day-detail-meal-time">
                                             ${meal.recipe.prep_time ? `Prep: ${meal.recipe.prep_time}min` : ''}
                                             ${meal.recipe.prep_time && meal.recipe.cook_time ? ' • ' : ''}
                                             ${meal.recipe.cook_time ? `Cook: ${meal.recipe.cook_time}min` : ''}
@@ -425,7 +424,7 @@ async function showDayDetail(dateStr) {
                                     ` : ''}
                                     ${buildMealServingMeta(meal.recipe)}
                                 </div>
-                                <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+                                <div class="day-detail-meal-actions">
                                     <button class="btn-icon" onclick="editMealPlanFromDay(${meal.id})" title="Edit">✏️</button>
                                     <button class="btn-icon" onclick="deleteMealPlanFromDay(${meal.id})" title="Delete">🗑️</button>
                                 </div>
@@ -444,10 +443,10 @@ async function showDayDetail(dateStr) {
     const snackMeals = dayMeals.filter(m => m.meal_type === 'snack');
     if (snackMeals.length > 0) {
         const snackDiv = document.createElement('div');
-        snackDiv.style.cssText = 'margin-bottom: 1.5rem; padding: 0.75rem 1rem; background: var(--light-cream); border-radius: 8px; opacity: 0.8;';
+        snackDiv.className = 'day-detail-snack-list';
         snackDiv.innerHTML = `
-            <p style="margin: 0 0 0.25rem 0; font-size: 0.9rem; font-weight: 600; color: var(--text);">🍎 Snacks</p>
-            ${snackMeals.map(s => `<p style="margin: 0.15rem 0; font-size: 0.85rem; color: var(--text);">${s.recipe ? s.recipe.title : 'Snack'}${s.notes ? ` <em style="opacity:0.7">(${s.notes})</em>` : ''}</p>`).join('')}
+            <p class="day-detail-snack-label">🍎 Snacks</p>
+            ${snackMeals.map(s => `<p class="day-detail-snack-item">${s.recipe ? s.recipe.title : 'Snack'}${s.notes ? ` <em>(${s.notes})</em>` : ''}</p>`).join('')}
         `;
         slotsEl.appendChild(snackDiv);
     }
@@ -475,23 +474,26 @@ async function editMealPlanFromDay(planId) {
     }
 }
 
-async function deleteMealPlanFromDay(planId) {
-    if (!confirm('Are you sure you want to delete this meal?')) {
-        return;
-    }
-    
-    try {
-        await api.deleteMealPlan(planId);
-        await loadMealPlan();
-        // Refresh day detail if modal is open
-        const modal = document.getElementById('dayDetailModal');
-        if (modal.classList.contains('active')) {
-            const dateStr = document.getElementById('dayMealSlots').dataset.date;
-            showDayDetail(dateStr);
+function deleteMealPlanFromDay(planId) {
+    const doDelete = async () => {
+        try {
+            await api.deleteMealPlan(planId);
+            await loadMealPlan();
+            // Refresh day detail if modal is open
+            const modal = document.getElementById('dayDetailModal');
+            if (modal && modal.classList.contains('active')) {
+                const dateStr = document.getElementById('dayMealSlots')?.dataset.date;
+                if (dateStr) showDayDetail(dateStr);
+            }
+        } catch (error) {
+            console.error('Error deleting meal plan:', error);
+            if (window.showToast) window.showToast('Failed to delete meal', 'error');
         }
-    } catch (error) {
-        console.error('Error deleting meal plan:', error);
-        alert('Failed to delete meal');
+    };
+    if (window.showConfirm) {
+        window.showConfirm('Remove this meal from your plan?', doDelete);
+    } else {
+        if (confirm('Are you sure you want to delete this meal?')) doDelete();
     }
 }
 

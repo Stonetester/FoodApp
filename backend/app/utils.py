@@ -1029,6 +1029,82 @@ def extract_text_from_image(image_data):
         }
 
 
+def extract_text_from_images(images_data):
+    """Run OCR on multiple images, join the text, and parse as one recipe.
+
+    images_data: list of base64 strings (with or without data URL prefix).
+    Falls back to extract_text_from_image for a single image.
+    """
+    if not images_data:
+        return None
+
+    if len(images_data) == 1:
+        return extract_text_from_image(images_data[0])
+
+    try:
+        from PIL import Image
+        import pytesseract
+        import os
+
+        tesseract_cmd = os.environ.get('TESSERACT_CMD')
+        if tesseract_cmd:
+            pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+
+        ocr_pages = []
+        for idx, image_data in enumerate(images_data):
+            try:
+                raw = image_data
+                if ',' in raw:
+                    raw = raw.split(',')[1]
+                image_bytes = base64.b64decode(raw)
+                image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+                text = pytesseract.image_to_string(image, config='--psm 6')
+                if text.strip():
+                    ocr_pages.append(text.strip())
+                    print(f"OCR page {idx + 1}: {len(text)} chars")
+            except Exception as e:
+                print(f"OCR failed for image {idx + 1}: {e}")
+
+        if not ocr_pages:
+            return {
+                'title': 'Recipe from Images',
+                'description': None,
+                'ingredients': [],
+                'instructions': None,
+                'prep_time': None,
+                'cook_time': None,
+                'servings': None,
+                '_error': 'Could not extract text from any of the provided images.'
+            }
+
+        combined_text = '\n\n'.join(ocr_pages)
+        print(f"Combined OCR text from {len(ocr_pages)} pages: {len(combined_text)} chars")
+        return parse_recipe_from_text(combined_text)
+
+    except ImportError:
+        return {
+            'title': 'Recipe from Images',
+            'description': None,
+            'ingredients': [],
+            'instructions': None,
+            'prep_time': None,
+            'cook_time': None,
+            'servings': None,
+            '_error': 'OCR requires pytesseract. Install with: pip install pytesseract. Also install Tesseract OCR on your system.'
+        }
+    except Exception as e:
+        return {
+            'title': 'Recipe from Images',
+            'description': None,
+            'ingredients': [],
+            'instructions': None,
+            'prep_time': None,
+            'cook_time': None,
+            'servings': None,
+            '_error': f'Error processing images: {str(e)}'
+        }
+
+
 def parse_recipe_from_text(text):
     """Parse recipe information from extracted text - IMPROVED VERSION"""
     lines = text.split('\n')

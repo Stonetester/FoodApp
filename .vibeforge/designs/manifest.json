@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-03-27T00:00:00Z",
+  "app_type": "Mobile food and meal planning app",
+  "framework": "Vanilla JS + Flask",
+  "design_system_source": "Local BrandDNA (Stitch MCP unavailable)",
+  "screens": [
+    {
+      "id": "screen-1",
+      "name": "dashboard",
+      "title": "Dashboard / Home",
+      "html": "C:\\Users\\keato\\FoodApp\\.vibeforge\\designs\\screen-1-dashboard.html",
+      "description": "Main dashboard showing app stats, today's meals, and quick actions with prominent meal plan CTA"
+    },
+    {
+      "id": "screen-2",
+      "name": "pantry",
+      "title": "My Pantry",
+      "html": "C:\\Users\\keato\\FoodApp\\.vibeforge\\designs\\screen-2-pantry.html",
+      "description": "Pantry management with item cards, nutrition info, and prominent camera scan button for quick-add"
+    },
+    {
+      "id": "screen-3",
+      "name": "recipes",
+      "title": "Recipe Cards",
+      "html": "C:\\Users\\keato\\FoodApp\\.vibeforge\\designs\\screen-3-recipes.html",
+      "description": "Recipe browse with prominent dietary badges, nutrition grid, and meal plan integration buttons"
+    },
+    {
+      "id": "screen-4",
+      "name": "meal-plan",
+      "title": "Weekly Meal Plan",
+      "html": "C:\\Users\\keato\\FoodApp\\.vibeforge\\designs\\screen-4-meal-plan.html",
+      "description": "Week calendar view showing all 4 meal slots per day, optimized for mobile with compact layout"
+    },
+    {
+      "id": "screen-5",
+      "name": "community",
+      "title": "Community Discovery",
+      "html": "C:\\Users\\keato\\FoodApp\\.vibeforge\\designs\\screen-5-community.html",
+      "description": "Social recipe discovery with community cards, ratings, and friend activity sidebar"
+    }
+  ],
+  "design_decisions": {
+    "palette_applied": {
+      "primary": "#BF5700",
+      "secondary": "#568203",
+      "accent": "#D67236",
+      "surface": "#F1E6D3",
+      "surface_alt": "#E8DCC6",
+      "text": "#2C1810",
+      "text_muted": "#5D4F3A"
+    },
+    "typography_applied": {
+      "display": "Playfair Display",
+      "heading": "Playfair Display",
+      "body": "Source Serif 4",
+      "mono": "DM Mono"
+    },
+    "mobile_optimization": [
+      "Maximum width 430px for modern phones",
+      "Touch targets minimum 44px",
+      "Compact card layouts to show more items",
+      "Bottom navigation with central home button",
+      "Floating action buttons for primary actions",
+      "7-day meal plan calendar fits in viewport"
+    ],
+    "brand_motifs_applied": [
+      "Warm cream card backgrounds",
+      "Subtle border styling with earth tones",
+      "Hand-drawn feel with soft shadows",
+      "Vintage recipe card aesthetic",
+      "Monospace fonts for data/nutrition"
+    ]
+  }
+}

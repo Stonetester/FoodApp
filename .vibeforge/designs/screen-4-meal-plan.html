@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Gusto - Meal Plan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+4:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #BF5700;
+            --secondary: #568203;
+            --accent: #D67236;
+            --surface: #F1E6D3;
+            --surface-alt: #E8DCC6;
+            --text: #2C1810;
+            --text-muted: #5D4F3A;
+            --border: #C4B5A0;
+            --success: #6B7A42;
+            --warning: #CC7722;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Serif 4', serif;
+            background-color: var(--surface);
+            color: var(--text);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 430px;
+            margin: 0 auto;
+            background: var(--surface);
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-alt);
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .week-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .nav-arrow {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .week-range {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .calendar-grid {
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .days-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .day-header {
+            text-align: center;
+            padding: 8px 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .day-header.today {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .calendar-week {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .day-column {
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 6px;
+            min-height: 280px;
+        }
+
+        .day-column.today {
+            border-color: var(--primary);
+            border-width: 2px;
+        }
+
+        .day-date {
+            text-align: center;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 8px;
+            padding: 4px;
+            background: var(--surface);
+            border-radius: 4px;
+        }
+
+        .day-date.today {
+            background: var(--primary);
+            color: white;
+        }
+
+        .meal-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .meal-slot {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px;
+            min-height: 50px;
+            cursor: pointer;
+        }
+
+        .meal-slot.empty {
+            border-style: dashed;
+            border-color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 1.25rem;
+        }
+
+        .meal-slot.filled {
+            background: var(--surface);
+            border-color: var(--border);
+        }
+
+        .meal-time {
+            font-size: 0.625rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .meal-name {
+            font-size: 0.625rem;
+            color: var(--text);
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .meal-calories {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.5rem;
+            color: var(--primary);
+            margin-top: 2px;
+        }
+
+        .quick-actions {
+            padding: 16px 20px;
+            background: var(--surface-alt);
+            border-top: 1px solid var(--border);
+            margin-bottom: 0;
+        }
+
+        .actions-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Source Serif 4', serif;
+        }
+
+        .action-btn.secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            background: var(--surface-alt);
+            border-top: 1px solid var(--border);
+            display: flex;
+            padding: 12px 0;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px 4px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item.center {
+            color: var(--text-muted);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="page-title">Meal Plan</h1>
+            <div class="week-navigation">
+                <button class="nav-arrow">‹</button>
+                <span class="week-range">Mon Mar 24 – Sun Mar 30</span>
+                <button class="nav-arrow">›</button>
+            </div>
+        </header>
+
+        <div class="calendar-grid">
+            <div class="days-header">
+                <div class="day-header">Mon</div>
+                <div class="day-header">Tue</div>
+                <div class="day-header">Wed</div>
+                <div class="day-header">Thu</div>
+                <div class="day-header">Fri</div>
+                <div class="day-header">Sat</div>
+                <div class="day-header today">Sun</div>
+            </div>
+
+            <div class="calendar-week">
+                <!-- Monday -->
+                <div class="day-column">
+                    <div class="day-date">24</div>
+                    <div class="meal-slots">
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Breakfast</div>
+                            <div class="meal-name">Overnight Oats</div>
+                            <div class="meal-calories">320 cal</div>
+                        </div>
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Lunch</div>
+                            <div class="meal-name">Mediterranean Bowl</div>
+                            <div class="meal-calories">420 cal</div>
+                        </div>
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Dinner</div>
+                            <div class="meal-name">Herb Chicken</div>
+                            <div class="meal-calories">480 cal</div>
+                        </div>
+                        <div class="meal-slot empty">+</div>
+                    </div>
+                </div>
+
+                <!-- Tuesday -->
+                <div class="day-column">
+                    <div class="day-date">25</div>
+                    <div class="meal-slots">
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Breakfast</div>
+                            <div class="meal-name">Greek Yogurt Parfait</div>
+                            <div class="meal-calories">280 cal</div>
+                        </div>
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Dinner</div>
+                            <div class="meal-name">Salmon & Bok Choy</div>
+                            <div class="meal-calories">350 cal</div>
+                        </div>
+                        <div class="meal-slot empty">+</div>
+                    </div>
+                </div>
+
+                <!-- Wednesday -->
+                <div class="day-column">
+                    <div class="day-date">26</div>
+                    <div class="meal-slots">
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Lunch</div>
+                            <div class="meal-name">Quinoa Salad</div>
+                            <div class="meal-calories">380 cal</div>
+                        </div>
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Dinner</div>
+                            <div class="meal-name">Mushroom Risotto</div>
+                            <div class="meal-calories">450 cal</div>
+                        </div>
+                        <div class="meal-slot empty">+</div>
+                    </div>
+                </div>
+
+                <!-- Thursday -->
+                <div class="day-column">
+                    <div class="day-date">27</div>
+                    <div class="meal-slots">
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Breakfast</div>
+                            <div class="meal-name">Avocado Toast</div>
+                            <div class="meal-calories">340 cal</div>
+                        </div>
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Snack</div>
+                            <div class="meal-name">Mixed Nuts</div>
+                            <div class="meal-calories">180 cal</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friday -->
+                <div class="day-column">
+                    <div class="day-date">28</div>
+                    <div class="meal-slots">
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Lunch</div>
+                            <div class="meal-name">Veggie Wrap</div>
+                            <div class="meal-calories">390 cal</div>
+                        </div>
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot empty">+</div>
+                    </div>
+                </div>
+
+                <!-- Saturday -->
+                <div class="day-column">
+                    <div class="day-date">29</div>
+                    <div class="meal-slots">
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Breakfast</div>
+                            <div class="meal-name">Weekend Pancakes</div>
+                            <div class="meal-calories">520 cal</div>
+                        </div>
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot filled">
+                            <div class="meal-time">Dinner</div>
+                            <div class="meal-name">BBQ Night</div>
+                            <div class="meal-calories">600 cal</div>
+                        </div>
+                        <div class="meal-slot empty">+</div>
+                    </div>
+                </div>
+
+                <!-- Sunday (Today) -->
+                <div class="day-column today">
+                    <div class="day-date today">30</div>
+                    <div class="meal-slots">
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot empty">+</div>
+                        <div class="meal-slot empty">+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <div class="actions-title">Quick Actions</div>
+            <div class="action-buttons">
+                <button class="action-btn">🍳 Browse Recipes</button>
+                <button class="action-btn secondary">📋 Grocery List</button>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item">
+                <div class="nav-icon">🍳</div>
+                <span>Recipes</span>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">🥫</div>
+                <span>Pantry</span>
+            </a>
+            <a href="#" class="nav-item center">
+                <div class="nav-icon">🏠</div>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <div class="nav-icon">📅</div>
+                <span>Meal Plan</span>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">⋯</div>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+</body>
+</html>

@@ -1,0 +1,101 @@
+{
+  "aesthetic_refs": ["Cottagecore", "1970s Retro", "Cabin Core", "Wes Anderson"],
+  "vibe_summary": "A cozy cabin meets retro 50s homestead aesthetic blended with Wes Anderson's whimsical film palettes. The design embraces warm earth tones from the 1970s era—burnt orange, avocado green, rust, and sage—paired with cream surfaces and dusty rose accents. The overall feeling is grown-up, tactile, and hand-crafted without being childish, creating a cartoon-like warmth that feels lived-in and trustworthy. Colors are muted and easy on the eyes, providing strong contrast where needed for usability while maintaining the cozy, nostalgic atmosphere of a well-loved kitchen.",
+  "palette": {
+    "primary": "#BF5700",
+    "secondary": "#568203",
+    "accent": "#D67236",
+    "surface": "#F1E6D3",
+    "surface_alt": "#E8DCC6",
+    "text": "#2C1810",
+    "text_muted": "#5D4F3A",
+    "border": "#C4B5A0",
+    "error": "#B7410E",
+    "success": "#6B7A42",
+    "warning": "#CC7722"
+  },
+  "typography": {
+    "display": "Playfair Display",
+    "heading": "Lora",
+    "body": "Source Serif 4",
+    "mono": "DM Mono",
+    "scale": {
+      "xs": "0.75",
+      "sm": "0.875",
+      "base": "1",
+      "lg": "1.125",
+      "xl": "1.25",
+      "2xl": "1.5",
+      "3xl": "1.875",
+      "4xl": "2.25",
+      "5xl": "3",
+      "6xl": "3.75"
+    }
+  },
+  "spacing": {
+    "unit": "4",
+    "density": "comfortable"
+  },
+  "motion": {
+    "speed": "medium",
+    "easing": "cubic-bezier(0.4,0,0.2,1)",
+    "style": "fade"
+  },
+  "radius": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "16px",
+    "full": "9999px"
+  },
+  "shadows": {
+    "sm": "0 1px 3px rgba(44, 24, 16, 0.12), 0 1px 2px rgba(44, 24, 16, 0.24)",
+    "md": "0 4px 6px rgba(44, 24, 16, 0.15), 0 2px 4px rgba(44, 24, 16, 0.12)",
+    "lg": "0 10px 15px rgba(44, 24, 16, 0.1), 0 4px 6px rgba(44, 24, 16, 0.1)"
+  },
+  "motifs": [
+    "hand-drawn recipe card borders",
+    "subtle wood grain textures",
+    "vintage label and badge shapes",
+    "soft rounded corners on containers",
+    "grid patterns reminiscent of recipe notebooks",
+    "illustration-style icons with organic shapes"
+  ],
+  "textures": [
+    "canvas or linen background texture",
+    "subtle paper grain for recipe cards",
+    "wood grain for navigation elements",
+    "soft fabric texture for buttons"
+  ],
+  "mood_keywords": [
+    "cozy",
+    "warm",
+    "nostalgic",
+    "handcrafted",
+    "lived-in",
+    "trustworthy",
+    "organic",
+    "earthy",
+    "tactile",
+    "wholesome",
+    "editorial",
+    "vintage"
+  ],
+  "do_not": [
+    "bright yellow or neon colors",
+    "pure white backgrounds",
+    "cold blue tones",
+    "sharp geometric modern tech aesthetic",
+    "childish cartoon style",
+    "dark mode treatments",
+    "bright saturated colors that hurt readability",
+    "Inter, Roboto, or Arial fonts as display",
+    "overly glossy or plastic-looking elements",
+    "harsh drop shadows or stark contrasts"
+  ],
+  "reference_urls": [],
+  "wiki_urls": [
+    "https://aesthetics.fandom.com/wiki/Cottagecore",
+    "https://aesthetics.fandom.com/wiki/1970s",
+    "https://aesthetics.fandom.com/wiki/Cabin_Core"
+  ]
+}

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Gusto - My Pantry</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+4:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #BF5700;
+            --secondary: #568203;
+            --accent: #D67236;
+            --surface: #F1E6D3;
+            --surface-alt: #E8DCC6;
+            --text: #2C1810;
+            --text-muted: #5D4F3A;
+            --border: #C4B5A0;
+            --success: #6B7A42;
+            --warning: #CC7722;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Serif 4', serif;
+            background-color: var(--surface);
+            color: var(--text);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 430px;
+            margin: 0 auto;
+            background: var(--surface);
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 140px;
+        }
+
+        .header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-alt);
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            font-family: 'Source Serif 4', serif;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .search-bar::placeholder {
+            color: var(--text-muted);
+        }
+
+        .filter-chips {
+            padding: 16px 20px 8px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .chip {
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pantry-grid {
+            padding: 12px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .pantry-item {
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(44, 24, 16, 0.1);
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .item-details {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .quantity {
+            font-family: 'DM Mono', monospace;
+            color: var(--primary);
+        }
+
+        .expiry {
+            color: var(--warning);
+        }
+
+        .expiry.soon {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .nutrition-strip {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .nutrition-badge {
+            background: var(--secondary);
+            color: white;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.625rem;
+            font-family: 'DM Mono', monospace;
+        }
+
+        .scan-button {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Source Serif 4', serif;
+            box-shadow: 0 4px 12px rgba(191, 87, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .empty-message {
+            font-size: 0.875rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-cta {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Source Serif 4', serif;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            background: var(--surface-alt);
+            border-top: 1px solid var(--border);
+            display: flex;
+            padding: 12px 0;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px 4px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item.center {
+            color: var(--text-muted);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="page-title">My Pantry</h1>
+            <input type="text" class="search-bar" placeholder="Search pantry items...">
+        </header>
+
+        <div class="filter-chips">
+            <span class="chip active">All</span>
+            <span class="chip">Grains</span>
+            <span class="chip">Proteins</span>
+            <span class="chip">Dairy</span>
+            <span class="chip">Produce</span>
+            <span class="chip">Other</span>
+        </div>
+
+        <div class="pantry-grid">
+            <div class="pantry-item">
+                <div class="item-info">
+                    <div class="item-name">Organic Brown Rice</div>
+                    <div class="item-details">
+                        <span class="quantity">2.5 lbs</span>
+                        <span class="expiry">Expires Dec 2026</span>
+                    </div>
+                    <div class="nutrition-strip">
+                        <span class="nutrition-badge">45g carbs</span>
+                        <span class="nutrition-badge">5g protein</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pantry-item">
+                <div class="item-info">
+                    <div class="item-name">Free-Range Chicken Breast</div>
+                    <div class="item-details">
+                        <span class="quantity">1.2 lbs</span>
+                        <span class="expiry soon">Use by Mar 29</span>
+                    </div>
+                    <div class="nutrition-strip">
+                        <span class="nutrition-badge">31g protein</span>
+                        <span class="nutrition-badge">3g fat</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pantry-item">
+                <div class="item-info">
+                    <div class="item-name">Whole Milk (Organic)</div>
+                    <div class="item-details">
+                        <span class="quantity">0.5 gallon</span>
+                        <span class="expiry soon">Use by Mar 28</span>
+                    </div>
+                    <div class="nutrition-strip">
+                        <span class="nutrition-badge">8g protein</span>
+                        <span class="nutrition-badge">8g fat</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pantry-item">
+                <div class="item-info">
+                    <div class="item-name">Baby Spinach</div>
+                    <div class="item-details">
+                        <span class="quantity">5 oz bag</span>
+                        <span class="expiry soon">Best by Mar 30</span>
+                    </div>
+                    <div class="nutrition-strip">
+                        <span class="nutrition-badge">3g protein</span>
+                        <span class="nutrition-badge">Iron rich</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pantry-item">
+                <div class="item-info">
+                    <div class="item-name">Extra Virgin Olive Oil</div>
+                    <div class="item-details">
+                        <span class="quantity">500ml</span>
+                        <span class="expiry">Best by Aug 2025</span>
+                    </div>
+                    <div class="nutrition-strip">
+                        <span class="nutrition-badge">14g fat</span>
+                        <span class="nutrition-badge">Vitamin E</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pantry-item">
+                <div class="item-info">
+                    <div class="item-name">Aged Cheddar Cheese</div>
+                    <div class="item-details">
+                        <span class="quantity">8 oz block</span>
+                        <span class="expiry">Best by Apr 15</span>
+                    </div>
+                    <div class="nutrition-strip">
+                        <span class="nutrition-badge">7g protein</span>
+                        <span class="nutrition-badge">9g fat</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="scan-button">
+            📷 Scan Item
+        </button>
+
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item">
+                <div class="nav-icon">🍳</div>
+                <span>Recipes</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <div class="nav-icon">🥫</div>
+                <span>Pantry</span>
+            </a>
+            <a href="#" class="nav-item center">
+                <div class="nav-icon">🏠</div>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">📅</div>
+                <span>Meal Plan</span>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">⋯</div>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+</body>
+</html>

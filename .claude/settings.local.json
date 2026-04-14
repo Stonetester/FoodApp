@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git reset:*)",
+      "Bash(git commit:*)",
+      "Bash(git merge:*)",
+      "Bash(git add:*)",
+      "Bash(for b in fix/tutorial-show-frequency fix/delete-recipe-and-nutrition-timeout fix/cloudflare-reset-banner-admin claude/fix-cloudflare-waitress-errors-6K522 fix/dev-localhost-session-cookies dev/runner)",
+      "Bash(do echo \"=== $b ===\")",
+      "Bash(done)",
+      "Bash(git branch:*)",
+      "Bash(backend/venv/Scripts/python.exe:*)",
+      "Bash(git rm:*)",
+      "Bash(tasklist:*)",
+      "Bash(sc query:*)",
+      "Bash(\"/c/Program Files/MySQL/MySQL Server 9.1/bin/mysql.exe\" -u root -e \"SELECT ''connected OK''; SHOW DATABASES;\")",
+      "Bash(\"/c/Program Files/MySQL/MySQL Server 9.1/bin/mysql.exe\":*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(python -c:*)",
+      "Bash(kill:*)",
+      "Bash(pkill:*)",
+      "Bash(git:*)",
+      "Bash(cp /tmp/accesslint-skills/plugins/accesslint/skills/contrast-checker/SKILL.md \"C:\\\\Users\\\\keato\\\\.claude\\\\skills\\\\contrast-checker.md\")",
+      "Bash(cp /tmp/accesslint-skills/plugins/accesslint/skills/link-purpose/SKILL.md \"C:\\\\Users\\\\keato\\\\.claude\\\\skills\\\\link-purpose.md\")",
+      "Bash(cp /tmp/accesslint-skills/plugins/accesslint/skills/refactor/SKILL.md \"C:\\\\Users\\\\keato\\\\.claude\\\\skills\\\\refactor.md\")",
+      "Bash(cp /tmp/accesslint-skills/plugins/accesslint/skills/use-of-color/SKILL.md \"C:\\\\Users\\\\keato\\\\.claude\\\\skills\\\\use-of-color.md\")",
+      "Bash(cp /tmp/stitch-skills/skills/stitch-design/SKILL.md \"C:\\\\Users\\\\keato\\\\.claude\\\\skills\\\\stitch-design.md\")",
+      "Bash(cp /tmp/stitch-skills/skills/design-md/SKILL.md \"C:\\\\Users\\\\keato\\\\.claude\\\\skills\\\\design-md.md\")",
+      "Bash(npm install:*)",
+      "Bash(npx playwright:*)"
+    ]
+  }
+}

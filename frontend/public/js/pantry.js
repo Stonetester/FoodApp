@@ -55,7 +55,7 @@ async function loadPantry() {
         displayPantry();
     } catch (error) {
         console.error('Error loading pantry:', error);
-        alert('Failed to load pantry items');
+        if (window.showToast) window.showToast('Failed to load pantry items', 'error');
     }
 }
 
@@ -66,7 +66,17 @@ function displayPantry() {
     container.innerHTML = '';
 
     if (pantryItems.length === 0) {
-        container.innerHTML = '<p>Your pantry is empty. Add some items!</p>';
+        container.innerHTML = `
+            <div class="empty-state-card" style="grid-column: 1/-1; text-align: center; padding: 3rem 1.5rem;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🥫</div>
+                <h3 style="margin-bottom: 0.5rem;">Your pantry is empty</h3>
+                <p style="color: var(--muted); margin-bottom: 1.5rem;">Scan a barcode to add your first item.</p>
+                <button class="btn btn-primary" id="emptyPantryScanBtn" type="button">📷 Scan Your First Item</button>
+            </div>
+        `;
+        document.getElementById('emptyPantryScanBtn')?.addEventListener('click', () => {
+            openScanner();
+        });
         return;
     }
 
@@ -268,7 +278,7 @@ async function savePantryItem() {
         }
     } catch (error) {
         console.error('Error saving pantry item:', error);
-        alert('Failed to save pantry item: ' + error.message);
+        if (window.showToast) window.showToast('Failed to save pantry item: ' + error.message, 'error');
     }
 }
 
@@ -353,20 +363,23 @@ async function editPantryItem(id) {
     }
 }
 
-async function deletePantryItem(id) {
-    if (!confirm('Are you sure you want to delete this pantry item?')) {
-        return;
-    }
-
-    try {
-        await api.deletePantryItem(id);
-        loadPantry();
-        if (window.loadDashboard) {
-            window.loadDashboard();
+function deletePantryItem(id) {
+    const doDelete = async () => {
+        try {
+            await api.deletePantryItem(id);
+            loadPantry();
+            if (window.loadDashboard) {
+                window.loadDashboard();
+            }
+        } catch (error) {
+            console.error('Error deleting pantry item:', error);
+            if (window.showToast) window.showToast('Failed to delete pantry item', 'error');
         }
-    } catch (error) {
-        console.error('Error deleting pantry item:', error);
-        alert('Failed to delete pantry item');
+    };
+    if (window.showConfirm) {
+        window.showConfirm('Remove this item from your pantry?', doDelete);
+    } else {
+        if (confirm('Are you sure you want to delete this pantry item?')) doDelete();
     }
 }
 

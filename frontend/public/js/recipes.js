@@ -2,7 +2,7 @@
 
 let recipes = [];
 let currentFilters = { search: '', tags: [] };
-let selectedRecipeImageFile = null;
+let selectedRecipeImageFiles = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     setupRecipeListeners();
@@ -56,11 +56,11 @@ function setupRecipeListeners() {
 
     // Image preview
     document.getElementById('recipeImageCamera')?.addEventListener('change', (e) => {
-        handleRecipeImageSelection(e.target.files[0]);
+        handleRecipeImageSelection([...e.target.files]);
     });
 
     document.getElementById('recipeImageLibrary')?.addEventListener('change', (e) => {
-        handleRecipeImageSelection(e.target.files[0]);
+        handleRecipeImageSelection([...e.target.files]);
     });
 
     // Recipe photo buttons
@@ -99,7 +99,7 @@ function setupRecipeListeners() {
     // Scan nutrition label for recipe
     document.getElementById('scanRecipeNutritionLabelBtn')?.addEventListener('click', async () => {
         if (typeof window.initNutritionLabelScannerForRecipe !== 'function') {
-            alert('Nutrition label scanner is not available.');
+            if (window.showToast) window.showToast('Nutrition label scanner is not available.', 'info');
             return;
         }
         try {
@@ -135,7 +135,7 @@ async function loadRecipes() {
         displayRecipes();
     } catch (error) {
         console.error('Error loading recipes:', error);
-        alert('Failed to load recipes');
+        if (window.showToast) window.showToast('Failed to load recipes', 'error');
     }
 }
 
@@ -146,7 +146,17 @@ function displayRecipes() {
     container.innerHTML = '';
 
     if (recipes.length === 0) {
-        container.innerHTML = '<p>No recipes found. Add your first recipe!</p>';
+        container.innerHTML = `
+            <div class="empty-state-card" style="grid-column: 1/-1; text-align: center; padding: 3rem 1.5rem;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📖</div>
+                <h3 style="margin-bottom: 0.5rem;">No recipes found</h3>
+                <p style="color: var(--muted); margin-bottom: 1.5rem;">Browse the community to discover recipes.</p>
+                <button class="btn btn-primary page-link" type="button" data-page="userSearch">Browse Community Recipes</button>
+            </div>
+        `;
+        container.querySelector('.page-link')?.addEventListener('click', () => {
+            if (window.navigateToPage) window.navigateToPage('userSearch');
+        });
         return;
     }
 
@@ -155,25 +165,71 @@ function displayRecipes() {
     });
 }
 
+// Dietary tag emoji map
+const DIETARY_TAG_ICONS = {
+    'vegan': '🌱',
+    'vegetarian': '🥦',
+    'gluten-free': '🌾',
+    'dairy-free': '🥛',
+    'nut-free': '🥜',
+    'high-protein': '💪',
+    'low-carb': '⬇️',
+    'keto': '🥑',
+    'paleo': '🦴',
+};
+
+function buildRecipeNutritionStrip(recipe) {
+    const nutrition = getRecipeNutrition(recipe);
+    if (!nutrition) return '';
+    const cal = nutrition.energy_kcal != null ? `${nutrition.energy_kcal}` : '—';
+    const prot = nutrition.proteins != null ? `${nutrition.proteins}g` : '—';
+    const carbs = nutrition.carbohydrates != null ? `${nutrition.carbohydrates}g` : '—';
+    const fat = nutrition.fat != null ? `${nutrition.fat}g` : '—';
+    if (cal === '—' && prot === '—' && carbs === '—' && fat === '—') return '';
+    return `
+        <div class="recipe-nutrition-strip" aria-label="Nutrition per serving">
+            <div class="recipe-nutrition-cell">
+                <span class="recipe-nutrition-cell__value">${cal}</span>
+                <span class="recipe-nutrition-cell__label">Cal</span>
+            </div>
+            <div class="recipe-nutrition-cell">
+                <span class="recipe-nutrition-cell__value">${prot}</span>
+                <span class="recipe-nutrition-cell__label">Protein</span>
+            </div>
+            <div class="recipe-nutrition-cell">
+                <span class="recipe-nutrition-cell__value">${carbs}</span>
+                <span class="recipe-nutrition-cell__label">Carbs</span>
+            </div>
+            <div class="recipe-nutrition-cell">
+                <span class="recipe-nutrition-cell__value">${fat}</span>
+                <span class="recipe-nutrition-cell__label">Fat</span>
+            </div>
+        </div>
+    `;
+}
+
 function createRecipeCard(recipe) {
     const card = document.createElement('div');
     card.className = 'recipe-card';
 
-    const tagsHtml = recipe.tags.map(tag => 
-        `<span class="recipe-tag">${tag}</span>`
-    ).join('');
+    const tagsHtml = recipe.tags.map(tag => {
+        const icon = DIETARY_TAG_ICONS[tag.toLowerCase()] || '';
+        return `<span class="recipe-tag">${icon ? icon + ' ' : ''}${tag}</span>`;
+    }).join('');
+
+    const nutritionStrip = buildRecipeNutritionStrip(recipe);
 
     card.innerHTML = `
         ${recipe.image_url ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="recipe-card-image" onerror="this.style.display='none'">` : ''}
         <div class="recipe-card-content">
+            ${tagsHtml ? `<div class="recipe-card-tags recipe-card-tags--top">${tagsHtml}</div>` : ''}
             <h3 class="recipe-card-title">${recipe.title}</h3>
+            ${nutritionStrip}
             <p class="recipe-card-description">${recipe.description || ''}</p>
             ${recipe.source_url ? `<p class="recipe-card-source"><a href="${recipe.source_url}" target="_blank" rel="noopener noreferrer">🔗 Original recipe</a></p>` : ''}
-            <div class="recipe-card-meta">${buildRecipeServingAndNutritionMeta(recipe)}</div>
             <div class="recipe-card-rating">
                 ${buildRecipeRatingDisplay(recipe)}
             </div>
-            <div class="recipe-card-tags">${tagsHtml}</div>
             <div class="recipe-card-actions">
                 <button class="btn-icon" type="button" data-action="view" title="View recipe">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -619,7 +675,7 @@ async function saveRecipe() {
 
     // Validate title
     if (!titleField.value || !titleField.value.trim()) {
-        alert('Please enter a recipe title');
+        if (window.showToast) window.showToast('Please enter a recipe title', 'info');
         titleField.focus();
         return;
     }
@@ -707,7 +763,7 @@ async function saveRecipe() {
         if (error.message) {
             errorMsg += ': ' + error.message;
         }
-        alert(errorMsg);
+        if (window.showToast) window.showToast(errorMsg, 'error');
     } finally {
         // Always unlock saving state
         _recipeSaving = false;
@@ -773,7 +829,7 @@ async function viewRecipeDetail(id) {
         }
     } catch (error) {
         console.error('Error loading recipe:', error);
-        alert('Failed to load recipe');
+        if (window.showToast) window.showToast('Failed to load recipe', 'error');
     }
 }
 
@@ -786,27 +842,30 @@ async function editRecipe(id) {
         openRecipeModal(recipe);
     } catch (error) {
         console.error('Error loading recipe for edit:', error);
-        alert('Failed to load recipe');
+        if (window.showToast) window.showToast('Failed to load recipe', 'error');
     }
 }
 
-async function deleteRecipe(id) {
-    if (!confirm('Are you sure you want to delete this recipe?')) {
-        return;
-    }
-
-    try {
-        await api.deleteRecipe(id);
-        loadRecipes();
-        if (window.loadDashboard) {
-            window.loadDashboard();
+function deleteRecipe(id) {
+    const doDelete = async () => {
+        try {
+            await api.deleteRecipe(id);
+            loadRecipes();
+            if (window.loadDashboard) {
+                window.loadDashboard();
+            }
+            if (window.loadMealPlan) {
+                window.loadMealPlan();
+            }
+        } catch (error) {
+            console.error('Error deleting recipe:', error);
+            if (window.showToast) window.showToast('Failed to delete recipe', 'error');
         }
-        if (window.loadMealPlan) {
-            window.loadMealPlan();
-        }
-    } catch (error) {
-        console.error('Error deleting recipe:', error);
-        alert('Failed to delete recipe');
+    };
+    if (window.showConfirm) {
+        window.showConfirm('Delete this recipe permanently?', doDelete);
+    } else {
+        if (confirm('Are you sure you want to delete this recipe?')) doDelete();
     }
 }
 
@@ -824,7 +883,7 @@ async function shareRecipeQR(id) {
         modal.classList.add('active');
     } catch (error) {
         console.error('Error generating QR code:', error);
-        alert('Failed to generate QR code');
+        if (window.showToast) window.showToast('Failed to generate QR code', 'error');
     }
 }
 
@@ -873,7 +932,7 @@ async function importRecipeFromUrl() {
                 
                 // Show warning if present
                 if (recipeData._warning) {
-                    alert(recipeData._warning);
+                    if (window.showToast) window.showToast(recipeData._warning, 'info');
                 }
                 
                 // Ensure ingredients is an array
@@ -932,55 +991,37 @@ function openImportImageModal() {
     document.getElementById('recipeImageLibrary').value = '';
     document.getElementById('imagePreview').innerHTML = '';
     document.getElementById('importImageResult').innerHTML = '';
-    selectedRecipeImageFile = null;
+    selectedRecipeImageFiles = [];
     modal.classList.add('active');
 }
 
-function handleRecipeImageSelection(file) {
+function handleRecipeImageSelection(files) {
     const preview = document.getElementById('imagePreview');
     const resultDiv = document.getElementById('importImageResult');
-    
-    if (resultDiv) {
-        resultDiv.innerHTML = '';
-    }
-    
-    if (!file) {
-        selectedRecipeImageFile = null;
-        if (preview) preview.innerHTML = '';
-        return;
-    }
-    
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        if (preview) preview.innerHTML = '<p class="error-message">Please select a valid image file</p>';
-        return;
-    }
-    
-    // Validate file size
-    if (file.size > 10 * 1024 * 1024) {
-        if (preview) preview.innerHTML = '<p class="error-message">Image is too large (max 10MB)</p>';
-        return;
-    }
-    
-    selectedRecipeImageFile = file;
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        if (preview) {
-            preview.innerHTML = `
-                <img src="${event.target.result}" 
-                     style="max-width: 100%; max-height: 300px; border-radius: 8px; display: block; margin: 0 auto;"
-                     alt="Recipe preview">
-                <p style="text-align: center; margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                    Ready to extract recipe text
-                </p>
-            `;
+
+    if (resultDiv) resultDiv.innerHTML = '';
+    if (!files || files.length === 0) return;
+
+    const errors = [];
+    const valid = [];
+    for (const file of files) {
+        if (!file.type.startsWith('image/')) {
+            errors.push(`${file.name}: not an image`);
+        } else if (file.size > 10 * 1024 * 1024) {
+            errors.push(`${file.name}: too large (max 10MB)`);
+        } else {
+            valid.push(file);
         }
-    };
-    reader.onerror = () => {
-        if (preview) preview.innerHTML = '<p class="error-message">Error loading image preview</p>';
-    };
-    reader.readAsDataURL(file);
+    }
+
+    if (errors.length && preview) {
+        preview.innerHTML = `<p class="error-message">${errors.join('<br>')}</p>`;
+    }
+    if (!valid.length) return;
+
+    // Accumulate — don't replace what's already there
+    selectedRecipeImageFiles = selectedRecipeImageFiles.concat(valid);
+    renderImagePreviews(preview);
 }
 
 function handleRecipePhotoSelection(file) {
@@ -996,12 +1037,12 @@ function handleRecipePhotoSelection(file) {
     }
 
     if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file.');
+        if (window.showToast) window.showToast('Please select a valid image file.', 'info');
         return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-        alert('Image is too large (max 10MB).');
+        if (window.showToast) window.showToast('Image is too large (max 10MB).', 'info');
         return;
     }
 
@@ -1019,232 +1060,134 @@ function handleRecipePhotoSelection(file) {
     reader.readAsDataURL(file);
 }
 
-async function importRecipeFromImage() {
-    console.log('=== IMAGE IMPORT STARTED ===');
-    const file = selectedRecipeImageFile;
-    const resultDiv = document.getElementById('importImageResult');
+function renderImagePreviews(container) {
+    if (!container) return;
+    container.innerHTML = '';
+    if (!selectedRecipeImageFiles.length) return;
 
-    console.log('Selected file:', file);
-    
-    if (!file) {
-        console.warn('No file selected');
-        resultDiv.innerHTML = '<p class="error-message">Please select or take an image</p>';
-        return;
-    }
+    const strip = document.createElement('div');
+    strip.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.75rem 0;';
 
-    console.log('File details:', {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        lastModified: file.lastModified
+    selectedRecipeImageFiles.forEach((file, i) => {
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:relative;width:80px;flex-shrink:0;';
+
+        const img = document.createElement('img');
+        img.alt = `Page ${i + 1}`;
+        img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:6px;display:block;';
+
+        const label = document.createElement('span');
+        label.textContent = `${i + 1}`;
+        label.style.cssText = 'position:absolute;top:3px;left:3px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:1px 5px;border-radius:4px;';
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.textContent = '×';
+        removeBtn.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:13px;line-height:1;cursor:pointer;padding:0;';
+        removeBtn.addEventListener('click', () => {
+            selectedRecipeImageFiles.splice(i, 1);
+            renderImagePreviews(container);
+        });
+
+        const reader = new FileReader();
+        reader.onload = (e) => { img.src = e.target.result; };
+        reader.readAsDataURL(file);
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(label);
+        wrapper.appendChild(removeBtn);
+        strip.appendChild(wrapper);
     });
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        console.error('Invalid file type:', file.type);
-        resultDiv.innerHTML = '<p class="error-message">Please select a valid image file</p>';
+    const hint = document.createElement('p');
+    hint.style.cssText = 'font-size:0.85rem;color:var(--color-text-muted);margin:0.25rem 0 0;';
+    hint.textContent = `${selectedRecipeImageFiles.length} image${selectedRecipeImageFiles.length > 1 ? 's' : ''} selected — tap × to remove one, or choose more.`;
+
+    container.appendChild(strip);
+    container.appendChild(hint);
+}
+
+async function importRecipeFromImage() {
+    console.log('=== IMAGE IMPORT STARTED ===');
+    const files = selectedRecipeImageFiles;
+    const resultDiv = document.getElementById('importImageResult');
+
+    if (!files || files.length === 0) {
+        resultDiv.innerHTML = '<p class="error-message">Please select at least one image</p>';
         return;
     }
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        console.error('File too large:', file.size);
-        resultDiv.innerHTML = '<p class="error-message">Image file is too large. Please use an image smaller than 10MB.</p>';
-        return;
-    }
-
-    console.log('File validation passed, starting to read file...');
-    // Show loading state
-    resultDiv.innerHTML = '<p style="text-align: center; color: var(--accent);">📸 Reading image... This may take 10-30 seconds.</p>';
+    const count = files.length;
+    resultDiv.innerHTML = `<p style="text-align:center;color:var(--accent);">📸 Reading ${count} image${count > 1 ? 's' : ''}... This may take 10–30 seconds.</p>`;
 
     try {
-        // Convert image to base64
-        const reader = new FileReader();
-        
-        reader.onload = async (event) => {
-            try {
-                console.log('FileReader onload triggered');
-                let imageData = event.target.result;
-                console.log('Image data length:', imageData ? imageData.length : 0);
-                console.log('Image data preview:', imageData ? imageData.substring(0, 100) + '...' : 'null');
-                
-                // Update loading message
-                resultDiv.innerHTML = '<p style="text-align: center; color: var(--accent);">🔍 Processing image with OCR... Please wait.</p>';
-                
-                console.log('=== SENDING TO BACKEND ===');
-                console.log('Calling api.importRecipeFromImage()...');
-                const recipeData = await api.importRecipeFromImage(imageData);
-                
-                console.log('=== BACKEND RESPONSE RECEIVED ===');
-                console.log('Full recipe data object:', recipeData);
-                console.log('Recipe data type:', typeof recipeData);
-                console.log('Recipe data keys:', recipeData ? Object.keys(recipeData) : 'null');
-                
-                if (recipeData) {
-                    console.log('Recipe data exists, checking for errors...');
-                    console.log('Has _error field?', '_error' in recipeData);
-                    console.log('_error value:', recipeData._error);
-                    
-                    // Check for error message
-                    if (recipeData._error) {
-                        console.error('Backend returned error:', recipeData._error);
-                        console.log('Showing error message to user');
-                        resultDiv.innerHTML = `
-                            <div style="text-align: center;">
-                                <p class="error-message">${recipeData._error}</p>
-                                <p style="margin-top: 1rem; color: var(--text-secondary);">You can still manually enter the recipe details.</p>
-                                <button class="btn btn-primary" onclick="document.getElementById('importImageModal').classList.remove('active'); openRecipeModal();">Add Recipe Manually</button>
-                            </div>
-                        `;
-                        return;
-                    }
-                    
-                    console.log('No error found, checking for title...');
-                    console.log('Title value:', recipeData.title);
-                    console.log('Title type:', typeof recipeData.title);
-                    console.log('Title truthy?', !!recipeData.title);
-                    
-                    // Ensure we have at least a title (backend always provides one)
-                    if (recipeData.title) {
-                        console.log('=== EXTRACTED DATA SUMMARY ===');
-                        console.log('Title:', recipeData.title);
-                        console.log('Description:', recipeData.description);
-                        console.log('Instructions:', recipeData.instructions);
-                        console.log('Prep time:', recipeData.prep_time);
-                        console.log('Cook time:', recipeData.cook_time);
-                        console.log('Servings:', recipeData.servings);
-                        console.log('Ingredients count:', recipeData.ingredients ? recipeData.ingredients.length : 0);
-                        console.log('Ingredients:', recipeData.ingredients);
-                        
-                        // Ensure ingredients is an array
-                        let ingredients = recipeData.ingredients || [];
-                        if (!Array.isArray(ingredients)) {
-                            console.warn('Ingredients is not an array, converting...', ingredients);
-                            ingredients = [];
-                        }
-                        console.log('Final ingredients array:', ingredients);
-                        console.log('Ingredients array length:', ingredients.length);
-                        
-                        console.log('=== PREPARING TO OPEN MODAL ===');
-                        console.log('Recipe data to pass to modal:', {
-                            id: undefined,
-                            title: recipeData.title || 'Recipe from Image',
-                            description: recipeData.description || null,
-                            instructions: recipeData.instructions || null,
-                            prep_time: recipeData.prep_time || null,
-                            cook_time: recipeData.cook_time || null,
-                            servings: recipeData.servings || null,
-                            ingredients: ingredients,
-                            tags: []
-                        });
-                        
-                        // Close import modal first
-                        const importModal = document.getElementById('importImageModal');
-                        console.log('Import modal element:', importModal);
-                        if (importModal) {
-                            console.log('Closing import modal...');
-                            importModal.classList.remove('active');
-                            console.log('Import modal closed, active classes:', importModal.classList.toString());
-                        } else {
-                            console.error('Import modal element not found!');
-                        }
-                        
-                        // Small delay to ensure modal closes before opening new one
-                        console.log('Waiting 100ms before opening recipe modal...');
-                        setTimeout(() => {
-                            console.log('=== OPENING RECIPE MODAL ===');
-                            try {
-                                // Open recipe modal with extracted data (no ID = new recipe)
-                                openRecipeModal({
-                                    id: undefined,  // Explicitly set to undefined for new recipe
-                                    title: recipeData.title || 'Recipe from Image',
-                                    description: recipeData.description || null,
-                                    instructions: recipeData.instructions || null,
-                                    prep_time: recipeData.prep_time || null,
-                                    cook_time: recipeData.cook_time || null,
-                                    servings: recipeData.servings || null,
-                                    ingredients: ingredients,
-                                    tags: []
-                                });
-                                console.log('Recipe modal opened successfully!');
-                                console.log('=== IMAGE IMPORT COMPLETE ===');
-                            } catch (modalError) {
-                                console.error('Error opening recipe modal:', modalError);
-                                console.error('Stack trace:', modalError.stack);
-                                resultDiv.innerHTML = `
-                                    <div style="text-align: center;">
-                                        <p class="error-message">Error opening recipe form: ${modalError.message}</p>
-                                        <button class="btn btn-primary" onclick="document.getElementById('importImageModal').classList.remove('active'); openRecipeModal();">Add Recipe Manually</button>
-                                    </div>
-                                `;
-                            }
-                        }, 100);
-                    } else {
-                        console.error('No title found in recipe data!');
-                        console.log('Full recipe data:', JSON.stringify(recipeData, null, 2));
-                        resultDiv.innerHTML = `
-                            <div style="text-align: center;">
-                                <p class="error-message">Could not extract recipe title from image. Please add manually.</p>
-                                <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">Extracted data: ${JSON.stringify(recipeData).substring(0, 200)}...</p>
-                                <button class="btn btn-primary" onclick="document.getElementById('importImageModal').classList.remove('active'); openRecipeModal();">Add Recipe Manually</button>
-                            </div>
-                        `;
-                    }
-                } else {
-                    console.error('Recipe data is null or undefined!');
-                    resultDiv.innerHTML = `
-                        <div style="text-align: center;">
-                            <p class="error-message">Could not extract recipe from image. Please add manually.</p>
-                            <button class="btn btn-primary" onclick="document.getElementById('importImageModal').classList.remove('active'); openRecipeModal();">Add Recipe Manually</button>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('=== ERROR IN READER.ONLOAD ===');
-                console.error('Error type:', error.constructor.name);
-                console.error('Error message:', error.message);
-                console.error('Error stack:', error.stack);
-                console.error('Full error object:', error);
-                
-                let errorMsg = 'Error extracting recipe from image';
-                if (error.message && error.message.includes('JSON')) {
-                    errorMsg = 'Error: Invalid response from server. The OCR service may not be available.';
-                } else if (error.message) {
-                    errorMsg = `Error: ${error.message}`;
-                }
-                resultDiv.innerHTML = `
-                    <div style="text-align: center;">
-                        <p class="error-message">${errorMsg}</p>
-                        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">Check console for details (F12)</p>
-                        <button class="btn btn-primary" onclick="document.getElementById('importImageModal').classList.remove('active'); openRecipeModal();">Add Recipe Manually</button>
-                    </div>
-                `;
-            }
-        };
-        
-        reader.onerror = (error) => {
-            console.error('=== FILEREADER ERROR ===');
-            console.error('FileReader error:', error);
-            console.error('Error type:', error.type);
-            resultDiv.innerHTML = '<p class="error-message">Error reading image file. Please try a different image or check file permissions.</p>';
-        };
-        
-        reader.onabort = () => {
-            console.warn('FileReader aborted');
-            resultDiv.innerHTML = '<p class="error-message">Image reading was cancelled.</p>';
-        };
-        
-        console.log('Starting FileReader.readAsDataURL()...');
-        // Read file as data URL (base64)
-        reader.readAsDataURL(file);
-        console.log('FileReader.readAsDataURL() called');
+        // Convert all files to base64 in parallel
+        const imageDataArray = await Promise.all(files.map(file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        })));
+
+        resultDiv.innerHTML = `<p style="text-align:center;color:var(--accent);">🔍 Running OCR on ${count} image${count > 1 ? 's' : ''}... Please wait.</p>`;
+
+        const recipeData = await api.importRecipeFromImage(imageDataArray);
+
+        if (!recipeData) {
+            resultDiv.innerHTML = `
+                <div style="text-align:center;">
+                    <p class="error-message">Could not extract recipe from image. Please add manually.</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('importImageModal').classList.remove('active'); openRecipeModal();">Add Recipe Manually</button>
+                </div>
+            `;
+            return;
+        }
+
+        if (recipeData._error) {
+            resultDiv.innerHTML = `
+                <div style="text-align:center;">
+                    <p class="error-message">${recipeData._error}</p>
+                    <p style="margin-top:1rem;color:var(--color-text-muted);">You can still manually enter the recipe details.</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('importImageModal').classList.remove('active'); openRecipeModal();">Add Recipe Manually</button>
+                </div>
+            `;
+            return;
+        }
+
+        if (!recipeData.title) {
+            resultDiv.innerHTML = `
+                <div style="text-align:center;">
+                    <p class="error-message">Could not extract recipe title from image. Please add manually.</p>
+                    <button class="btn btn-primary" onclick="document.getElementById('importImageModal').classList.remove('active'); openRecipeModal();">Add Recipe Manually</button>
+                </div>
+            `;
+            return;
+        }
+
+        const ingredients = Array.isArray(recipeData.ingredients) ? recipeData.ingredients : [];
+
+        document.getElementById('importImageModal')?.classList.remove('active');
+        setTimeout(() => {
+            openRecipeModal({
+                id: undefined,
+                title: recipeData.title || 'Recipe from Image',
+                description: recipeData.description || null,
+                instructions: recipeData.instructions || null,
+                prep_time: recipeData.prep_time || null,
+                cook_time: recipeData.cook_time || null,
+                servings: recipeData.servings || null,
+                ingredients,
+                tags: []
+            });
+        }, 100);
+
     } catch (error) {
-        console.error('=== ERROR IN TRY BLOCK ===');
-        console.error('Error type:', error.constructor.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        console.error('Full error object:', error);
-        resultDiv.innerHTML = `<p class="error-message">Error: ${error.message || 'Unknown error occurred while reading image'}</p>`;
+        resultDiv.innerHTML = `
+            <div style="text-align:center;">
+                <p class="error-message">Error: ${error.message || 'Unknown error occurred while reading image'}</p>
+                <button class="btn btn-primary" onclick="document.getElementById('importImageModal').classList.remove('active'); openRecipeModal();">Add Recipe Manually</button>
+            </div>
+        `;
     }
 }
 

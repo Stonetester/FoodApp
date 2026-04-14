@@ -1,0 +1,221 @@
+# DESIGN.md — Modo Gusto
+
+## Brand DNA
+
+```json
+{
+  "aesthetic_refs": ["Cottagecore", "1970s Retro", "Cabin Core", "Wes Anderson"],
+  "vibe_summary": "A cozy cabin meets retro 50s homestead aesthetic blended with Wes Anderson's whimsical film palettes. The design embraces warm earth tones from the 1970s era—burnt orange, avocado green, rust, and sage—paired with cream surfaces and dusty rose accents. The overall feeling is grown-up, tactile, and hand-crafted without being childish, creating a cartoon-like warmth that feels lived-in and trustworthy. Colors are muted and easy on the eyes, providing strong contrast where needed for usability while maintaining the cozy, nostalgic atmosphere of a well-loved kitchen.",
+  "palette": {
+    "primary": "#BF5700",
+    "secondary": "#568203",
+    "accent": "#D67236",
+    "surface": "#F1E6D3",
+    "surface_alt": "#E8DCC6",
+    "text": "#2C1810",
+    "text_muted": "#5D4F3A",
+    "border": "#C4B5A0",
+    "error": "#B7410E",
+    "success": "#6B7A42",
+    "warning": "#CC7722"
+  },
+  "typography": {
+    "display": "Playfair Display",
+    "heading": "Lora",
+    "body": "Source Serif 4",
+    "mono": "DM Mono",
+    "scale": {
+      "xs": "0.75",
+      "sm": "0.875",
+      "base": "1",
+      "lg": "1.125",
+      "xl": "1.25",
+      "2xl": "1.5",
+      "3xl": "1.875",
+      "4xl": "2.25",
+      "5xl": "3",
+      "6xl": "3.75"
+    }
+  },
+  "spacing": {
+    "unit": "4",
+    "density": "comfortable"
+  },
+  "motion": {
+    "speed": "medium",
+    "easing": "cubic-bezier(0.4,0,0.2,1)",
+    "style": "fade"
+  },
+  "radius": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "16px",
+    "full": "9999px"
+  },
+  "shadows": {
+    "sm": "0 1px 3px rgba(44, 24, 16, 0.12), 0 1px 2px rgba(44, 24, 16, 0.24)",
+    "md": "0 4px 6px rgba(44, 24, 16, 0.15), 0 2px 4px rgba(44, 24, 16, 0.12)",
+    "lg": "0 10px 15px rgba(44, 24, 16, 0.1), 0 4px 6px rgba(44, 24, 16, 0.1)"
+  },
+  "motifs": [
+    "hand-drawn recipe card borders",
+    "subtle wood grain textures",
+    "vintage label and badge shapes",
+    "soft rounded corners on containers",
+    "grid patterns reminiscent of recipe notebooks",
+    "illustration-style icons with organic shapes"
+  ],
+  "textures": [
+    "canvas or linen background texture",
+    "subtle paper grain for recipe cards",
+    "wood grain for navigation elements",
+    "soft fabric texture for buttons"
+  ],
+  "mood_keywords": [
+    "cozy",
+    "warm",
+    "nostalgic",
+    "handcrafted",
+    "lived-in",
+    "trustworthy",
+    "organic",
+    "earthy",
+    "tactile",
+    "wholesome",
+    "editorial",
+    "vintage"
+  ],
+  "do_not": [
+    "bright yellow or neon colors",
+    "pure white backgrounds",
+    "cold blue tones",
+    "sharp geometric modern tech aesthetic",
+    "childish cartoon style",
+    "dark mode treatments",
+    "bright saturated colors that hurt readability",
+    "Inter, Roboto, or Arial fonts as display",
+    "overly glossy or plastic-looking elements",
+    "harsh drop shadows or stark contrasts"
+  ],
+  "reference_urls": [],
+  "wiki_urls": [
+    "https://aesthetics.fandom.com/wiki/Cottagecore",
+    "https://aesthetics.fandom.com/wiki/1970s",
+    "https://aesthetics.fandom.com/wiki/Cabin_Core"
+  ]
+}
+```
+
+## UX Decisions
+*[Will be populated by UX audit agent and review broker]*
+
+## Layout Architecture
+*[Will be populated by layout redesign agent]*
+
+## Token Map
+
+CSS custom property name → BrandDNA field mapping:
+
+### Colors
+- `--color-primary` → `palette.primary` (#BF5700)
+- `--color-secondary` → `palette.secondary` (#568203)
+- `--color-accent` → `palette.accent` (#D67236)
+- `--color-surface` → `palette.surface` (#F1E6D3)
+- `--color-surface-alt` → `palette.surface_alt` (#E8DCC6)
+- `--color-text` → `palette.text` (#2C1810)
+- `--color-text-muted` → `palette.text_muted` (#5D4F3A)
+- `--color-border` → `palette.border` (#C4B5A0)
+- `--color-error` → `palette.error` (#B7410E)
+- `--color-success` → `palette.success` (#6B7A42)
+- `--color-warning` → `palette.warning` (#CC7722)
+
+### Typography
+- `--font-display` → `typography.display` (Playfair Display)
+- `--font-heading` → `typography.heading` (Lora)
+- `--font-body` → `typography.body` (Source Serif 4)
+- `--font-mono` → `typography.mono` (DM Mono)
+- `--text-xs` through `--text-6xl` → `typography.scale.*`
+
+### Layout
+- `--space-1` through `--space-12` → `spacing.unit` (4px base)
+- `--radius-sm` → `radius.sm` (4px)
+- `--radius-md` → `radius.md` (8px)
+- `--radius-lg` → `radius.lg` (16px)
+- `--radius-full` → `radius.full` (9999px)
+- `--shadow-sm/md/lg` → `shadows.sm/md/lg` (warm brown-based)
+
+### Motion
+- `--motion-speed` → `motion.speed` (300ms)
+- `--motion-easing` → `motion.easing` (cubic-bezier(0.4,0,0.2,1))
+- `--transition-fast/base/slow` → derived from motion values
+
+### Legacy Compatibility
+- `--bg`, `--surface`, `--text`, `--primary` etc. → mapped to new color tokens
+- Preserves existing variable references while introducing systematic naming
+
+## File Manifest
+
+| Path | What changed | Why | Date |
+|------|-------------|-----|------|
+| frontend/public/css/style.css | --bg changed from teal #A9D9D0 to warm cream #F1E6D3 | P2-8: Replace cold teal background with brand-aligned warm cream | 2026-03-27 |
+| frontend/public/css/style.css | body font-family set to DM Sans; h1-h4 set to Playfair Display | P1-1: Apply correct brand typography | 2026-03-27 |
+| frontend/public/css/style.css | nav-help-btn width/height 32px → 44px | P2-1: Touch target compliance | 2026-03-27 |
+| frontend/public/css/style.css | Removed duplicate .btn-ghost and .btn-destructive rule sets | P2-7: Remove duplicate CSS | 2026-03-27 |
+| frontend/public/css/style.css | btn-icon min-width/min-height 44px, display inline-flex | P1-5: Touch target compliance | 2026-03-27 |
+| frontend/public/css/style.css | filter-tag checkbox hidden absolutely; label is full tap target | P2-2: Chip-style tap targets | 2026-03-27 |
+| frontend/public/css/style.css | pantry-action-btn min-height 44px, padding 0.6rem 1rem, font-size 0.9rem | P0-5: Touch target compliance | 2026-03-27 |
+| frontend/public/css/style.css | meal-section-actions display restored on mobile; meal-empty restored; week add button visible | P0-3/P2-6: Show slot actions on mobile | 2026-03-27 |
+| frontend/public/css/style.css | stats-grid 3-column on mobile, stat-card h3 1.5rem, padding 1rem | P2-3: Compact dashboard on mobile | 2026-03-27 |
+| frontend/public/css/style.css | Added pantry-scan-fab fixed bottom FAB with pantry-tab-active toggle | P0-1: Pantry-specific scan FAB | 2026-03-27 |
+| frontend/public/css/style.css | Added mg-toast, mg-confirm-backdrop/sheet classes | P1-6: Styled toast/confirm dialog | 2026-03-27 |
+| frontend/public/css/style.css | Added recipe-nutrition-strip, recipe-nutrition-cell classes | P0-4: Recipe card nutrition strip | 2026-03-27 |
+| frontend/public/css/style.css | Added login-card mobile padding 1.5rem 1.25rem at max-width 480px | P2-4: Login card mobile padding | 2026-03-27 |
+| frontend/public/css/style.css | Added maintenance-banner__dismiss button styling | P1-4: Banner dismiss button style | 2026-03-27 |
+| frontend/public/css/style.css | Added day-detail-slot and related classes | P2-5: Remove inline styles from showDayDetail | 2026-03-27 |
+| frontend/public/css/style.css | recipe-tag font-size 0.85rem; recipe-card-tags--top class added | P0-4: Dietary badge improvements | 2026-03-27 |
+| frontend/public/index.html | Removed mobileFabRecipe and mobileFabPantry FAB buttons | P0-1/P1-2: Remove old FABs | 2026-03-27 |
+| frontend/public/index.html | Added pantry-scan-fab button | P0-1: Pantry scan FAB | 2026-03-27 |
+| frontend/public/index.html | Added maintenance-banner__dismiss button to banner | P1-4: Banner dismiss button | 2026-03-27 |
+| frontend/public/index.html | Removed first duplicate friendsPage block (style=display:none) | P1-8: Remove dead page | 2026-03-27 |
+| frontend/public/index.html | Removed second duplicate styleGuidePage block | P1-3: Remove duplicate styleGuide | 2026-03-27 |
+| frontend/public/index.html | Removed second friendsPage block (duplicate IDs eliminated) | P1-8: Remove duplicate IDs | 2026-03-27 |
+| frontend/public/js/main.js | maintenanceAnnouncement.enabled false | P1-4: Disable banner by default | 2026-03-27 |
+| frontend/public/js/main.js | applyMaintenanceBanners: added dismiss button handler, removed banner-click dismiss | P1-4: Dedicated dismiss button | 2026-03-27 |
+| frontend/public/js/main.js | navigateToPage: removed post-init mobile view flash; added pantry-tab-active body class toggle | P0-1/P0-2: FAB toggle + no flash | 2026-03-27 |
+| frontend/public/js/main.js | Replaced mobileFabRecipe/mobileFabPantry handlers with pantryScanFab handler | P0-1: New pantry scan FAB | 2026-03-27 |
+| frontend/public/js/main.js | Added showToast() and showConfirm() helper functions, exported to window | P1-6: Styled toast/confirm | 2026-03-27 |
+| frontend/public/js/mealplan.js | currentCalendarView defaults to mealWeek on mobile | P0-2: Default week view on mobile | 2026-03-27 |
+| frontend/public/js/mealplan.js | initializeCalendar: initialView determined by viewport width | P0-2: No flash on mobile | 2026-03-27 |
+| frontend/public/js/mealplan.js | All alert() replaced with showToast; confirm() replaced with showConfirm | P1-6: Styled notifications | 2026-03-27 |
+| frontend/public/js/mealplan.js | showDayDetail: inline cssText replaced with CSS classes | P2-5: Class-based day detail styles | 2026-03-27 |
+| frontend/public/js/pantry.js | loadPantry alert → showToast | P1-6: Styled notifications | 2026-03-27 |
+| frontend/public/js/pantry.js | Empty pantry state: icon + message + "Scan Your First Item" CTA | P1-7: Meaningful empty state | 2026-03-27 |
+| frontend/public/js/pantry.js | savePantryItem alert → showToast | P1-6: Styled notifications | 2026-03-27 |
+| frontend/public/js/pantry.js | deletePantryItem confirm → showConfirm, alert → showToast | P1-6: Styled notifications | 2026-03-27 |
+| frontend/public/js/recipes.js | All alert() → showToast; confirm() → showConfirm | P1-6: Styled notifications | 2026-03-27 |
+| frontend/public/js/recipes.js | Empty recipes state: icon + message + "Browse Community Recipes" CTA | P1-7: Meaningful empty state | 2026-03-27 |
+| frontend/public/js/recipes.js | createRecipeCard: added nutrition strip, dietary tag icons, tags moved to top | P0-4: Recipe card nutrition + badges | 2026-03-27 |
+| frontend/public/css/style.css | Complete :root CSS custom property system implemented | VibeForge styling implementation: BrandDNA design tokens | 2026-03-27 |
+| frontend/public/index.html | Google Fonts import updated to include Playfair Display, Lora, Source Serif 4, DM Mono | VibeForge typography implementation | 2026-03-27 |
+| frontend/public/css/style.css | All typography updated to use var(--font-*) tokens | VibeForge typography implementation | 2026-03-27 |
+| frontend/public/css/style.css | Button styles updated with new design system | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Card styles updated with consistent shadow/border treatment | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Form input and label styles updated with new color/font tokens | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Recipe nutrition strip updated with monospace values and structured layout | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Dietary tag badges redesigned with vintage label style | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Meal plan calendar cards updated with new surface/border treatment | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Pantry scan FAB redesigned with new primary color and shadow system | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Modal and dialog styles updated with new design tokens | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Toast notification styles updated with brand color system | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Empty state styling implemented with consistent text treatment | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Stat card styling updated with monospace numbers and muted labels | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Filter chip/tag styles redesigned with pill shape and active states | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Login card and page styles updated with warm surface treatment | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Page titles and section headers updated with display/heading fonts | VibeForge component implementation | 2026-03-27 |
+| frontend/public/css/style.css | Reduced motion media query added for accessibility | VibeForge accessibility implementation | 2026-03-27 |
+
+## Review History
+*[Will be populated by visual review broker]*
+
+## Anti-Patterns
+*[Options explicitly rejected will be logged here]*

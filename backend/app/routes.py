@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
 from app.account_profile import get_account_profile
 from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship, RecipeReview
-from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image, auto_assign_category
+from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image, extract_text_from_images, auto_assign_category
 from app.nutrition import lookup_ingredient_nutrition, calculate_recipe_nutrition, parse_nutrition_label_text
 from datetime import datetime, date
 from collections import Counter
@@ -393,16 +393,17 @@ def import_recipe_from_image():
         if not data:
             return jsonify({'error': 'Invalid request data'}), 400
             
-        image_data = data.get('image')
-        
-        if not image_data:
+        # Accept either 'images' (array) or legacy 'image' (single)
+        images = data.get('images') or ([data['image']] if data.get('image') else None)
+
+        if not images:
             return jsonify({'error': 'Image data is required'}), 400
-        
+
         print("=== IMAGE IMPORT REQUEST RECEIVED ===")
-        print(f"Image data length: {len(image_data) if image_data else 0}")
-        print("Attempting to extract recipe from image...")
-        
-        recipe_data = extract_text_from_image(image_data)
+        print(f"Number of images: {len(images)}")
+        print("Attempting to extract recipe from image(s)...")
+
+        recipe_data = extract_text_from_images(images)
         
         print("=== EXTRACTION COMPLETE ===")
         print(f"Recipe data returned: {recipe_data is not None}")
@@ -882,7 +883,12 @@ def get_user_recipes(user_id):
 def get_user_meal_plan(user_id):
     """Get meal plan for a specific user (friends only)"""
     if user_id != current_user.id:
-        is_friend = Friendship.query.filter_by(user_id=current_user.id, friend_id=user_id).first()
+        is_friend = Friendship.query.filter(
+            db.or_(
+                db.and_(Friendship.user_id == current_user.id, Friendship.friend_id == user_id),
+                db.and_(Friendship.user_id == user_id, Friendship.friend_id == current_user.id)
+            )
+        ).first()
         if not is_friend:
             return jsonify({'error': 'You do not have access to this meal plan'}), 403
 
@@ -905,6 +911,31 @@ def get_user_meal_plan(user_id):
 
     plans = query.order_by(MealPlan.planned_date.asc()).all()
     return jsonify([plan.to_dict() for plan in plans]), 200
+
+@api_bp.route('/friends/activity', methods=['GET'])
+@login_required
+def get_friends_activity():
+    """Recent recipes added by friends (for dashboard feed)"""
+    friend_ids_q = db.session.query(Friendship.friend_id).filter_by(user_id=current_user.id).all()
+    reverse_ids_q = db.session.query(Friendship.user_id).filter_by(friend_id=current_user.id).all()
+    friend_ids = list({row[0] for row in friend_ids_q + reverse_ids_q})
+
+    if not friend_ids:
+        return jsonify([]), 200
+
+    recent = (
+        Recipe.query
+        .filter(Recipe.user_id.in_(friend_ids))
+        .order_by(Recipe.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    results = []
+    for recipe in recent:
+        d = recipe.to_dict()
+        d['owner'] = {'id': recipe.user_id, 'username': recipe.user.username}
+        results.append(d)
+    return jsonify(results), 200
 
 # ==================== FRIENDS & SOCIAL ====================
 @api_bp.route('/friends', methods=['GET'])
@@ -1410,3 +1441,76 @@ def test_email():
         return jsonify({'message': f'Test email sent to {current_user.email}'}), 200
     except Exception as e:
         return jsonify({'error': f'Failed to send test email: {str(e)}'}), 500
+
+
+# ==================== ADMIN ====================
+
+def admin_required(f):
+    """Decorator: requires current user to have is_admin=True."""
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            return jsonify({'error': 'Admin access required'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+@api_bp.route('/admin/users', methods=['GET'])
+@login_required
+@admin_required
+def admin_list_users():
+    """List all users with stats."""
+    users = User.query.order_by(User.created_at.desc()).all()
+    result = []
+    for u in users:
+        result.append({
+            'id': u.id,
+            'username': u.username,
+            'email': u.email,
+            'is_admin': u.is_admin,
+            'created_at': u.created_at.isoformat() if u.created_at else None,
+            'recipe_count': Recipe.query.filter_by(user_id=u.id).count(),
+            'pantry_count': PantryItem.query.filter_by(user_id=u.id).count(),
+        })
+    return jsonify(result), 200
+
+@api_bp.route('/admin/users/<int:user_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def admin_delete_user(user_id):
+    """Delete any user account (admin only). Cannot delete yourself."""
+    if user_id == current_user.id:
+        return jsonify({'error': 'You cannot delete your own account from the admin panel. Use Settings instead.'}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    try:
+        FriendRequest.query.filter(
+            (FriendRequest.sender_id == user_id) | (FriendRequest.receiver_id == user_id)
+        ).delete(synchronize_session=False)
+        Friendship.query.filter(
+            (Friendship.user_id == user_id) | (Friendship.friend_id == user_id)
+        ).delete(synchronize_session=False)
+        RecipeReview.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'message': f'User {user.username} deleted'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to delete user: {str(e)}'}), 500
+
+@api_bp.route('/admin/users/<int:user_id>/toggle-admin', methods=['POST'])
+@login_required
+@admin_required
+def admin_toggle_admin(user_id):
+    """Promote or demote a user's admin status."""
+    if user_id == current_user.id:
+        return jsonify({'error': 'You cannot change your own admin status'}), 400
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    user.is_admin = not user.is_admin
+    db.session.commit()
+    return jsonify({'message': f'{user.username} is now {"an admin" if user.is_admin else "a regular user"}', 'is_admin': user.is_admin}), 200

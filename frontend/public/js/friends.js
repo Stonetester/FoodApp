@@ -7,6 +7,21 @@ document.addEventListener('DOMContentLoaded', () => {
 let friendsCache = [];
 let selectedFriendId = null;
 
+function showFriendsList() {
+    const listView = document.getElementById('friendsListView');
+    const detailView = document.getElementById('friendDetailView');
+    if (listView) listView.hidden = false;
+    if (detailView) detailView.hidden = true;
+    selectedFriendId = null;
+}
+
+function showFriendDetail() {
+    const listView = document.getElementById('friendsListView');
+    const detailView = document.getElementById('friendDetailView');
+    if (listView) listView.hidden = true;
+    if (detailView) detailView.hidden = false;
+}
+
 function setupFriendsListeners() {
     const refreshBtn = document.getElementById('refreshFriendsBtn');
     if (refreshBtn) {
@@ -21,9 +36,17 @@ function setupFriendsListeners() {
             }
         });
     }
+
+    const backBtn = document.getElementById('friendBackBtn');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            showFriendsList();
+        });
+    }
 }
 
 async function loadFriendsPage() {
+    showFriendsList();
     const listPanel = document.getElementById('friendsListPanel');
     if (!listPanel) return;
 
@@ -81,7 +104,7 @@ function renderFriendsList(friends) {
 
 async function selectFriend(friend) {
     selectedFriendId = friend.id;
-    renderFriendsList(friendsCache);
+    showFriendDetail();
 
     const titleEl = document.getElementById('friendDetailTitle');
     const subtitleEl = document.getElementById('friendDetailSubtitle');

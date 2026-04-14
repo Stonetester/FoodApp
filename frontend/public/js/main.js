@@ -3,7 +3,7 @@
 let currentUser = null;
 
 const maintenanceAnnouncement = {
-    enabled: true,
+    enabled: false,
     // Maintenance message
     //message: 'We will be performing scheduled maintenance tonight from 11 PM–1 AM. Some features may be unavailable.'
     // Email Spam message
@@ -272,23 +272,10 @@ function setupEventListeners() {
         });
     }
 
-    // Mobile FAB buttons
-    const mobileFabRecipe = document.getElementById('mobileFabRecipe');
-    if (mobileFabRecipe) {
-        mobileFabRecipe.addEventListener('click', () => {
-            const modal = document.getElementById('quickAddRecipeModal');
-            if (modal) {
-                document.getElementById('quickPasteLinkForm').style.display = 'none';
-                document.getElementById('quickImportResult').innerHTML = '';
-                document.getElementById('quickRecipeUrl').value = '';
-                modal.classList.add('active');
-            }
-        });
-    }
-
-    const mobileFabPantry = document.getElementById('mobileFabPantry');
-    if (mobileFabPantry) {
-        mobileFabPantry.addEventListener('click', () => {
+    // Pantry Scan FAB (bottom-anchored, pantry tab only)
+    const pantryScanFab = document.getElementById('pantryScanFab');
+    if (pantryScanFab) {
+        pantryScanFab.addEventListener('click', () => {
             const scannerModal = document.getElementById('scannerModal');
             if (scannerModal) {
                 scannerModal.classList.add('active');
@@ -623,6 +610,11 @@ function showApp() {
     handleSharedRecipeLink();
     initTutorial();
     showTutorialIfNew();
+    // Reveal admin link for admin users
+    if (currentUser && currentUser.is_admin) {
+        const adminLink = document.getElementById('adminSheetLink');
+        if (adminLink) adminLink.removeAttribute('hidden');
+    }
 }
 
 function updateRecipesTitle() {
@@ -673,7 +665,8 @@ function navigateToPage(pageName) {
         'friends': 'friendsPage',
         'styleGuide': 'styleGuidePage',
         'account': 'accountPage',
-        'settings': 'settingsPage'
+        'settings': 'settingsPage',
+        'admin': 'adminPage'
     };
 
     if (pageName === 'friends') {
@@ -710,6 +703,8 @@ function navigateToPage(pageName) {
             loadHistory();
         } else if (pageName === 'settings') {
             if (window.loadSettingsPage) window.loadSettingsPage();
+        } else if (pageName === 'admin') {
+            if (window.loadAdminPage) window.loadAdminPage();
         }
     }
 
@@ -718,14 +713,8 @@ function navigateToPage(pageName) {
     closeAllSheetsAndModals();
     updateActiveNav(pageName);
 
-    if (pageName === 'mealplan' && window.innerWidth < 768) {
-        setTimeout(() => {
-            const activeView = document.querySelector('.view-switcher .view-btn.active')?.dataset.view;
-            if (activeView === 'dayGridMonth') {
-                document.querySelector('.view-switcher .view-btn[data-view="mealWeek"]')?.click();
-            }
-        }, 120);
-    }
+    // Toggle pantry scan FAB visibility
+    document.body.classList.toggle('pantry-tab-active', pageName === 'pantry');
 
     initializeLucideIcons();
 }
@@ -738,35 +727,59 @@ function initializeLucideIcons() {
 
 async function loadDashboard() {
     try {
-        const recipes = await api.getRecipes();
-        const pantryItems = await api.getPantryItems();
-        const mealPlans = await api.getMealPlan();
         const today = new Date();
         const tomorrow = new Date();
         tomorrow.setDate(today.getDate() + 1);
-        const upcomingMeals = await api.getMealPlan(
-            today.toISOString().split('T')[0],
-            tomorrow.toISOString().split('T')[0]
-        );
+
+        const [recipes, pantryItems, mealPlans, upcomingMeals, communityRecipes] = await Promise.all([
+            api.getRecipes(),
+            api.getPantryItems(),
+            api.getMealPlan(),
+            api.getMealPlan(today.toISOString().split('T')[0], tomorrow.toISOString().split('T')[0]),
+            api.discoverRecipes()
+        ]);
 
         document.getElementById('recipeCount').textContent = recipes.length;
         document.getElementById('pantryCount').textContent = pantryItems.length;
         document.getElementById('mealPlanCount').textContent = mealPlans.length;
 
-        // Show recent recipes
-        const recentRecipes = recipes.slice(0, 6);
+        // Your recent recipes
         const recentRecipesContainer = document.getElementById('recentRecipes');
         recentRecipesContainer.innerHTML = '';
-
-        if (recentRecipes.length === 0) {
-            recentRecipesContainer.innerHTML = '<p>No recipes yet. Add your first recipe!</p>';
+        if (recipes.length === 0) {
+            recentRecipesContainer.innerHTML = '<p class="empty-state">No recipes yet. Add your first recipe!</p>';
         } else {
-            recentRecipes.forEach(recipe => {
+            recipes.slice(0, 6).forEach(recipe => {
                 recentRecipesContainer.appendChild(createRecipeCard(recipe));
             });
         }
 
         renderUpcomingMeals(upcomingMeals, today, tomorrow);
+
+        // Community newest recipes (exclude own)
+        const communityEl = document.getElementById('communityRecipesFeed');
+        if (communityEl) {
+            const others = communityRecipes.filter(r => !r.is_owner).slice(0, 6);
+            communityEl.innerHTML = '';
+            if (others.length === 0) {
+                communityEl.innerHTML = '<p class="empty-state">No community recipes yet.</p>';
+            } else {
+                others.forEach(recipe => communityEl.appendChild(createRecipeCard(recipe)));
+            }
+        }
+
+        // Friends' latest recipes (load async, show section only if results)
+        try {
+            const friendsActivity = await api.getFriendsActivity();
+            const section = document.getElementById('friendsActivitySection');
+            const feedEl = document.getElementById('friendsActivityFeed');
+            if (feedEl && friendsActivity && friendsActivity.length > 0) {
+                feedEl.innerHTML = '';
+                friendsActivity.slice(0, 6).forEach(recipe => feedEl.appendChild(createRecipeCard(recipe)));
+                if (section) section.hidden = false;
+            }
+        } catch (_) { /* no friends yet — section stays hidden */ }
+
     } catch (error) {
         console.error('Error loading dashboard:', error);
     }
@@ -890,7 +903,7 @@ function updateActiveNav(pageName) {
     const moreTabBtn = document.getElementById('moreTabBtn');
     navLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
     bottomLinks.forEach(link => link.classList.toggle('is-active', link.dataset.page === pageName));
-    const morePages = ['account', 'history', 'userSearch', 'styleGuide', 'settings'];
+    const morePages = ['account', 'history', 'social', 'styleGuide', 'settings', 'admin'];
     if (moreTabBtn) {
         moreTabBtn.classList.toggle('is-active', morePages.includes(pageName));
     }
@@ -911,15 +924,79 @@ function applyMaintenanceBanners() {
             messageEl.textContent = maintenanceAnnouncement.message;
         }
         banner.classList.toggle('is-hidden', !isEnabled || wasDismissed);
-        banner.addEventListener('click', () => {
-            banner.classList.add('is-hidden');
+    });
+    document.body.classList.toggle('has-maintenance-banner', isEnabled && !wasDismissed);
+
+    // Dismiss button — uses dedicated button, not the whole banner
+    const dismissBtn = document.getElementById('maintenanceDismissBtn');
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            banners.forEach(banner => banner.classList.add('is-hidden'));
             document.body.classList.remove('has-maintenance-banner');
             try { sessionStorage.setItem('mg_banner_dismissed', '1'); } catch (_) {}
         });
-    });
-    document.body.classList.toggle('has-maintenance-banner', isEnabled && !wasDismissed);
+    }
 }
 
+
+// ---- Toast Notification ----
+function showToast(message, type = 'success') {
+    // Remove any existing toast
+    document.querySelectorAll('.mg-toast').forEach(t => t.remove());
+
+    const toast = document.createElement('div');
+    toast.className = 'mg-toast';
+    if (type === 'error') toast.classList.add('mg-toast--error');
+    if (type === 'info') toast.classList.add('mg-toast--info');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Trigger show animation
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            toast.classList.add('mg-toast--visible');
+        });
+    });
+
+    setTimeout(() => {
+        toast.classList.remove('mg-toast--visible');
+        setTimeout(() => toast.remove(), 350);
+    }, 3000);
+}
+
+// ---- Confirm Dialog ----
+function showConfirm(message, onConfirm, confirmLabel = 'Delete', danger = true) {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'mg-confirm-backdrop';
+    backdrop.innerHTML = `
+        <div class="mg-confirm-sheet">
+            <p>${message}</p>
+            <div class="mg-confirm-actions">
+                <button class="btn btn-secondary" id="mgConfirmCancel" type="button">Cancel</button>
+                <button class="btn ${danger ? 'btn-destructive' : 'btn-primary'}" id="mgConfirmOk" type="button">${confirmLabel}</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(backdrop);
+
+    const close = () => backdrop.remove();
+    backdrop.querySelector('#mgConfirmCancel').addEventListener('click', () => {
+        close();
+        if (typeof onConfirm !== 'function') return; // promise mode
+    });
+    backdrop.querySelector('#mgConfirmOk').addEventListener('click', () => {
+        close();
+        if (typeof onConfirm === 'function') onConfirm(true);
+    });
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) close();
+    });
+}
+
+// Export helpers so other files can use them
+window.showToast = showToast;
+window.showConfirm = showConfirm;
 
 // ---- Tutorial / Help ----
 function initTutorial() {

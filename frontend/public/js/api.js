@@ -171,9 +171,11 @@ class ApiService {
     }
 
     async importRecipeFromImage(imageData) {
+        // imageData may be a single string (legacy) or an array of base64 strings
+        const images = Array.isArray(imageData) ? imageData : [imageData];
         return this.request('/api/recipes/import-image', {
             method: 'POST',
-            body: JSON.stringify({ image: imageData }),
+            body: JSON.stringify({ images }),
         });
     }
 
@@ -268,6 +270,10 @@ class ApiService {
 
     async getUserRecipes(userId) {
         return this.request(`/api/users/${userId}/recipes`);
+    }
+
+    async getFriendsActivity() {
+        return this.request('/api/friends/activity');
     }
 
     async getUserMealPlan(userId, startDate, endDate) {

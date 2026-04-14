@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Gusto - Discover</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+4:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #BF5700;
+            --secondary: #568203;
+            --accent: #D67236;
+            --surface: #F1E6D3;
+            --surface-alt: #E8DCC6;
+            --text: #2C1810;
+            --text-muted: #5D4F3A;
+            --border: #C4B5A0;
+            --success: #6B7A42;
+            --warning: #CC7722;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Serif 4', serif;
+            background-color: var(--surface);
+            color: var(--text);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 430px;
+            margin: 0 auto;
+            background: var(--surface);
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-alt);
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            font-family: 'Source Serif 4', serif;
+            font-size: 1rem;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .search-bar::placeholder {
+            color: var(--text-muted);
+        }
+
+        .trending-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .trending-tag {
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .section {
+            padding: 20px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 12px;
+        }
+
+        .community-recipes {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .community-recipe-card {
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(44, 24, 16, 0.1);
+        }
+
+        .recipe-author {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .author-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .author-info {
+            flex: 1;
+        }
+
+        .author-name {
+            font-weight: 500;
+            color: var(--text);
+            font-size: 0.875rem;
+        }
+
+        .author-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .recipe-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+        }
+
+        .stars {
+            color: var(--accent);
+        }
+
+        .recipe-content {
+            margin-bottom: 12px;
+        }
+
+        .recipe-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .recipe-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .recipe-tag {
+            background: var(--secondary);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 0.625rem;
+            font-weight: 500;
+        }
+
+        .recipe-description {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .recipe-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .recipe-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Source Serif 4', serif;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .action-btn.secondary {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        .friends-section {
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+
+        .friends-grid {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+
+        .friend-card {
+            flex-shrink: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            width: 80px;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .friend-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0 auto 6px;
+        }
+
+        .friend-name {
+            font-size: 0.625rem;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .friend-activity {
+            font-size: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 430px;
+            background: var(--surface-alt);
+            border-top: 1px solid var(--border);
+            display: flex;
+            padding: 12px 0;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px 4px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item.center {
+            color: var(--text-muted);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="page-title">Discover Recipes</h1>
+            <input type="text" class="search-bar" placeholder="Search by ingredient or cuisine...">
+            <div class="trending-tags">
+                <a href="#" class="trending-tag">#Italian</a>
+                <a href="#" class="trending-tag">#QuickMeals</a>
+                <a href="#" class="trending-tag">#Vegan</a>
+                <a href="#" class="trending-tag">#ComfortFood</a>
+                <a href="#" class="trending-tag">#Healthy</a>
+            </div>
+        </header>
+
+        <div class="section">
+            <h2 class="section-title">Community Favorites</h2>
+            <div class="community-recipes">
+                <article class="community-recipe-card">
+                    <div class="recipe-author">
+                        <div class="author-avatar">SC</div>
+                        <div class="author-info">
+                            <div class="author-name">Sarah Chen</div>
+                            <div class="author-meta">Shared 2 hours ago</div>
+                        </div>
+                        <div class="recipe-rating">
+                            <span class="stars">★★★★★</span>
+                            <span>4.8</span>
+                        </div>
+                    </div>
+                    <div class="recipe-content">
+                        <h3 class="recipe-title">Grandmother's Bolognese</h3>
+                        <div class="recipe-tags">
+                            <span class="recipe-tag">#Italian</span>
+                            <span class="recipe-tag">#ComfortFood</span>
+                            <span class="recipe-tag">#Family</span>
+                        </div>
+                        <p class="recipe-description">
+                            A slow-simmered sauce passed down through generations. Rich tomatoes, ground beef, and aromatic herbs create the perfect pasta companion.
+                        </p>
+                        <div class="recipe-stats">
+                            <div class="stat">
+                                <span>⏱</span>
+                                <span>3h 20m</span>
+                            </div>
+                            <div class="stat">
+                                <span>👥</span>
+                                <span>6 servings</span>
+                            </div>
+                            <div class="stat">
+                                <span>💬</span>
+                                <span>23 comments</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recipe-actions">
+                        <a href="#" class="action-btn primary">View Recipe</a>
+                        <a href="#" class="action-btn secondary">💾 Save</a>
+                        <a href="#" class="action-btn secondary">+ Plan</a>
+                    </div>
+                </article>
+
+                <article class="community-recipe-card">
+                    <div class="recipe-author">
+                        <div class="author-avatar">MK</div>
+                        <div class="author-info">
+                            <div class="author-name">Marcus Kim</div>
+                            <div class="author-meta">Shared yesterday</div>
+                        </div>
+                        <div class="recipe-rating">
+                            <span class="stars">★★★★☆</span>
+                            <span>4.3</span>
+                        </div>
+                    </div>
+                    <div class="recipe-content">
+                        <h3 class="recipe-title">15-Minute Thai Coconut Curry</h3>
+                        <div class="recipe-tags">
+                            <span class="recipe-tag">#QuickMeals</span>
+                            <span class="recipe-tag">#Vegan</span>
+                            <span class="recipe-tag">#Thai</span>
+                        </div>
+                        <p class="recipe-description">
+                            Creamy coconut milk, fresh vegetables, and aromatic Thai spices come together in this incredibly fast weeknight dinner.
+                        </p>
+                        <div class="recipe-stats">
+                            <div class="stat">
+                                <span>⏱</span>
+                                <span>15 min</span>
+                            </div>
+                            <div class="stat">
+                                <span>👥</span>
+                                <span>4 servings</span>
+                            </div>
+                            <div class="stat">
+                                <span>💬</span>
+                                <span>8 comments</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recipe-actions">
+                        <a href="#" class="action-btn primary">View Recipe</a>
+                        <a href="#" class="action-btn secondary">💾 Save</a>
+                        <a href="#" class="action-btn secondary">+ Plan</a>
+                    </div>
+                </article>
+
+                <article class="community-recipe-card">
+                    <div class="recipe-author">
+                        <div class="author-avatar">LR</div>
+                        <div class="author-info">
+                            <div class="author-name">Luna Rodriguez</div>
+                            <div class="author-meta">Shared 3 days ago</div>
+                        </div>
+                        <div class="recipe-rating">
+                            <span class="stars">★★★★★</span>
+                            <span>4.9</span>
+                        </div>
+                    </div>
+                    <div class="recipe-content">
+                        <h3 class="recipe-title">Rustic Sourdough Bread</h3>
+                        <div class="recipe-tags">
+                            <span class="recipe-tag">#Bread</span>
+                            <span class="recipe-tag">#Homemade</span>
+                            <span class="recipe-tag">#Weekend</span>
+                        </div>
+                        <p class="recipe-description">
+                            Nothing beats the smell of fresh bread baking. This rustic sourdough has a perfect crust and tender, tangy crumb.
+                        </p>
+                        <div class="recipe-stats">
+                            <div class="stat">
+                                <span>⏱</span>
+                                <span>24h</span>
+                            </div>
+                            <div class="stat">
+                                <span>👥</span>
+                                <span>1 loaf</span>
+                            </div>
+                            <div class="stat">
+                                <span>💬</span>
+                                <span>45 comments</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recipe-actions">
+                        <a href="#" class="action-btn primary">View Recipe</a>
+                        <a href="#" class="action-btn secondary">💾 Save</a>
+                        <a href="#" class="action-btn secondary">+ Plan</a>
+                    </div>
+                </article>
+            </div>
+
+            <div class="friends-section">
+                <h3 class="section-title">Your Kitchen Friends</h3>
+                <div class="friends-grid">
+                    <a href="#" class="friend-card">
+                        <div class="friend-avatar">AJ</div>
+                        <div class="friend-name">Alex J.</div>
+                        <div class="friend-activity">Made risotto</div>
+                    </a>
+                    <a href="#" class="friend-card">
+                        <div class="friend-avatar">SM</div>
+                        <div class="friend-name">Sam M.</div>
+                        <div class="friend-activity">Shared 3 recipes</div>
+                    </a>
+                    <a href="#" class="friend-card">
+                        <div class="friend-avatar">JL</div>
+                        <div class="friend-name">Jordan L.</div>
+                        <div class="friend-activity">Tried curry</div>
+                    </a>
+                    <a href="#" class="friend-card">
+                        <div class="friend-avatar">TS</div>
+                        <div class="friend-name">Taylor S.</div>
+                        <div class="friend-activity">Planned week</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item">
+                <div class="nav-icon">🍳</div>
+                <span>Recipes</span>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">🥫</div>
+                <span>Pantry</span>
+            </a>
+            <a href="#" class="nav-item center">
+                <div class="nav-icon">🏠</div>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item">
+                <div class="nav-icon">📅</div>
+                <span>Meal Plan</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <div class="nav-icon">⋯</div>
+                <span>More</span>
+            </a>
+        </nav>
+    </div>
+</body>
+</html>
