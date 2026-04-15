@@ -610,6 +610,7 @@ function showApp() {
     handleSharedRecipeLink();
     initTutorial();
     showTutorialIfNew();
+    setupQuickAddFabs();
     // Reveal admin link for admin users
     if (currentUser && currentUser.is_admin) {
         const adminLink = document.getElementById('adminSheetLink');
@@ -1055,6 +1056,82 @@ function showTutorialIfNew() {
         const modal = document.getElementById('tutorialModal');
         if (modal) modal.classList.add('active');
     }
+}
+
+// ==================== QUICK-ADD FLOATING BUBBLES ====================
+function setupQuickAddFabs() {
+    const backdrop = document.getElementById('fabBackdrop');
+    const pantryToggle = document.getElementById('fabPantryToggle');
+    const pantryPopover = document.getElementById('fabPantryPopover');
+    const recipeToggle = document.getElementById('fabRecipeToggle');
+    const recipePopover = document.getElementById('fabRecipePopover');
+
+    if (!pantryToggle || !recipeToggle) return;
+
+    function openPopover(toggle, popover) {
+        // Close the other one first
+        closeAllPopovers();
+        popover.classList.add('is-open');
+        toggle.setAttribute('aria-expanded', 'true');
+        backdrop.classList.add('is-open');
+    }
+
+    function closeAllPopovers() {
+        pantryPopover.classList.remove('is-open');
+        recipePopover.classList.remove('is-open');
+        pantryToggle.setAttribute('aria-expanded', 'false');
+        recipeToggle.setAttribute('aria-expanded', 'false');
+        backdrop.classList.remove('is-open');
+    }
+
+    pantryToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = pantryPopover.classList.contains('is-open');
+        if (isOpen) {
+            closeAllPopovers();
+        } else {
+            openPopover(pantryToggle, pantryPopover);
+        }
+    });
+
+    recipeToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = recipePopover.classList.contains('is-open');
+        if (isOpen) {
+            closeAllPopovers();
+        } else {
+            openPopover(recipeToggle, recipePopover);
+        }
+    });
+
+    backdrop.addEventListener('click', closeAllPopovers);
+
+    // --- Pantry popover actions ---
+    document.getElementById('fabScanBarcode')?.addEventListener('click', () => {
+        closeAllPopovers();
+        if (window.openScanner) window.openScanner();
+    });
+
+    document.getElementById('fabAddPantryManual')?.addEventListener('click', () => {
+        closeAllPopovers();
+        if (window.openPantryModal) window.openPantryModal();
+    });
+
+    // --- Recipe popover actions ---
+    document.getElementById('fabImportUrl')?.addEventListener('click', () => {
+        closeAllPopovers();
+        if (window.openImportUrlModal) window.openImportUrlModal();
+    });
+
+    document.getElementById('fabImportImage')?.addEventListener('click', () => {
+        closeAllPopovers();
+        if (window.openImportImageModal) window.openImportImageModal();
+    });
+
+    document.getElementById('fabAddRecipeManual')?.addEventListener('click', () => {
+        closeAllPopovers();
+        if (window.openRecipeModal) window.openRecipeModal();
+    });
 }
 
 // Export for use in other modules

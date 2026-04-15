@@ -1198,3 +1198,5 @@ window.deleteRecipe = deleteRecipe;
 window.shareRecipeQR = shareRecipeQR;
 window.loadRecipes = loadRecipes;
 window.openRecipeModal = openRecipeModal;
+window.openImportUrlModal = openImportUrlModal;
+window.openImportImageModal = openImportImageModal;

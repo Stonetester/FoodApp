@@ -397,3 +397,5 @@ function openScanner() {
 window.editPantryItem = editPantryItem;
 window.deletePantryItem = deletePantryItem;
 window.loadPantry = loadPantry;
+window.openPantryModal = openPantryModal;
+window.openScanner = openScanner;

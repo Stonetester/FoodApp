@@ -217,5 +217,72 @@ CSS custom property name → BrandDNA field mapping:
 ## Review History
 *[Will be populated by visual review broker]*
 
+---
+
+## Figma Translation Pass — 2026-04-14
+
+### Changes applied
+
+#### Bottom nav
+- Background changed from deep walnut `#2C1810` to cream `var(--color-surface-alt)` matching Figma
+- Border-top changed from 3px burnt orange to 2px tan `var(--color-border)` matching Figma
+- Active icon color changed from `--color-primary` (burnt orange) to `--color-secondary` (teal #4A9D8F) matching Figma
+- Nav label font set to `var(--font-heading)` (Lora) at 10px matching Figma
+- Added explicit `.bottom-nav__label` rule
+
+#### Page headers
+- Background changed from sage-mint surface to cream `var(--color-surface-alt)` matching Figma
+- Border-bottom changed from 1px faint to 2px tan `var(--color-border)` matching Figma
+- Title color changed from `--color-text` (deep brown) to `--color-primary` (burnt orange) matching Figma
+- Title font-size reduced from 2.5rem to 1.875rem for mobile-first proportion
+- Padding unified to horizontal 1rem + top/bottom 0.75rem/0.85rem
+
+#### Cards
+- `.recipe-card`, `.pantry-card`, `.social-card`, `.meal-day-card` border changed from 1px to 2px `var(--color-border)` matching Figma
+- Background normalised to `var(--color-surface-alt)` (warm cream) matching Figma
+- `.meal-day-card` gets `overflow: hidden` and `.is-today` class support
+
+#### Recipe tags
+- Changed from avocado-green pill style to sage-mint bg, rounded-md, dark text matching Figma
+- Border now uses `var(--color-border)`, background uses `var(--color-surface)`
+
+#### Buttons
+- Primary button text now uses `var(--color-surface-alt)` for better warmth matching Figma
+- Secondary button now transparent bg with 2px tan border matching Figma
+
+#### Form inputs
+- Background changed from sage-mint to cream `var(--color-surface-alt)` matching Figma
+- Border changed from 1.5px to 2px matching Figma
+
+#### Filter tags
+- Redesigned to match Figma: sage-mint bg, rounded-md (not full pill), 2px tan border, dark text
+- Active state: burnt orange bg, cream text
+
+#### Quick-add floating bubbles (NEW FEATURE)
+- Two 48×48px circular buttons fixed top-right of screen
+- Above all content (z-index 1150), always visible when authenticated
+- Bubble 1 (Package icon): Scan Barcode → `openScanner()`, Add Manually → `openPantryModal()`
+- Bubble 2 (BookOpen icon): Import from URL → `openImportUrlModal()`, Import from Image → `openImportImageModal()`, Add Manually → `openRecipeModal()`
+- Popovers appear to the LEFT of each bubble
+- Tap-outside (backdrop) dismisses any open popover
+- Full accessibility: aria-haspopup, aria-expanded, role=menu, role=menuitem
+
+## File Manifest (Figma Translation Pass)
+| File | What changed | Why | Date |
+|------|-------------|-----|------|
+| frontend/public/css/style.css | Bottom nav: cream bg, tan border, teal active, Lora labels | Match Figma design | 2026-04-14 |
+| frontend/public/css/style.css | Page headers: cream bg, 2px tan border-bottom, burnt-orange title | Match Figma design | 2026-04-14 |
+| frontend/public/css/style.css | Cards: 2px tan border, cream bg | Match Figma design | 2026-04-14 |
+| frontend/public/css/style.css | Recipe tags: sage-mint bg, rounded-md, dark text | Match Figma design | 2026-04-14 |
+| frontend/public/css/style.css | Buttons: primary cream text, secondary transparent/outlined | Match Figma design | 2026-04-14 |
+| frontend/public/css/style.css | Form inputs: cream bg, 2px tan border | Match Figma design | 2026-04-14 |
+| frontend/public/css/style.css | Filter tags: sage-mint bg, rounded-md, tan border | Match Figma design | 2026-04-14 |
+| frontend/public/css/style.css | Mobile FAB redesign: cream bg, tan border, burnt-orange icon, 48px | Figma bubble spec | 2026-04-14 |
+| frontend/public/css/style.css | Added .fab-popover, .fab-popover__item, .fab-backdrop, .fab-popover__divider | Quick-add bubble popovers | 2026-04-14 |
+| frontend/public/css/style.css | Added .bottom-nav__label explicit rule | Lora 10px label font | 2026-04-14 |
+| frontend/public/index.html | Added #fabBackdrop, #mobileFabContainer with 2 FAB buttons + popovers | Quick-add bubbles | 2026-04-14 |
+| frontend/public/js/main.js | Added setupQuickAddFabs() and wired to existing JS functions | Quick-add bubble logic | 2026-04-14 |
+| frontend/public/js/main.js | Call setupQuickAddFabs() inside showApp() | Initialize on login | 2026-04-14 |
+
 ## Anti-Patterns
 *[Options explicitly rejected will be logged here]*
