@@ -2,25 +2,25 @@
 /* Edit .vibeforge/cache/brand-dna.json and re-run VibeForge instead */
 
 :root {
-  /* Palette */
-  --color-primary:     #994600;
-  --color-secondary:   #568203;
-  --color-accent:      #D67236;
-  --color-surface:     #F1E6D3;
-  --color-surface-alt: #E8DCC6;
-  --color-text:        #2C1810;
-  --color-text-muted:  #5D4F3A;
-  --color-border:      #C4B5A0;
-  --color-error:       #B7410E;
-  --color-success:     #566235;
-  --color-warning:     #8f5318;
+  /* Palette — Wes Anderson sage/cream/burnt-orange */
+  --color-primary:     #C4622D;  /* burnt orange — CTAs, active states, headings */
+  --color-secondary:   #4A9D8F;  /* teal sage — active nav pill, success accents */
+  --color-accent:      #D67236;  /* warm orange — hover states */
+  --color-surface:     #C8DAD5;  /* sage mint green — main page background */
+  --color-surface-alt: #F5EDD8;  /* warm cream — cards, inputs, elevated surfaces */
+  --color-text:        #3D1F0A;  /* deep brown — all primary text */
+  --color-text-muted:  #6B4C35;  /* warm mid-brown — secondary text, captions */
+  --color-border:      #C8A97A;  /* warm tan — card borders, dividers */
+  --color-error:       #B7410E;  /* rust red */
+  --color-success:     #4A9D8F;  /* teal */
+  --color-warning:     #8f5318;  /* amber */
 
-  /* Wes Anderson character palette — distinct earth-tone tints */
-  --color-sage-light:       #D0DBC0;  /* muted sage green tint */
-  --color-terracotta-light: #EDD0B4;  /* warm terracotta-peach tint */
-  --color-dusty-rose-light: #E4CEC6;  /* dusty rose tint */
-  --color-nav-dark:         #2C1810;  /* deep walnut for bottom nav */
-  --color-nav-inactive:     #C4B5A0;  /* warm tan for inactive nav icons */
+  /* Wes Anderson character palette */
+  --color-sage-light:       #B8D4CC;  /* deeper sage — section tints */
+  --color-terracotta-light: #F0E2C8;  /* light cream tint — pantry cards */
+  --color-dusty-rose-light: #E8D5C8;  /* dusty rose tint — stat card 3 */
+  --color-nav-dark:         #F5EDD8;  /* cream — bottom nav background */
+  --color-nav-inactive:     #9BB8B2;  /* muted sage — inactive nav icons */
 
   /* Typography */
   --font-display: 'Playfair Display', Georgia, serif;
@@ -399,7 +399,7 @@ h4, h5, h6 {
     gap: 0.25rem;
     padding: 0.5rem 0.75rem calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
     z-index: 1200;
-    box-shadow: 0 -4px 16px rgba(44, 24, 16, 0.35);
+    box-shadow: 0 -2px 12px rgba(61, 31, 10, 0.12);
 }
 
 .app-authenticated .bottom-nav {
@@ -436,8 +436,8 @@ h4, h5, h6 {
 }
 
 .bottom-nav__link.is-active {
-    background: rgba(191, 87, 0, 0.28);
-    color: var(--color-surface);
+    background: rgba(196, 98, 45, 0.18);
+    color: var(--color-primary);
 }
 
 .bottom-nav__link--center .bottom-nav__icon svg {
@@ -446,8 +446,8 @@ h4, h5, h6 {
 }
 
 .bottom-nav__link--center.is-active {
-    background: rgba(191, 87, 0, 0.35);
-    color: var(--color-surface);
+    background: rgba(196, 98, 45, 0.22);
+    color: var(--color-primary);
 }
 
 .bottom-nav__more {
