@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="/css/style.css">
     <!-- Load CDN CSS asynchronously so they don't block first paint -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500;600&family=Source+Serif+4:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500;600&family=Source+Serif+4:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css" media="print" onload="this.media='all'">
     <script defer src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
@@ -245,13 +245,10 @@
 
         <!-- Dashboard Page -->
         <div id="dashboardPage" class="page">
-            <div class="container">
-                <div class="page-header">
-                    <h1>Dashboard</h1>
-                    <div class="header-actions">
-                        <button class="btn btn-primary page-link" type="button" data-page="recipes">+ Add Recipe</button>
-                    </div>
-                </div>
+            <div class="page-header">
+                <h1>ModoGusto</h1>
+            </div>
+            <div class="page-content">
                 <div class="dashboard-stats">
                     <div class="stat-card" data-page="recipes">
                         <h3 id="recipeCount">0</h3>
@@ -269,7 +266,7 @@
                 <div class="upcoming-section">
                     <div class="section-header">
                         <h2>Upcoming Meals</h2>
-                        <button class="btn btn-secondary" id="viewMealPlanBtn">View Meal Plan</button>
+                        <button class="btn-link page-link" data-page="mealplan">View Plan →</button>
                     </div>
                     <div class="upcoming-grid">
                         <div class="upcoming-card">
@@ -293,20 +290,22 @@
                     </div>
                 </div>
                 <div class="recent-section">
-                    <h2>Your Recent Recipes</h2>
+                    <div class="section-header">
+                        <h2>Your Recent Recipes</h2>
+                    </div>
                     <div id="recentRecipes" class="recipe-grid"></div>
                 </div>
                 <div class="recent-section" id="friendsActivitySection" hidden>
                     <div class="section-header">
                         <h2>Friends' Latest Recipes</h2>
-                        <button class="btn btn-secondary btn-sm" data-page="social" type="button">See Friends</button>
+                        <button class="btn-link page-link" data-page="social" type="button">View All →</button>
                     </div>
                     <div id="friendsActivityFeed" class="recipe-grid"></div>
                 </div>
                 <div class="recent-section">
                     <div class="section-header">
                         <h2>Newest in Community</h2>
-                        <button class="btn btn-secondary btn-sm" data-page="userSearch" type="button">Discover All</button>
+                        <button class="btn-link page-link" data-page="userSearch" type="button">Discover →</button>
                     </div>
                     <div id="communityRecipesFeed" class="recipe-grid">
                         <p class="empty-state">Loading community recipes...</p>
@@ -317,37 +316,40 @@
 
         <!-- Recipes Page -->
         <div id="recipesPage" class="page">
-            <div class="container">
-                <div class="page-header">
-                    <h1 id="recipesTitle">Your Recipes</h1>
-                    <div class="header-actions">
-                        <button class="btn btn-secondary" id="importUrlBtn">📥 Import from URL</button>
-                        <button class="btn btn-secondary" id="importImageBtn">📷 Import from Image</button>
-                        <button class="btn btn-primary" id="addRecipeBtn">+ Add Recipe</button>
-                    </div>
+            <div class="page-header">
+                <div class="page-header-row">
+                    <h1 id="recipesTitle">My Recipes</h1>
+                    <button class="btn btn-primary btn-icon-only" id="addRecipeBtn" aria-label="Add recipe"><i data-lucide="plus"></i></button>
                 </div>
-                <div class="filters">
+                <div class="search-wrapper">
+                    <i data-lucide="search" class="search-icon"></i>
                     <input type="text" id="recipeSearch" placeholder="Search recipes..." class="search-input">
-                    <div class="tag-filters">
-                        <label class="filter-tag">
-                            <input type="checkbox" value="gluten-free"> Gluten Free
-                        </label>
-                        <label class="filter-tag">
-                            <input type="checkbox" value="vegan"> Vegan
-                        </label>
-                        <label class="filter-tag">
-                            <input type="checkbox" value="dairy-free"> Dairy Free
-                        </label>
-                        <label class="filter-tag">
-                            <input type="checkbox" value="nut-free"> Nut Free
-                        </label>
-                        <label class="filter-tag">
-                            <input type="checkbox" value="vegetarian"> Vegetarian
-                        </label>
-                    </div>
                 </div>
-                <div id="recipesList" class="recipe-grid"></div>
             </div>
+            <div class="filters">
+                <div class="filters-label"><i data-lucide="filter"></i> <span>Filter by tag:</span></div>
+                <div class="tag-filters">
+                    <label class="filter-tag active-all">
+                        <input type="radio" name="recipeTag" value=""> All
+                    </label>
+                    <label class="filter-tag">
+                        <input type="checkbox" value="gluten-free"> Gluten Free
+                    </label>
+                    <label class="filter-tag">
+                        <input type="checkbox" value="vegan"> Vegan
+                    </label>
+                    <label class="filter-tag">
+                        <input type="checkbox" value="dairy-free"> Dairy Free
+                    </label>
+                    <label class="filter-tag">
+                        <input type="checkbox" value="nut-free"> Nut Free
+                    </label>
+                    <label class="filter-tag">
+                        <input type="checkbox" value="vegetarian"> Vegetarian
+                    </label>
+                </div>
+            </div>
+            <div id="recipesList" class="recipe-grid"></div>
         </div>
 
         <!-- Recipe Detail/Edit Modal -->
@@ -521,17 +523,23 @@
 
         <!-- Pantry Page -->
         <div id="pantryPage" class="page">
-            <div class="container">
-                <div class="page-header">
+            <div class="page-header">
+                <div class="page-header-row">
                     <h1>Pantry</h1>
                     <div class="header-actions">
-                        <button class="btn btn-secondary" id="scanBarcodeBtn">📷 Scan Barcode</button>
-                        <button class="btn btn-secondary" id="scanNutritionLabelPageBtn">📷 Scan Nutrition</button>
-                        <button class="btn btn-primary" id="addPantryItemBtn">+ Add Item</button>
+                        <button class="btn btn-teal btn-icon-only" id="scanBarcodeBtn" aria-label="Scan barcode"><i data-lucide="scan-barcode"></i></button>
+                        <button class="btn btn-primary btn-icon-only" id="addPantryItemBtn" aria-label="Add pantry item"><i data-lucide="plus"></i></button>
                     </div>
                 </div>
-                <div id="pantryList" class="pantry-grid"></div>
+                <p class="page-subtitle" id="pantrySubtitle">Items in inventory</p>
             </div>
+            <div class="filters">
+                <div class="filters-label"><i data-lucide="package"></i> <span>Category:</span></div>
+                <div class="tag-filters" id="pantryFilters">
+                    <button class="filter-tag is-active" data-category="">All</button>
+                </div>
+            </div>
+            <div id="pantryList" class="pantry-grid"></div>
         </div>
 
         <!-- Pantry Item Modal -->
@@ -731,10 +739,10 @@
 
         <!-- Meal Plan Page -->
         <div id="mealplanPage" class="page">
-            <div class="container">
-                <div class="page-header">
-                    <h1>Meal Planning</h1>
-                    <button class="btn btn-primary" id="addMealPlanBtn">+ Add Meal</button>
+            <div class="page-header">
+                <div class="page-header-row">
+                    <h1>Meal Plan</h1>
+                    <button class="btn btn-primary btn-icon-only" id="addMealPlanBtn" aria-label="Add meal"><i data-lucide="plus"></i></button>
                 </div>
                 <div class="calendar-controls">
                     <div class="view-switcher" id="calendarViewSwitcher">
@@ -743,14 +751,14 @@
                         <button class="view-btn" data-view="mealDay">Day</button>
                     </div>
                     <div class="calendar-nav">
-                        <button class="btn btn-secondary" id="calendarPrevBtn">Prev</button>
-                        <button class="btn btn-secondary" id="calendarNextBtn">Next</button>
+                        <button class="btn btn-outline" id="calendarPrevBtn"><i data-lucide="chevron-left"></i></button>
+                        <button class="btn btn-outline" id="calendarTodayBtn">Today</button>
+                        <button class="btn btn-outline" id="calendarNextBtn"><i data-lucide="chevron-right"></i></button>
                     </div>
-                    <button class="btn btn-secondary" id="calendarTodayBtn">Today</button>
                 </div>
-                <div id="mealPlanCalendar"></div>
-                <div id="mealPlanSections" class="meal-plan-sections" aria-live="polite"></div>
             </div>
+            <div id="mealPlanCalendar"></div>
+            <div id="mealPlanSections" class="meal-plan-sections" aria-live="polite"></div>
         </div>
 
         <!-- Meal Plan Modal -->
@@ -793,7 +801,7 @@
 
         <!-- History Page -->
         <div id="historyPage" class="page">
-            <div class="container">
+
                 <div class="page-header">
                     <h1>Meal History</h1>
                     <button class="btn btn-primary" id="logMealBtn">+ Log Meal</button>
@@ -812,99 +820,64 @@
                     </div>
                 </div>
                 <div id="historyList" class="history-list"></div>
-            </div>
         </div>
 
-        <!-- User Search Page -->
+        <!-- User Search / Discover Page -->
         <div id="userSearchPage" class="page">
-            <div class="container">
-                <div class="page-header">
-                    <div>
-                        <h1>Discover Recipes</h1>
-                        <p>Search all recipes and find other users to follow.</p>
-                    </div>
-                    <div class="header-actions">
-                        <a class="btn btn-primary" href="#discoverSearchInput">Search Meals</a>
-                    </div>
+            <div class="page-header">
+                <h1><i data-lucide="trending-up" style="width:1.25rem;height:1.25rem;display:inline-block;vertical-align:middle;margin-right:0.5rem;"></i>Discover Recipes</h1>
+                <div class="search-wrapper" style="margin-top:0.75rem;">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="discoverSearchInput" placeholder="Search community recipes..." class="search-input">
                 </div>
-
-                <div class="discover-section">
-                    <div class="section-header">
-                        <h2>Search all meals</h2>
-                        <p>Use keywords or filters to browse recipes from everyone.</p>
-                    </div>
-                    <div class="filters">
-                        <input type="text" id="discoverSearchInput" placeholder="Search meals by name or description..." class="search-input">
-                        <div class="tag-filters" id="discoverTagFilters">
-                            <label class="filter-tag">
-                                <input type="checkbox" value="gluten-free"> Gluten Free
-                            </label>
-                            <label class="filter-tag">
-                                <input type="checkbox" value="vegan"> Vegan
-                            </label>
-                            <label class="filter-tag">
-                                <input type="checkbox" value="dairy-free"> Dairy Free
-                            </label>
-                            <label class="filter-tag">
-                                <input type="checkbox" value="nut-free"> Nut Free
-                            </label>
-                            <label class="filter-tag">
-                                <input type="checkbox" value="vegetarian"> Vegetarian
-                            </label>
-                        </div>
-                        <button class="btn btn-primary" id="discoverSearchBtn">Search Meals</button>
-                    </div>
-                    <div id="discoverResults" class="recipe-grid">
-                        <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
-                            Loading all meals from the community...
-                        </p>
-                    </div>
+            </div>
+            <div class="filters">
+                <div class="filters-label"><i data-lucide="filter"></i> <span>Filter by tag:</span></div>
+                <div class="tag-filters" id="discoverTagFilters">
+                    <label class="filter-tag">
+                        <input type="checkbox" value="gluten-free"> Gluten Free
+                    </label>
+                    <label class="filter-tag">
+                        <input type="checkbox" value="vegan"> Vegan
+                    </label>
+                    <label class="filter-tag">
+                        <input type="checkbox" value="dairy-free"> Dairy Free
+                    </label>
+                    <label class="filter-tag">
+                        <input type="checkbox" value="nut-free"> Nut Free
+                    </label>
+                    <label class="filter-tag">
+                        <input type="checkbox" value="vegetarian"> Vegetarian
+                    </label>
                 </div>
-                
-                <div class="search-section">
-                    <div class="form-group">
-                        <label for="userSearchInput">Search for users by username:</label>
-                        <div class="search-input-group">
-                            <input 
-                                type="text" 
-                                id="userSearchInput" 
-                                class="search-input" 
-                                placeholder="Enter username to search..."
-                                autocomplete="off"
-                            >
-                            <button id="searchUsersBtn" class="btn btn-primary">
-                                🔍 Search
-                            </button>
-                        </div>
-                        <p class="search-hint">Tip: You can search by partial names (e.g., "john" will find "john123", "johnny", etc.)</p>
-                    </div>
-                    
-                    <div id="userSearchResults" class="user-search-results">
-                        <p style="text-align: center; color: var(--text); opacity: 0.6; padding: 3rem;">
-                            Start typing to search for users and discover their recipes!
-                        </p>
-                    </div>
+            </div>
+            <div class="page-content" style="padding-top:0.75rem;">
+                <div id="discoverResults" class="recipe-grid">
+                    <p class="empty-state">Loading community recipes...</p>
                 </div>
+                <div class="section-header" style="margin-top:0.5rem;">
+                    <h2>Find Users</h2>
+                </div>
+                <div class="search-input-group">
+                    <input type="text" id="userSearchInput" class="search-input" placeholder="Search by username..." autocomplete="off">
+                    <button id="searchUsersBtn" class="btn btn-primary">Search</button>
+                </div>
+                <div id="userSearchResults" class="user-search-results"></div>
             </div>
         </div>
 
         <!-- Social Page -->
         <div id="socialPage" class="page">
-            <div class="container">
-                <div class="page-header">
-                    <div>
-                        <h1>Social</h1>
-                        <p>Connect with friends and share recipes.</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-secondary" id="refreshSocialBtn" type="button">🔄 Refresh</button>
-                    </div>
+            <div class="page-header">
+                <div class="page-header-row">
+                    <h1>Social</h1>
+                    <button class="btn btn-primary btn-icon-only" id="refreshSocialBtn" aria-label="Refresh social"><i data-lucide="user-plus"></i></button>
                 </div>
-
-                <div class="social-tabs">
-                    <button class="social-tab active" data-social-tab="activity" type="button">Activity</button>
-                    <button class="social-tab" data-social-tab="friends" type="button">Friends</button>
+                <div class="social-tabs" style="margin-top:0.75rem;">
+                    <button class="social-tab active" data-social-tab="activity" type="button"><i data-lucide="activity" style="width:1rem;height:1rem;"></i> Activity</button>
+                    <button class="social-tab" data-social-tab="friends" type="button"><i data-lucide="users" style="width:1rem;height:1rem;"></i> Friends</button>
                 </div>
+            </div>
 
                 <div id="socialActivityTab" class="social-tab-content active">
                     <div class="social-grid">
@@ -970,17 +943,13 @@
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
 
         <!-- Account Page -->
         <div id="accountPage" class="page">
-            <div class="container">
-                <div class="page-header">
-                    <div>
-                        <h1>Account</h1>
-                        <p>Manage your public profile, stats, and favorite recipes.</p>
-                    </div>
+            <div class="page-header">
+                <h1>Account</h1>
+                <p class="page-subtitle">Manage your public profile, stats, and favorite recipes.</p>
                 </div>
 
                 <div class="social-grid">
@@ -1055,14 +1024,13 @@
                 </div>
 
                 <div id="accountStatus" class="status-message" aria-live="polite"></div>
-            </div>
         </div>
 
 
 
         <!-- Settings Page -->
         <div id="settingsPage" class="page">
-            <div class="container">
+
                 <div class="page-header">
                     <div>
                         <h1>⚙️ Settings</h1>
@@ -1123,11 +1091,10 @@
                 <div class="settings-styleguide-action">
                     <button class="btn btn-secondary page-link" type="button" data-page="styleGuide">🎨 Open Style Guide</button>
                 </div>
-            </div>
         </div>
 
         <div id="styleGuidePage" class="page">
-            <div class="container">
+
                 <div class="page-header">
                     <h1>Style Guide</h1>
                     <div class="header-actions">
@@ -1219,7 +1186,6 @@
                         </div>
                     </section>
                 </div>
-            </div>
         </div>
 
         <!-- User Recipes Modal -->
