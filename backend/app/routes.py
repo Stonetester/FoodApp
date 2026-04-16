@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, send_from_directory, send_file, current_app
+import requests
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
 from app.account_profile import get_account_profile
@@ -941,13 +942,18 @@ def get_friends_activity():
 @api_bp.route('/friends', methods=['GET'])
 @login_required
 def get_friends():
-    """Get current user's friends list"""
-    friendships = (
+    """Get current user's friends list (both directions of the friendship row)"""
+    forward = (
         Friendship.query.filter_by(user_id=current_user.id)
         .with_entities(Friendship.friend_id)
         .all()
     )
-    friend_ids = [friendship.friend_id for friendship in friendships]
+    reverse = (
+        Friendship.query.filter_by(friend_id=current_user.id)
+        .with_entities(Friendship.user_id)
+        .all()
+    )
+    friend_ids = list({row[0] for row in forward + reverse})
     friends = User.query.filter(User.id.in_(friend_ids)).all() if friend_ids else []
     
     return jsonify([

@@ -259,20 +259,28 @@ async function respondToRequest(requestId, action) {
         await api.respondToFriendRequest(requestId, action);
         await loadSocialData();
     } catch (error) {
-        alert(error.message || 'Failed to update request.');
+        if (window.showToast) window.showToast(error.message || 'Failed to update request.', 'error');
     }
 }
 
 async function removeFriend(friendId) {
-    if (!confirm('Remove this friend?')) {
-        return;
-    }
-    
-    try {
-        await api.removeFriend(friendId);
-        await loadSocialData();
-    } catch (error) {
-        alert(error.message || 'Failed to remove friend.');
+    if (window.showConfirm) {
+        window.showConfirm('Remove this friend?', async () => {
+            try {
+                await api.removeFriend(friendId);
+                await loadSocialData();
+            } catch (error) {
+                if (window.showToast) window.showToast(error.message || 'Failed to remove friend.', 'error');
+            }
+        }, 'Remove', true);
+    } else {
+        if (!confirm('Remove this friend?')) return;
+        try {
+            await api.removeFriend(friendId);
+            await loadSocialData();
+        } catch (error) {
+            if (window.showToast) window.showToast(error.message || 'Failed to remove friend.', 'error');
+        }
     }
 }
 

@@ -13,10 +13,10 @@
 set -euo pipefail
 
 # ---- Configure these for your server ----
-APP_USER="modogusto"                        # Linux user that runs the app (check: ps aux | grep run.py)
-APP_DIR="/opt/modogusto/app"                # Root of the cloned repo on CT 100
+APP_USER="root"                             # Linux user that runs the app
+APP_DIR="/opt/app/FoodApp"                  # Root of the cloned repo on CT 100
 VENV_DIR="$APP_DIR/backend/venv"           # Python virtualenv path
-SERVICE_NAME="modogusto"                    # systemd service name (check: systemctl status modogusto)
+SERVICE_NAME="modogusto"                    # systemd service name
 # -----------------------------------------
 
 echo ""

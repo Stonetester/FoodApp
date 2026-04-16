@@ -284,5 +284,35 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/js/main.js | Added setupQuickAddFabs() and wired to existing JS functions | Quick-add bubble logic | 2026-04-14 |
 | frontend/public/js/main.js | Call setupQuickAddFabs() inside showApp() | Initialize on login | 2026-04-14 |
 
+## Bug Fix Pass — 2026-04-16
+
+### Issues fixed
+
+| # | Bug | File(s) | Fix |
+|---|-----|---------|-----|
+| 1 | `is_admin` column missing on CT 100 — admin panel broken | `backend/app/__init__.py` | Added `is_admin` to `_migrate_columns()` — runs automatically on next deploy, safe to re-run |
+| 2 | `requests` not imported in routes.py — `NameError` on URL import network failure | `backend/app/routes.py` | Added `import requests` at top of file |
+| 3 | `getFriends()` only queried one direction — friends list incomplete for users who accepted requests | `backend/app/routes.py` | Query both `user_id` and `friend_id` columns, union into a set |
+| 4 | `loadDashboard` not exported to `window` — dashboard didn't refresh after saving/deleting a recipe | `frontend/public/js/main.js` | Added `window.loadDashboard = loadDashboard` to exports block |
+| 5 | `alert()` / `confirm()` in social.js — native browser dialogs, broken on mobile | `frontend/public/js/social.js` | Replaced with `showToast` / `showConfirm` throughout |
+| 6 | 25+ debug `console.log` statements left in `openRecipeModal` — console spam | `frontend/public/js/recipes.js` | Removed all debug logs; cleaned up `importRecipeFromUrl` and `importRecipeFromImage` logs too |
+
+### Bonus fixes
+| Fix | File | Detail |
+|-----|------|--------|
+| deploy.sh values filled in | `backend/deploy.sh` | `APP_USER=root`, `APP_DIR=/opt/app/FoodApp`, `SERVICE_NAME=modogusto` |
+| `navigateToPage('friends')` comment cleanup | `frontend/public/js/main.js` | Removed stale comment from friends→social remap block |
+
+### File Manifest (Bug Fix Pass)
+| File | What changed | Why | Date |
+|------|-------------|-----|------|
+| backend/app/__init__.py | Added `is_admin` column to `_migrate_columns()` | Auto-migrate missing column on CT 100 | 2026-04-16 |
+| backend/app/routes.py | Added `import requests` | Fix NameError on URL import network failures | 2026-04-16 |
+| backend/app/routes.py | `get_friends()` now queries both Friendship directions | Friends list was incomplete | 2026-04-16 |
+| frontend/public/js/main.js | Exported `loadDashboard` to `window` | Dashboard refresh broken after recipe save/delete | 2026-04-16 |
+| frontend/public/js/social.js | Replaced `alert`/`confirm` with `showToast`/`showConfirm` | Consistent UX, mobile-safe | 2026-04-16 |
+| frontend/public/js/recipes.js | Stripped all debug `console.log` from `openRecipeModal`, `importRecipeFromUrl`, `importRecipeFromImage` | Console spam, accidental debug code | 2026-04-16 |
+| backend/deploy.sh | Filled in correct CT 100 values | Script was placeholder-only | 2026-04-16 |
+
 ## Anti-Patterns
 *[Options explicitly rejected will be logged here]*

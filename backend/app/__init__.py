@@ -36,6 +36,9 @@ def _migrate_columns():
         ("serving_size", "ALTER TABLE recipes ADD COLUMN serving_size VARCHAR(100) DEFAULT NULL"),
         ("source_url",   "ALTER TABLE recipes ADD COLUMN source_url VARCHAR(500) DEFAULT NULL"),
     ]
+    user_cols = [
+        ("is_admin", "ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE"),
+    ]
 
     with db.engine.begin() as conn:
         if inspector.has_table('pantry_items'):
@@ -47,6 +50,12 @@ def _migrate_columns():
         if inspector.has_table('recipes'):
             existing = {c['name'] for c in inspector.get_columns('recipes')}
             for col, sql in recipe_cols:
+                if col not in existing:
+                    conn.execute(text(sql))
+
+        if inspector.has_table('users'):
+            existing = {c['name'] for c in inspector.get_columns('users')}
+            for col, sql in user_cols:
                 if col not in existing:
                     conn.execute(text(sql))
 

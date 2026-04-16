@@ -672,7 +672,6 @@ function navigateToPage(pageName) {
 
     if (pageName === 'friends') {
         pageName = 'social';
-        // After navigation, activate friends tab
         setTimeout(() => {
             if (window.activateSocialFriendsTab) window.activateSocialFriendsTab();
         }, 100);
@@ -1139,3 +1138,4 @@ window.navigateToPage = navigateToPage;
 window.currentUser = () => currentUser;
 window.initTutorial = initTutorial;
 window.showTutorialIfNew = showTutorialIfNew;
+window.loadDashboard = loadDashboard;

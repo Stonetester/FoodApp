@@ -344,47 +344,28 @@ function buildRecipeRatingDisplay(recipe) {
 }
 
 function openRecipeModal(recipe = null) {
-    console.log('=== openRecipeModal CALLED ===');
-    console.log('Recipe parameter:', recipe);
-    console.log('Recipe type:', typeof recipe);
-    console.log('Recipe is null?', recipe === null);
-    console.log('Recipe keys:', recipe ? Object.keys(recipe) : 'null');
-    
     const modal = document.getElementById('recipeModal');
     const form = document.getElementById('recipeForm');
     const title = document.getElementById('modalTitle');
     const photoPreview = document.getElementById('recipePhotoPreview');
-    
-    console.log('Modal element:', modal);
-    console.log('Form element:', form);
-    console.log('Title element:', title);
-    
-    if (!modal) {
-        console.error('ERROR: recipeModal element not found!');
-        return;
-    }
-    
+
+    if (!modal) return;
+
     // Helper function to set placeholder if value is empty
     function setFieldWithPlaceholder(fieldId, value, placeholder) {
         const field = document.getElementById(fieldId);
-        console.log(`Setting field ${fieldId}:`, { value, placeholder, hasValue: !!(value && value !== null && value !== '') });
-        if (!field) {
-            console.error(`Field ${fieldId} not found!`);
-            return;
-        }
+        if (!field) return;
         if (value && value !== null && value !== '') {
             field.value = value;
             field.style.color = 'var(--text)';
             field.placeholder = '';
             field.classList.remove('placeholder-text');
-            console.log(`Field ${fieldId} set to:`, value);
         } else {
             field.value = '';
             field.style.color = '#999';
             field.style.fontStyle = 'italic';
             field.placeholder = placeholder;
             field.classList.add('placeholder-text');
-            console.log(`Field ${fieldId} set to placeholder:`, placeholder);
         }
     }
     
@@ -413,41 +394,17 @@ function openRecipeModal(recipe = null) {
     }
     
     if (recipe) {
-        console.log('=== POPULATING RECIPE FORM ===');
-        console.log('Recipe has ID?', !!recipe.id);
-        console.log('Recipe data:', {
-            id: recipe.id,
-            title: recipe.title,
-            description: recipe.description,
-            instructions: recipe.instructions,
-            prep_time: recipe.prep_time,
-            cook_time: recipe.cook_time,
-            servings: recipe.servings,
-            ingredients_count: recipe.ingredients ? recipe.ingredients.length : 0
-        });
-        
         // We have recipe data - either editing existing or importing new
         if (recipe.id) {
-            console.log('Editing existing recipe, ID:', recipe.id);
             title.textContent = 'Edit Recipe';
             document.getElementById('recipeId').value = recipe.id;
         } else {
-            console.log('Adding new recipe (imported)');
             title.textContent = 'Add Recipe';
             document.getElementById('recipeId').value = '';
         }
-        
-        // Populate all fields with recipe data
-        console.log('Populating title field...');
+
         const titleField = document.getElementById('recipeTitle');
-        if (titleField) {
-            titleField.value = recipe.title || '';
-            console.log('Title field set to:', titleField.value);
-        } else {
-            console.error('Title field not found!');
-        }
-        
-        console.log('Populating other fields...');
+        if (titleField) titleField.value = recipe.title || '';
         setFieldWithPlaceholder('recipeDescription', recipe.description, 'No description found');
         setFieldWithPlaceholder('recipePrepTime', recipe.prep_time, 'No prep time found');
         setFieldWithPlaceholder('recipeCookTime', recipe.cook_time, 'No cook time found');
@@ -482,35 +439,23 @@ function openRecipeModal(recipe = null) {
         }
 
         // Load ingredients
-        console.log('Loading ingredients...');
         const ingredientsList = document.getElementById('ingredientsList');
         if (ingredientsList) {
             ingredientsList.innerHTML = '';
             if (recipe.ingredients && recipe.ingredients.length > 0) {
-                console.log(`Adding ${recipe.ingredients.length} ingredients...`);
-                recipe.ingredients.filter(ing => !isNutritionIngredient(ing)).forEach((ing, index) => {
-                    console.log(`Adding ingredient ${index + 1}:`, ing);
+                recipe.ingredients.filter(ing => !isNutritionIngredient(ing)).forEach(ing => {
                     addIngredientField(ing);
                 });
             } else {
-                console.log('No ingredients found, adding empty field');
-                // If no ingredients, add at least one empty field
                 addIngredientField();
             }
-        } else {
-            console.error('Ingredients list element not found!');
         }
 
         // Load tags
-        const tagCheckboxes = document.querySelectorAll('.tag-inputs input[type="checkbox"]');
-        console.log(`Found ${tagCheckboxes.length} tag checkboxes`);
-        tagCheckboxes.forEach(cb => {
+        document.querySelectorAll('.tag-inputs input[type="checkbox"]').forEach(cb => {
             cb.checked = recipe.tags && recipe.tags.includes(cb.value);
         });
-        
-        console.log('=== FORM POPULATION COMPLETE ===');
     } else {
-        console.log('No recipe data, resetting form');
         // No recipe data - fresh form
         title.textContent = 'Add Recipe';
         form.reset();
@@ -535,14 +480,8 @@ function openRecipeModal(recipe = null) {
         }
     }
 
-    console.log('Showing modal...');
     modal.classList.add('active');
-    console.log('Modal active classes:', modal.classList.toString());
-    console.log('Modal is visible?', modal.classList.contains('active'));
-    
-    // Set up placeholder handlers
     setupPlaceholderHandlers();
-    console.log('=== openRecipeModal COMPLETE ===');
 }
 
 function closeRecipeModal() {
@@ -916,10 +855,7 @@ async function importRecipeFromUrl() {
     try {
         const recipeData = await api.importRecipeFromUrl(url);
         
-        console.log('Received recipe data from backend:', recipeData);
-        
         if (recipeData) {
-            // Check for error in response
             if (recipeData.error) {
                 resultDiv.innerHTML = `<p class="error-message">${recipeData.error}</p>`;
                 return;
@@ -935,23 +871,8 @@ async function importRecipeFromUrl() {
                     if (window.showToast) window.showToast(recipeData._warning, 'info');
                 }
                 
-                // Ensure ingredients is an array
-                let ingredients = recipeData.ingredients || [];
-                if (!Array.isArray(ingredients)) {
-                    ingredients = [];
-                }
-                
-                console.log('Opening recipe modal with:', {
-                    title: recipeData.title,
-                    description: recipeData.description,
-                    instructions: recipeData.instructions,
-                    prep_time: recipeData.prep_time,
-                    cook_time: recipeData.cook_time,
-                    servings: recipeData.servings,
-                    nutrition: recipeData.nutrition,
-                    ingredients: ingredients
-                });
-                
+                const ingredients = Array.isArray(recipeData.ingredients) ? recipeData.ingredients : [];
+
                 // Open recipe modal with imported data (no ID = new recipe)
                 openRecipeModal({
                     id: undefined,  // Explicitly set to undefined for new recipe
@@ -1108,7 +1029,6 @@ function renderImagePreviews(container) {
 }
 
 async function importRecipeFromImage() {
-    console.log('=== IMAGE IMPORT STARTED ===');
     const files = selectedRecipeImageFiles;
     const resultDiv = document.getElementById('importImageResult');
 
