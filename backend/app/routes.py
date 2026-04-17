@@ -144,6 +144,8 @@ def get_recipes():
         ).filter(RecipeReview.recipe_id == recipe.id).first()
         recipe_dict['average_rating'] = round(float(review_stats[0]), 1) if review_stats[0] else None
         recipe_dict['rating_count'] = review_stats[1] or 0
+        recipe_dict['owner'] = {'id': recipe.user_id, 'username': recipe.user.username}
+        recipe_dict['is_owner'] = True
         result.append(recipe_dict)
 
     return jsonify(result), 200

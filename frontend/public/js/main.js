@@ -823,9 +823,13 @@ function createRecipeCard(recipe) {
     ).join('');
 
     card.innerHTML = `
-        ${recipe.image_url ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="recipe-card-image" onerror="this.style.display='none'">` : ''}
+        ${recipe.image_url
+            ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="recipe-card-image" onerror="this.style.display='none'">`
+            : `<div class="recipe-card-image-placeholder"><span>🍽️</span></div>`
+        }
         <div class="recipe-card-content">
             <h3 class="recipe-card-title">${recipe.title}</h3>
+            ${recipe.owner?.username ? `<p class="recipe-card-owner">by ${recipe.owner.username}</p>` : ''}
             <p class="recipe-card-description">${recipe.description || ''}</p>
             <div class="recipe-card-tags">${tagsHtml}</div>
         </div>

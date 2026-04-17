@@ -227,6 +227,7 @@ function createRecipeCard(recipe) {
         <div class="recipe-card-content">
             ${tagsHtml ? `<div class="recipe-card-tags recipe-card-tags--top">${tagsHtml}</div>` : ''}
             <h3 class="recipe-card-title">${recipe.title}</h3>
+            ${recipe.owner?.username ? `<p class="recipe-card-owner">by ${recipe.owner.username}</p>` : ''}
             ${nutritionStrip}
             <p class="recipe-card-description">${recipe.description || ''}</p>
             ${recipe.source_url ? `<p class="recipe-card-source"><a href="${recipe.source_url}" target="_blank" rel="noopener noreferrer">🔗 Original recipe</a></p>` : ''}
