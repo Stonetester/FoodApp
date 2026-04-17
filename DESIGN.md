@@ -314,5 +314,22 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/js/recipes.js | Stripped all debug `console.log` from `openRecipeModal`, `importRecipeFromUrl`, `importRecipeFromImage` | Console spam, accidental debug code | 2026-04-16 |
 | backend/deploy.sh | Filled in correct CT 100 values | Script was placeholder-only | 2026-04-16 |
 
+### File Manifest (FAB Redesign + Meal Plan Fix — 2026-04-17)
+| File | What changed | Why | Date |
+|------|-------------|-----|------|
+| frontend/public/index.html | Replaced dual floating FAB circles with single bottom-center + FAB + fan menu | Old circles cluttered top of every page, clashed with header | 2026-04-17 |
+| frontend/public/index.html | Removed `+ Quick Recipe` and `+ Quick Pantry` from navbar top-links | These buttons duplicated FAB actions and polluted every page header | 2026-04-17 |
+| frontend/public/index.html | Updated tutorial text to reference new + FAB instead of old circle bubbles | Kept help text accurate | 2026-04-17 |
+| frontend/public/js/main.js | Rewrote `setupQuickAddFabs()` for single-FAB pattern | Matches new HTML | 2026-04-17 |
+| frontend/public/js/main.js | Removed `quickAddRecipeBtn` / `quickAddPantryBtn` event listeners | Those elements removed from HTML | 2026-04-17 |
+| frontend/public/js/mealplan.js | Added `waitForFullCalendar()` guard in `loadMealPlan()` | FullCalendar CDN loads deferred — was crashing on navigation before it loaded | 2026-04-17 |
+| frontend/public/js/mealplan.js | Mobile view defaults to `mealWeek` section view, skipping FullCalendar entirely | FullCalendar not needed on mobile; section view is better UX | 2026-04-17 |
+| frontend/public/css/style.css | Replaced `.mobile-fab-container` / `.mobile-fab` / `.fab-popover` CSS with `.quick-add-fab` + `.quick-add-fab-menu` | New single-FAB pattern | 2026-04-17 |
+| backend/app/tasks.py | Added `list-users`, `delete-user`, `send-test-email` CLI commands | Admin ops without exposing a UI panel | 2026-04-17 |
+
 ## Anti-Patterns
-*[Options explicitly rejected will be logged here]*
+| Pattern | Why rejected |
+|---------|-------------|
+| Floating circle FAB bubbles at top-right | Overlap header, visually noisy, confusing placement — replaced with bottom-center single + FAB |
+| Inline Import/Add buttons at top of every page | Duplicate of FAB actions, bloat every page header, not mobile-friendly |
+| Admin panel visible to all users | Admin features should be CLI-only; no in-app panel needed for delete/test ops |

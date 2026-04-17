@@ -1,4 +1,4 @@
-"""Flask CLI commands for scheduled tasks."""
+"""Flask CLI commands for scheduled tasks and admin ops."""
 
 import click
 from datetime import datetime, timedelta
@@ -8,6 +8,9 @@ from flask.cli import with_appcontext
 def register_cli(app):
     """Register CLI commands with the Flask app."""
     app.cli.add_command(send_weekly_digest_cmd)
+    app.cli.add_command(list_users_cmd)
+    app.cli.add_command(delete_user_cmd)
+    app.cli.add_command(send_test_email_cmd)
 
 
 @click.command("send-weekly-digest")
@@ -68,3 +71,107 @@ def send_weekly_digest_cmd():
         sent += 1
 
     click.echo(f"Weekly digest sent to {sent} user(s).")
+
+
+@click.command("list-users")
+@with_appcontext
+def list_users_cmd():
+    """List all registered users (id, username, email, is_admin, created_at)."""
+    from app.models import User
+    users = User.query.order_by(User.id).all()
+    if not users:
+        click.echo("No users found.")
+        return
+    click.echo(f"{'ID':<5} {'Username':<20} {'Email':<35} {'Admin':<7} {'Created'}")
+    click.echo("-" * 80)
+    for u in users:
+        created = u.created_at.strftime("%Y-%m-%d") if u.created_at else "?"
+        click.echo(f"{u.id:<5} {u.username:<20} {u.email:<35} {str(u.is_admin):<7} {created}")
+
+
+@click.command("delete-user")
+@click.argument("username")
+@click.option("--confirm", is_flag=True, help="Skip interactive confirmation prompt.")
+@with_appcontext
+def delete_user_cmd(username, confirm):
+    """Permanently delete a user account and all their data.
+
+    \b
+    Usage:
+      flask delete-user testaccount
+      flask delete-user testaccount --confirm   # skip prompt
+    """
+    from app.models import db, User
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        click.echo(f"No user found with username '{username}'.")
+        return
+
+    click.echo(f"User found: id={user.id}  email={user.email}  is_admin={user.is_admin}")
+
+    if not confirm:
+        confirmed = click.confirm(
+            f"Permanently delete '{username}' and ALL their recipes, pantry items, "
+            f"meal plans, history, reviews, and friendships?",
+            default=False,
+        )
+        if not confirmed:
+            click.echo("Aborted.")
+            return
+
+    db.session.delete(user)
+    db.session.commit()
+    click.echo(f"User '{username}' (id={user.id}) deleted successfully.")
+
+
+@click.command("send-test-email")
+@click.argument("to_email")
+@with_appcontext
+def send_test_email_cmd(to_email):
+    """Send a test email to verify SendGrid delivery and check spam status.
+
+    \b
+    Usage:
+      flask send-test-email you@gmail.com
+    """
+    import os
+    from app.email_service import _get_sg_client, _from_email, _base_template
+
+    sg = _get_sg_client()
+    if not sg:
+        click.echo("ERROR: SENDGRID_API_KEY is not set or SendGrid package is missing.")
+        return
+
+    from_addr = _from_email()
+    subject = "Modo Gusto — Email Delivery Test"
+    body_html = _base_template(
+        "Email Delivery Test",
+        f"""
+        <p>This is a test email sent from the Modo Gusto Flask server.</p>
+        <p>If you received this in your <strong>inbox</strong>, SendGrid delivery is working correctly.</p>
+        <p>If you received this in <strong>spam</strong>, your SendGrid domain authentication
+        (SPF / DKIM / DMARC) still needs to be fixed.</p>
+        <p style="margin-top:1.5rem;font-size:0.85rem;color:#8a6b52;">
+            Sent at: {datetime.utcnow().isoformat()} UTC<br>
+            From: {from_addr}<br>
+            To: {to_email}
+        </p>
+        """,
+    )
+
+    try:
+        from sendgrid.helpers.mail import Mail
+        message = Mail(
+            from_email=from_addr,
+            to_emails=to_email,
+            subject=subject,
+            html_content=body_html,
+        )
+        response = sg.send(message)
+        click.echo(f"Test email sent to {to_email} — status {response.status_code}")
+        if response.status_code == 202:
+            click.echo("SendGrid accepted the message. Check inbox (and spam folder) to confirm delivery.")
+        else:
+            click.echo(f"Unexpected status. Response body: {response.body}")
+    except Exception as e:
+        click.echo(f"ERROR sending test email: {e}")

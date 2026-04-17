@@ -1817,21 +1817,10 @@ textarea:focus {
 }
 
 .view-btn.active {
-    background: var(--primary);
-    color: var(--white);
+    background: var(--color-secondary);
+    color: #fff;
+    box-shadow: 0 0 0 2px #2e7268;
     position: relative;
-}
-
-.view-btn.active::after {
-    content: "";
-    position: absolute;
-    left: 10%;
-    right: 10%;
-    bottom: 4px;
-    height: 4px;
-    border-radius: 999px;
-    background: var(--border);
-    opacity: 0.9;
 }
 
 .calendar-nav {
@@ -2091,8 +2080,9 @@ textarea:focus {
 }
 
 .view-btn.active {
-    background: var(--primary);
-    color: var(--white);
+    background: var(--color-secondary);
+    color: #fff;
+    box-shadow: 0 0 0 2px #2e7268;
 }
 
 .calendar-event {
@@ -3396,16 +3386,16 @@ button {
 }
 
 .view-btn.active {
-    background: var(--accent-teal);
+    background: var(--color-secondary);
     color: #fff;
+    box-shadow: 0 0 0 2px #2e7268;
 }
 
 .tab-btn.active {
     color: var(--accent-wine);
 }
 
-.tab-btn.active::after,
-.view-btn.active::after {
+.tab-btn.active::after {
     background: var(--accent-gold);
 }
 
@@ -4090,128 +4080,118 @@ button {
     background: rgba(0, 0, 0, 0.15);
 }
 
-/* Figma FAB bubbles: fixed top:80px right:16px, 48x48 circle, cream bg, tan border, shadow */
-.mobile-fab-container {
-    display: none;
-    flex-direction: column;
-    gap: 12px;
-    position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 80px);
-    right: calc(env(safe-area-inset-right, 0px) + 16px);
-    z-index: 1500;
-}
+/* ==================== QUICK-ADD FAB (single bottom-center + fan menu) ==================== */
 
-/* Figma: 48x48 circle, cream bg, tan border, shadow, burnt orange icon */
-.mobile-fab {
-    width: 48px;
-    height: 48px;
+/* Hidden by default; shown when authenticated */
+.quick-add-fab {
+    display: none;
+    position: fixed;
+    bottom: calc(var(--bottom-nav-height, 64px) + 16px);
+    right: 16px;
+    z-index: 1500;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    border: 2px solid #C8A97A;
-    background: #F5EDD8;
-    color: #C4622D;
-    display: flex;
+    background: var(--color-primary);
+    color: #F5EDD8;
+    border: none;
+    box-shadow: 0 4px 12px rgba(61, 31, 10, 0.35);
+    cursor: pointer;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(61, 31, 10, 0.18);
     padding: 0;
-    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    position: relative;
+    transition: transform 0.2s ease, background 0.15s ease;
 }
 
-/* Figma: 22px icons */
-.mobile-fab svg {
-    width: 22px;
-    height: 22px;
-    stroke: currentColor;
-    stroke-width: 2;
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.mobile-fab:active {
-    transform: scale(0.92);
-}
-
-.mobile-fab:hover {
-    background: #f0e2c8;
-}
-
-/* Figma: popover to the LEFT of bubble, cream bg, tan border, rounded-xl, shadow */
-.fab-popover {
-    position: absolute;
-    top: 0;
-    right: 64px; /* right: calc(100% + 16px) */
-    background: #F5EDD8;
-    border: 2px solid #C8A97A;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 12px rgba(61, 31, 10, 0.15);
-    min-width: 168px;
-    padding: 0.25rem 0;
-    display: none;
-    flex-direction: column;
-    z-index: 1501;
-    white-space: nowrap;
-}
-
-.fab-popover.is-open {
+.app-authenticated .quick-add-fab {
     display: flex;
 }
 
-/* Figma popover items: 44px min-height, px-3, border-bottom 1px tan, last no border */
-.fab-popover__item {
+.quick-add-fab svg {
+    transition: transform 0.25s ease;
+}
+
+.quick-add-fab.is-open {
+    background: var(--color-text);
+}
+
+.quick-add-fab.is-open svg {
+    transform: rotate(45deg);
+}
+
+.quick-add-fab:active {
+    transform: scale(0.93);
+}
+
+/* Fan menu — slides up from above the FAB, right-aligned */
+.quick-add-fab-menu {
+    display: none;
+    position: fixed;
+    bottom: calc(var(--bottom-nav-height, 64px) + 88px);
+    right: 16px;
+    transform: none;
+    z-index: 1501;
+    background: var(--color-surface);
+    border: 1.5px solid var(--color-border);
+    border-radius: 1rem;
+    box-shadow: 0 6px 24px rgba(61, 31, 10, 0.18);
+    min-width: 220px;
+    flex-direction: column;
+    overflow: hidden;
+    white-space: nowrap;
+    animation: fabMenuReveal 0.18s ease;
+}
+
+@keyframes fabMenuReveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.quick-add-fab-menu.is-open {
+    display: flex;
+}
+
+.quick-add-fab-item {
     background: none;
     border: none;
-    border-bottom: 1px solid #C8A97A;
+    border-bottom: 1px solid var(--color-border);
     text-align: left;
-    padding: 0.75rem;
+    padding: 0.875rem 1rem;
     font-family: var(--font-heading);
-    font-size: 0.875rem;
-    color: #3D1F0A;
+    font-size: 0.9rem;
+    color: var(--color-text);
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    min-height: 44px;
+    min-height: 48px;
     width: 100%;
-    transition: background-color 0.15s ease;
+    transition: background-color 0.12s ease;
 }
 
-.fab-popover__item:last-of-type {
+.quick-add-fab-item:last-of-type {
     border-bottom: none;
 }
 
-.fab-popover__item:hover {
-    background: #C8DAD5;
+.quick-add-fab-item:hover,
+.quick-add-fab-item:active {
+    background: var(--color-surface-alt);
 }
 
-.fab-popover__item:first-child {
-    border-radius: calc(0.75rem - 2px) calc(0.75rem - 2px) 0 0;
-}
-
-.fab-popover__item:last-child {
-    border-radius: 0 0 calc(0.75rem - 2px) calc(0.75rem - 2px);
-}
-
-.fab-popover__item svg {
-    width: 16px;
-    height: 16px;
+.quick-add-fab-item svg {
     stroke: var(--color-primary);
-    stroke-width: 2;
     fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
     flex-shrink: 0;
 }
 
-.fab-popover__divider {
+.quick-add-fab-divider {
     height: 1px;
     background: var(--color-border);
-    margin: 0.25rem 0;
+    margin: 0;
 }
 
-/* Backdrop to close popovers on outside tap */
+/* Backdrop to close menu on outside tap */
 .fab-backdrop {
     display: none;
     position: fixed;
@@ -4221,6 +4201,14 @@ button {
 
 .fab-backdrop.is-open {
     display: block;
+}
+
+/* Hide the FAB on desktop (nav bar is hidden anyway) */
+@media (min-width: 900px) {
+    .quick-add-fab,
+    .quick-add-fab-menu {
+        display: none !important;
+    }
 }
 
 /* ==================== MOBILE UX FIXES ==================== */
@@ -4249,14 +4237,6 @@ button {
         border: 2px solid #C8A97A;
     }
 
-    /* Mobile FABs - visible when authenticated */
-    .app-authenticated .mobile-fab-container {
-        display: flex;
-    }
-
-    body.has-maintenance-banner .mobile-fab-container {
-        top: calc(var(--maintenance-banner-height) + env(safe-area-inset-top, 0px) + 12px);
-    }
 }
 
 /* ==================== PANTRY SCAN FAB ==================== */
@@ -4544,6 +4524,149 @@ body.pantry-tab-active .pantry-scan-fab {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ==================== MONTH CALENDAR VIEW ==================== */
+
+.calendar-month-title {
+    font-family: var(--font-serif, 'Crimson Text', serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    padding: 0 0.25rem;
+}
+
+.month-grid {
+    width: 100%;
+    padding: 0 0.25rem 1rem;
+}
+
+.month-grid__header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 0.25rem;
+}
+
+.month-grid__dow {
+    text-align: center;
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+    padding: 0.4rem 0;
+    letter-spacing: 0.04em;
+}
+
+.month-grid__body {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.month-cell {
+    min-height: 64px;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border, #e0d6cc);
+    border-radius: 6px;
+    padding: 0.35rem 0.3rem 0.25rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: background 0.15s, box-shadow 0.15s;
+    position: relative;
+}
+
+.month-cell:hover,
+.month-cell:focus-visible {
+    background: var(--light-cream, #fdf6ee);
+    box-shadow: 0 0 0 2px var(--primary, #c0672d);
+    outline: none;
+    z-index: 1;
+}
+
+.month-cell--empty {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+    pointer-events: none;
+}
+
+.month-cell--today .month-cell__day {
+    background: var(--primary, #c0672d);
+    color: #fff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.month-cell--has-meals {
+    background: var(--light-cream, #fdf6ee);
+}
+
+.month-cell__day {
+    font-family: var(--font-mono, 'DM Mono', monospace);
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text, #3a2f2a);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+    min-width: 20px;
+    text-align: center;
+}
+
+.month-cell__dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: auto;
+}
+
+.month-cell__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.month-cell__dot--more {
+    background: var(--text-muted, #888) !important;
+    border-radius: 4px;
+    width: auto;
+    height: 8px;
+    padding: 0 3px;
+    font-size: 0.6rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    line-height: 1;
+}
+
+/* Responsive: smaller cells on narrow screens */
+@media (max-width: 480px) {
+    .month-cell {
+        min-height: 48px;
+        padding: 0.25rem 0.15rem 0.2rem;
+    }
+
+    .month-cell__day {
+        font-size: 0.7rem;
+    }
+
+    .month-cell__dot {
+        width: 6px;
+        height: 6px;
+    }
+
+    .month-grid__dow {
+        font-size: 0.62rem;
+    }
 }
 
 /* =============================================

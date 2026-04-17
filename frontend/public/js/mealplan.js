@@ -2,8 +2,9 @@
 
 let calendar = null;
 let mealPlans = [];
-let currentCalendarView = window.innerWidth < 768 ? 'mealWeek' : 'dayGridMonth';
+let currentCalendarView = 'mealWeek';
 let sectionFocusDate = new Date();
+let monthViewDate = new Date(); // tracks which month is shown in month view
 const snackSlots = [
     { key: 'before-breakfast', label: 'Snacks before breakfast', note: 'Before breakfast' },
     { key: 'between-breakfast-lunch', label: 'Snacks between breakfast & lunch', note: 'Between breakfast & lunch' },
@@ -68,116 +69,111 @@ function setupMealPlanListeners() {
 
 }
 
+
 async function loadMealPlan() {
     try {
-        // Load meal plans for current month
+        // Load a wide window — 3 months back to 3 months forward — so week/month
+        // navigation doesn't require a network round-trip for every page flip.
         const today = new Date();
-        const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        
+        const startDate = new Date(today.getFullYear(), today.getMonth() - 3, 1);
+        const endDate = new Date(today.getFullYear(), today.getMonth() + 4, 0);
+
         mealPlans = await api.getMealPlan(
             startDate.toISOString().split('T')[0],
             endDate.toISOString().split('T')[0]
         );
-        
-        initializeCalendar();
+
+        handleViewChange(currentCalendarView);
     } catch (error) {
         console.error('Error loading meal plan:', error);
         if (window.showToast) window.showToast('Failed to load meal plan', 'error');
     }
 }
 
-function initializeCalendar() {
+function renderMonthView() {
     const calendarEl = document.getElementById('mealPlanCalendar');
     if (!calendarEl) return;
 
-    if (calendar) {
-        calendar.destroy();
-    }
+    const year = monthViewDate.getFullYear();
+    const month = monthViewDate.getMonth();
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    // Group meals by date
+    // Month header label
+    const monthLabel = monthViewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const titleEl = document.getElementById('calendarMonthTitle');
+    if (titleEl) titleEl.textContent = monthLabel;
+
+    // Build index: dateStr -> plans[]
     const mealsByDate = {};
     mealPlans.forEach(plan => {
-        const date = plan.planned_date;
-        if (!mealsByDate[date]) {
-            mealsByDate[date] = [];
+        if (!mealsByDate[plan.planned_date]) mealsByDate[plan.planned_date] = [];
+        mealsByDate[plan.planned_date].push(plan);
+    });
+
+    // First day of month, last day
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startOffset = firstDay.getDay(); // 0=Sun
+
+    const DOW_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    let html = '<div class="month-grid">';
+
+    // Day-of-week header row
+    html += '<div class="month-grid__header">';
+    DOW_LABELS.forEach(d => { html += `<div class="month-grid__dow">${d}</div>`; });
+    html += '</div>';
+
+    // Day cells
+    html += '<div class="month-grid__body">';
+
+    // Leading empty cells
+    for (let i = 0; i < startOffset; i++) {
+        html += '<div class="month-cell month-cell--empty"></div>';
+    }
+
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const plans = mealsByDate[dateStr] || [];
+        const isToday = dateStr === todayStr;
+        const hasMeals = plans.length > 0;
+
+        const mealDots = plans.slice(0, 3).map(p => {
+            const color = getMealTypeColor(p.meal_type);
+            return `<span class="month-cell__dot" style="background:${color}" title="${p.meal_type}"></span>`;
+        }).join('');
+        const overflowDot = plans.length > 3
+            ? `<span class="month-cell__dot month-cell__dot--more">+${plans.length - 3}</span>`
+            : '';
+
+        html += `
+            <div class="month-cell${isToday ? ' month-cell--today' : ''}${hasMeals ? ' month-cell--has-meals' : ''}"
+                 data-date="${dateStr}" role="button" tabindex="0" aria-label="${dateStr}${hasMeals ? ', ' + plans.length + ' meals' : ''}">
+                <span class="month-cell__day">${d}</span>
+                <div class="month-cell__dots">${mealDots}${overflowDot}</div>
+            </div>
+        `;
+    }
+
+    // Trailing empty cells to complete the last row
+    const totalCells = startOffset + lastDay.getDate();
+    const remainder = totalCells % 7;
+    if (remainder !== 0) {
+        for (let i = 0; i < (7 - remainder); i++) {
+            html += '<div class="month-cell month-cell--empty"></div>';
         }
-        mealsByDate[date].push(plan);
+    }
+
+    html += '</div></div>'; // month-grid__body + month-grid
+    calendarEl.innerHTML = html;
+    calendarEl.style.display = 'block';
+
+    // Wire up click/keyboard on day cells
+    calendarEl.querySelectorAll('.month-cell[data-date]').forEach(cell => {
+        const handler = () => showDayDetail(cell.dataset.date);
+        cell.addEventListener('click', handler);
+        cell.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } });
     });
-
-    // Create events with meal type indicators
-    const events = mealPlans.map(plan => {
-        return {
-            id: plan.id,
-            title: plan.recipe ? plan.recipe.title : 'Meal',
-            start: plan.planned_date,
-            extendedProps: {
-                mealType: plan.meal_type,
-                recipeId: plan.recipe_id,
-                recipe: plan.recipe,
-                notes: plan.notes
-            },
-            backgroundColor: getMealTypeColor(plan.meal_type),
-            borderColor: getMealTypeColor(plan.meal_type),
-            display: 'block'
-        };
-    });
-
-    const isMobile = window.innerWidth < 768;
-
-    calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: window.innerWidth < 768 ? 'mealWeek' : 'dayGridMonth',
-        headerToolbar: isMobile ? {
-            left: '',
-            center: 'title',
-            right: ''
-        } : {
-            left: '',
-            center: 'title',
-            right: 'dayGridMonth'
-        },
-        events: events,
-        eventContent: (info) => {
-            const viewType = info.view.type;
-            const recipe = info.event.extendedProps.recipe;
-            const mealType = info.event.extendedProps.mealType;
-            const mealTypeIcon = {
-                'breakfast': '🌅',
-                'lunch': '☀️',
-                'dinner': '🌙',
-                'snack': '🍎'
-            }[mealType] || '🍽️';
-            const title = recipe ? recipe.title : info.event.title;
-            const showImage = viewType === 'dayGridWeek' && recipe && recipe.image_url;
-            return {
-                html: `
-                    <div class="calendar-event">
-                        ${showImage ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="calendar-event-image" onerror="this.style.display='none'">` : ''}
-                        ${!showImage && viewType === 'dayGridMonth' ? `<span class="calendar-event-icon">${mealTypeIcon}</span>` : ''}
-                        <span class="calendar-event-title">${title}</span>
-                    </div>
-                `
-            };
-        },
-        eventClick: (info) => {
-            viewMealPlan(info.event.id);
-        },
-        dateClick: (info) => {
-            // Show day detail modal instead of just adding meal
-            showDayDetail(info.dateStr);
-        },
-        viewDidMount: (info) => {
-            updateViewButtons(info.view.type);
-        },
-        editable: true,
-        eventDrop: async (info) => {
-            await updateMealPlanDate(info.event.id, info.event.startStr);
-        }
-    });
-
-    calendar.render();
-    updateViewButtons(currentCalendarView);
-    handleViewChange(currentCalendarView);
 }
 
 function updateViewButtons(viewName) {
@@ -508,66 +504,58 @@ function handleViewChange(viewName) {
     currentCalendarView = viewName;
     const sectionsEl = document.getElementById('mealPlanSections');
     const calendarEl = document.getElementById('mealPlanCalendar');
+    const monthTitleEl = document.getElementById('calendarMonthTitle');
 
-    if (viewName === 'mealWeek' || viewName === 'mealDay') {
-        sectionFocusDate = calendar ? calendar.getDate() : sectionFocusDate;
+    if (viewName === 'dayGridMonth') {
+        if (sectionsEl) sectionsEl.style.display = 'none';
+        if (monthTitleEl) monthTitleEl.style.display = '';
+        renderMonthView();
+    } else {
         if (calendarEl) {
             calendarEl.style.display = 'none';
+            calendarEl.innerHTML = '';
         }
-        if (sectionsEl) {
-            sectionsEl.style.display = 'grid';
-        }
+        if (monthTitleEl) monthTitleEl.style.display = 'none';
+        if (sectionsEl) sectionsEl.style.display = 'grid';
         renderMealSections(viewName);
-    } else {
-        if (calendar) {
-            calendar.changeView(viewName);
-        }
-        if (calendarEl) {
-            calendarEl.style.display = 'block';
-        }
-        if (sectionsEl) {
-            sectionsEl.style.display = 'none';
-        }
-        if (calendar) {
-            requestAnimationFrame(() => {
-                calendar.updateSize();
-            });
-        }
     }
 
     updateViewButtons(viewName);
 }
 
 function handleToday() {
-    if (currentCalendarView === 'mealWeek' || currentCalendarView === 'mealDay') {
+    if (currentCalendarView === 'dayGridMonth') {
+        monthViewDate = new Date();
+        renderMonthView();
+    } else {
         sectionFocusDate = new Date();
         renderMealSections(currentCalendarView);
-    } else if (calendar) {
-        calendar.today();
     }
 }
 
 function handlePrev() {
-    if (currentCalendarView === 'mealWeek') {
+    if (currentCalendarView === 'dayGridMonth') {
+        monthViewDate = new Date(monthViewDate.getFullYear(), monthViewDate.getMonth() - 1, 1);
+        renderMonthView();
+    } else if (currentCalendarView === 'mealWeek') {
         sectionFocusDate.setDate(sectionFocusDate.getDate() - 7);
         renderMealSections(currentCalendarView);
     } else if (currentCalendarView === 'mealDay') {
         sectionFocusDate.setDate(sectionFocusDate.getDate() - 1);
         renderMealSections(currentCalendarView);
-    } else if (calendar) {
-        calendar.prev();
     }
 }
 
 function handleNext() {
-    if (currentCalendarView === 'mealWeek') {
+    if (currentCalendarView === 'dayGridMonth') {
+        monthViewDate = new Date(monthViewDate.getFullYear(), monthViewDate.getMonth() + 1, 1);
+        renderMonthView();
+    } else if (currentCalendarView === 'mealWeek') {
         sectionFocusDate.setDate(sectionFocusDate.getDate() + 7);
         renderMealSections(currentCalendarView);
     } else if (currentCalendarView === 'mealDay') {
         sectionFocusDate.setDate(sectionFocusDate.getDate() + 1);
         renderMealSections(currentCalendarView);
-    } else if (calendar) {
-        calendar.next();
     }
 }
 

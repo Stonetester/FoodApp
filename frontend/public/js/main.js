@@ -247,31 +247,6 @@ function setupEventListeners() {
         });
     });
 
-    // Quick action buttons
-    const quickAddRecipeBtn = document.getElementById('quickAddRecipeBtn');
-    if (quickAddRecipeBtn) {
-        quickAddRecipeBtn.addEventListener('click', () => {
-            const modal = document.getElementById('quickAddRecipeModal');
-            if (modal) {
-                document.getElementById('quickPasteLinkForm').style.display = 'none';
-                document.getElementById('quickImportResult').innerHTML = '';
-                document.getElementById('quickRecipeUrl').value = '';
-                modal.classList.add('active');
-            }
-        });
-    }
-
-    const quickAddPantryBtn = document.getElementById('quickAddPantryBtn');
-    if (quickAddPantryBtn) {
-        quickAddPantryBtn.addEventListener('click', () => {
-            const scannerModal = document.getElementById('scannerModal');
-            if (scannerModal) {
-                scannerModal.classList.add('active');
-                if (window.initScanner) window.initScanner();
-            }
-        });
-    }
-
     // Pantry Scan FAB (bottom-anchored, pantry tab only)
     const pantryScanFab = document.getElementById('pantryScanFab');
     if (pantryScanFab) {
@@ -1057,79 +1032,70 @@ function showTutorialIfNew() {
     }
 }
 
-// ==================== QUICK-ADD FLOATING BUBBLES ====================
+// ==================== QUICK-ADD FAB (single bottom-center button) ====================
 function setupQuickAddFabs() {
+    const fab = document.getElementById('quickAddFab');
+    const menu = document.getElementById('quickAddFabMenu');
     const backdrop = document.getElementById('fabBackdrop');
-    const pantryToggle = document.getElementById('fabPantryToggle');
-    const pantryPopover = document.getElementById('fabPantryPopover');
-    const recipeToggle = document.getElementById('fabRecipeToggle');
-    const recipePopover = document.getElementById('fabRecipePopover');
 
-    if (!pantryToggle || !recipeToggle) return;
+    if (!fab || !menu) return;
 
-    function openPopover(toggle, popover) {
-        // Close the other one first
-        closeAllPopovers();
-        popover.classList.add('is-open');
-        toggle.setAttribute('aria-expanded', 'true');
+    function openFabMenu() {
+        menu.classList.add('is-open');
+        menu.setAttribute('aria-hidden', 'false');
+        fab.setAttribute('aria-expanded', 'true');
+        fab.classList.add('is-open');
         backdrop.classList.add('is-open');
     }
 
-    function closeAllPopovers() {
-        pantryPopover.classList.remove('is-open');
-        recipePopover.classList.remove('is-open');
-        pantryToggle.setAttribute('aria-expanded', 'false');
-        recipeToggle.setAttribute('aria-expanded', 'false');
+    function closeFabMenu() {
+        menu.classList.remove('is-open');
+        menu.setAttribute('aria-hidden', 'true');
+        fab.setAttribute('aria-expanded', 'false');
+        fab.classList.remove('is-open');
         backdrop.classList.remove('is-open');
     }
 
-    pantryToggle.addEventListener('click', (e) => {
+    fab.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isOpen = pantryPopover.classList.contains('is-open');
-        if (isOpen) {
-            closeAllPopovers();
+        if (menu.classList.contains('is-open')) {
+            closeFabMenu();
         } else {
-            openPopover(pantryToggle, pantryPopover);
+            openFabMenu();
         }
     });
 
-    recipeToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isOpen = recipePopover.classList.contains('is-open');
-        if (isOpen) {
-            closeAllPopovers();
-        } else {
-            openPopover(recipeToggle, recipePopover);
-        }
+    backdrop.addEventListener('click', closeFabMenu);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeFabMenu();
     });
 
-    backdrop.addEventListener('click', closeAllPopovers);
-
-    // --- Pantry popover actions ---
-    document.getElementById('fabScanBarcode')?.addEventListener('click', () => {
-        closeAllPopovers();
-        if (window.openScanner) window.openScanner();
-    });
-
-    document.getElementById('fabAddPantryManual')?.addEventListener('click', () => {
-        closeAllPopovers();
-        if (window.openPantryModal) window.openPantryModal();
-    });
-
-    // --- Recipe popover actions ---
+    // --- Recipe actions ---
     document.getElementById('fabImportUrl')?.addEventListener('click', () => {
-        closeAllPopovers();
+        closeFabMenu();
         if (window.openImportUrlModal) window.openImportUrlModal();
     });
 
     document.getElementById('fabImportImage')?.addEventListener('click', () => {
-        closeAllPopovers();
+        closeFabMenu();
         if (window.openImportImageModal) window.openImportImageModal();
     });
 
     document.getElementById('fabAddRecipeManual')?.addEventListener('click', () => {
-        closeAllPopovers();
+        closeFabMenu();
         if (window.openRecipeModal) window.openRecipeModal();
+    });
+
+    // --- Pantry actions ---
+    document.getElementById('fabScanBarcode')?.addEventListener('click', () => {
+        closeFabMenu();
+        if (window.openScanner) window.openScanner();
+    });
+
+    document.getElementById('fabAddPantryManual')?.addEventListener('click', () => {
+        closeFabMenu();
+        if (window.openPantryModal) window.openPantryModal();
     });
 }
 
