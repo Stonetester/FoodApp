@@ -200,12 +200,20 @@ function displayUserSearchResults(users) {
     
     users.forEach(user => {
         const userCard = document.createElement('div');
+        const avatarUrl = user.account_profile?.avatar_url || '';
         userCard.className = 'user-card';
         userCard.innerHTML = `
+            <div class="user-card-avatar">
+                ${avatarUrl
+                    ? `<img src="${avatarUrl}" alt="${user.username}" class="user-card-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">`
+                    : ''}
+                <div class="user-card-avatar-fallback" style="${avatarUrl ? 'display:none' : ''}">
+                    ${user.username.charAt(0).toUpperCase()}
+                </div>
+            </div>
             <div class="user-card-content">
-                <h3 class="user-card-name">👤 ${user.username}</h3>
-                <p class="user-card-info">📚 ${user.recipe_count} recipe${user.recipe_count !== 1 ? 's' : ''}</p>
-                ${user.created_at ? `<p class="user-card-info" style="font-size: 0.85rem; opacity: 0.7;">Joined ${new Date(user.created_at).toLocaleDateString()}</p>` : ''}
+                <h3 class="user-card-name">${user.username}</h3>
+                <p class="user-card-info">${user.recipe_count} recipe${user.recipe_count !== 1 ? 's' : ''}</p>
             </div>
             <div class="user-card-actions">
                 <button class="btn btn-primary" onclick="viewUserRecipes(${user.id}, '${user.username.replace(/'/g, "\\'")}')">

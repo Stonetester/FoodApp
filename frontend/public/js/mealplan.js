@@ -406,6 +406,7 @@ async function showDayDetail(dateStr) {
                 if (meal && meal.recipe) {
                     slotContent += `
                         <div class="day-detail-meal-item" style="border-left-color: ${getMealTypeColor(meal.meal_type)}">
+                            ${meal.recipe.image_url ? `<img src="${meal.recipe.image_url}" alt="${meal.recipe.title}" class="day-detail-meal-photo" onerror="this.style.display='none'">` : ''}
                             <div class="day-detail-meal-row">
                                 <div class="day-detail-meal-info">
                                     <h4 class="day-detail-meal-title">${meal.recipe.title}</h4>

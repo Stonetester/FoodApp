@@ -763,9 +763,10 @@ def search_users():
             'id': user.id,
             'username': user.username,
             'recipe_count': len(user.recipes),
-            'created_at': user.created_at.isoformat() if user.created_at else None
+            'created_at': user.created_at.isoformat() if user.created_at else None,
+            'account_profile': get_account_profile(user.id)
         })
-    
+
     return jsonify(result), 200
 
 # ==================== PUBLIC RECIPE DISCOVERY ====================

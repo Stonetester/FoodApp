@@ -220,7 +220,10 @@ function createRecipeCard(recipe) {
     const nutritionStrip = buildRecipeNutritionStrip(recipe);
 
     card.innerHTML = `
-        ${recipe.image_url ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="recipe-card-image" onerror="this.style.display='none'">` : ''}
+        ${recipe.image_url
+            ? `<img src="${recipe.image_url}" alt="${recipe.title}" class="recipe-card-image" onerror="this.parentElement.querySelector('.recipe-card-image-placeholder')?.classList.remove('hidden'); this.style.display='none'">`
+            : `<div class="recipe-card-image-placeholder"><span>🍽️</span></div>`
+        }
         <div class="recipe-card-content">
             ${tagsHtml ? `<div class="recipe-card-tags recipe-card-tags--top">${tagsHtml}</div>` : ''}
             <h3 class="recipe-card-title">${recipe.title}</h3>
