@@ -1035,14 +1035,21 @@ def send_friend_request():
     if existing_friendship:
         return jsonify({'error': 'You are already friends'}), 400
 
-    existing_request = FriendRequest.query.filter_by(
+    # Only block on a still-pending outgoing request
+    pending_request = FriendRequest.query.filter_by(
         sender_id=current_user.id,
-        receiver_id=receiver_id
-    ).order_by(FriendRequest.id.desc()).first()
-    if existing_request:
-        if existing_request.status == 'pending':
-            return jsonify({'friend_request': existing_request.to_dict()}), 200
-        return jsonify({'error': 'Friend request already exists'}), 409
+        receiver_id=receiver_id,
+        status='pending'
+    ).first()
+    if pending_request:
+        return jsonify({'friend_request': pending_request.to_dict()}), 200
+
+    # Clean up any stale (accepted/declined) requests between these two users
+    # so they don't block re-adding after an unfriend
+    FriendRequest.query.filter(
+        ((FriendRequest.sender_id == current_user.id) & (FriendRequest.receiver_id == receiver_id)) |
+        ((FriendRequest.sender_id == receiver_id) & (FriendRequest.receiver_id == current_user.id))
+    ).filter(FriendRequest.status != 'pending').delete(synchronize_session=False)
 
     reverse_request = FriendRequest.query.filter_by(
         sender_id=receiver_id,
@@ -1134,12 +1141,18 @@ def respond_to_friend_request():
 @api_bp.route('/friends/<int:friend_id>', methods=['DELETE'])
 @login_required
 def remove_friend(friend_id):
-    """Remove a friend connection"""
+    """Remove a friend connection and all related request history"""
     Friendship.query.filter_by(user_id=current_user.id, friend_id=friend_id).delete()
     Friendship.query.filter_by(user_id=friend_id, friend_id=current_user.id).delete()
-    
+
+    # Delete all request history between these two users so re-adding works cleanly
+    FriendRequest.query.filter(
+        ((FriendRequest.sender_id == current_user.id) & (FriendRequest.receiver_id == friend_id)) |
+        ((FriendRequest.sender_id == friend_id) & (FriendRequest.receiver_id == current_user.id))
+    ).delete(synchronize_session=False)
+
     db.session.commit()
-    
+
     return jsonify({'message': 'Friend removed'}), 200
 
 
