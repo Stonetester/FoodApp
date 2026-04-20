@@ -1468,16 +1468,15 @@ textarea:focus {
     align-items: center;
     gap: 0.25rem;
     cursor: pointer;
-    padding: 0.15rem 0.55rem;
+    padding: 0.3em 0.65em;
     background: #C8DAD5;
     border: 1.5px solid #C8A97A;
     border-radius: 999px;
     color: #3D1F0A;
     font-family: var(--font-body);
-    font-size: 0.78rem;
+    font-size: clamp(0.72rem, 2.5vw, 0.82rem);
     font-weight: 500;
     transition: all var(--transition-fast);
-    min-height: 26px;
     white-space: nowrap;
 }
 
