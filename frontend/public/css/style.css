@@ -1490,7 +1490,8 @@ textarea:focus {
     border-color: #C4622D;
 }
 
-.filter-tag input[type="checkbox"] {
+.filter-tag input[type="checkbox"],
+.filter-tag input[type="radio"] {
     position: absolute;
     opacity: 0;
     width: 0;
