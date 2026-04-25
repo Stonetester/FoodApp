@@ -157,6 +157,36 @@ def send_weekly_digest(user, stats):
     _send(user.email, "Your Modo Gusto Weekly Digest", html)
 
 
+def send_friend_recipe_digest(user, new_recipes):
+    """Send a digest of new recipes added by friends since the last check.
+
+    new_recipes: list of dicts with keys: title, username, added_at (isoformat string)
+    Only call this when len(new_recipes) > 0.
+    """
+    rows = "".join(
+        f"""<tr>
+          <td style="padding:10px 8px;border-bottom:1px solid #e8ddd0;">
+            <strong style="color:#3b2416;">{r['title']}</strong><br>
+            <span style="font-size:12px;color:#8a6b52;">by {r['username']} &middot; {r['added_at']}</span>
+          </td>
+        </tr>"""
+        for r in new_recipes
+    )
+    count = len(new_recipes)
+    label = "recipe" if count == 1 else "recipes"
+    body = f"""
+    <p>Your friends have been cooking! Here are <strong>{count} new {label}</strong> added since your last digest:</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+      {rows}
+    </table>
+    <p style="text-align:center;margin:24px 0;">
+      <a href="{_base_url()}" style="display:inline-block;padding:12px 32px;background:#2BAF90;color:#F4FFFC;border-radius:8px;text-decoration:none;font-weight:bold;">See Friend Recipes</a>
+    </p>
+    """
+    html = _base_template("New Recipes from Friends", body)
+    _send(user.email, f"Modo Gusto — {count} new friend {label} to check out", html)
+
+
 def send_test_email(user):
     body = f"""
     <p>Hi <strong>{user.username}</strong>,</p>

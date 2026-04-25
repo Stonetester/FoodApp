@@ -8,6 +8,7 @@ from flask.cli import with_appcontext
 def register_cli(app):
     """Register CLI commands with the Flask app."""
     app.cli.add_command(send_weekly_digest_cmd)
+    app.cli.add_command(send_friend_digest_cmd)
     app.cli.add_command(list_users_cmd)
     app.cli.add_command(delete_user_cmd)
     app.cli.add_command(send_test_email_cmd)
@@ -71,6 +72,57 @@ def send_weekly_digest_cmd():
         sent += 1
 
     click.echo(f"Weekly digest sent to {sent} user(s).")
+
+
+@click.command("send-friend-digest")
+@with_appcontext
+def send_friend_digest_cmd():
+    """Send friend recipe digest to users who have new friend recipes since their last digest."""
+    from app.models import db, User, Recipe, Friendship
+    from app.email_service import send_friend_recipe_digest
+
+    now = datetime.utcnow()
+    users = User.query.all()
+    sent = 0
+    skipped = 0
+
+    for user in users:
+        since = user.last_digest_sent_at or (now - timedelta(hours=1))
+
+        # Collect friend IDs (friendships are stored directionally; check both sides)
+        friend_ids = {f.friend_id for f in Friendship.query.filter_by(user_id=user.id).all()}
+        friend_ids |= {f.user_id for f in Friendship.query.filter_by(friend_id=user.id).all()}
+
+        if not friend_ids:
+            skipped += 1
+            continue
+
+        new_recipes = (
+            Recipe.query
+            .filter(Recipe.user_id.in_(friend_ids), Recipe.created_at > since)
+            .order_by(Recipe.created_at.desc())
+            .all()
+        )
+
+        if not new_recipes:
+            skipped += 1
+            continue
+
+        recipe_data = [
+            {
+                "title": r.title,
+                "username": r.user.username,
+                "added_at": r.created_at.strftime("%b %d"),
+            }
+            for r in new_recipes
+        ]
+
+        send_friend_recipe_digest(user, recipe_data)
+        user.last_digest_sent_at = now
+        sent += 1
+
+    db.session.commit()
+    click.echo(f"Friend digest sent to {sent} user(s), {skipped} skipped (no new recipes or no friends).")
 
 
 @click.command("list-users")

@@ -37,7 +37,8 @@ def _migrate_columns():
         ("source_url",   "ALTER TABLE recipes ADD COLUMN source_url VARCHAR(500) DEFAULT NULL"),
     ]
     user_cols = [
-        ("is_admin", "ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE"),
+        ("is_admin",              "ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE"),
+        ("last_digest_sent_at",   "ALTER TABLE users ADD COLUMN last_digest_sent_at DATETIME DEFAULT NULL"),
     ]
 
     with db.engine.begin() as conn:
