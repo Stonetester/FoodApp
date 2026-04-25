@@ -1,7 +1,7 @@
-"""SendGrid email service for Modo Gusto.
+"""Resend email service for Modo Gusto.
 
 All sends are fire-and-forget: errors are logged, never raised to the caller.
-If SENDGRID_API_KEY is not configured, every send silently returns.
+If RESEND_API_KEY is not configured, every send silently returns.
 """
 
 import os
@@ -9,20 +9,9 @@ import logging
 
 log = logging.getLogger(__name__)
 
-def _get_sg_client():
-    api_key = os.environ.get('SENDGRID_API_KEY')
-    if not api_key:
-        return None
-    try:
-        from sendgrid import SendGridAPIClient
-        return SendGridAPIClient(api_key)
-    except Exception as e:
-        log.warning("SendGrid client init failed: %s", e)
-        return None
-
 def _from_email():
-    from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@modogusto.com')
-    from_name = os.environ.get('SENDGRID_FROM_NAME', 'Modo Gusto')
+    from_email = os.environ.get('FROM_EMAIL', 'noreply@modogusto.com')
+    from_name = os.environ.get('FROM_NAME', 'Modo Gusto')
     return f"{from_name} <{from_email}>"
 
 def _base_url():
@@ -60,20 +49,20 @@ def _base_template(title, body_html):
 </html>"""
 
 def _send(to_email, subject, html_content):
-    sg = _get_sg_client()
-    if not sg:
-        log.debug("SendGrid not configured — skipping email to %s", to_email)
+    api_key = os.environ.get('RESEND_API_KEY')
+    if not api_key:
+        log.debug("Resend not configured — skipping email to %s", to_email)
         return
     try:
-        from sendgrid.helpers.mail import Mail
-        message = Mail(
-            from_email=_from_email(),
-            to_emails=to_email,
-            subject=subject,
-            html_content=html_content,
-        )
-        response = sg.send(message)
-        log.info("Email sent to %s — status %s", to_email, response.status_code)
+        import resend
+        resend.api_key = api_key
+        resend.Emails.send({
+            "from": _from_email(),
+            "to": [to_email],
+            "subject": subject,
+            "html": html_content,
+        })
+        log.info("Email sent to %s", to_email)
     except Exception as e:
         log.error("Failed to send email to %s: %s", to_email, e)
 
@@ -81,7 +70,6 @@ def _send(to_email, subject, html_content):
 # ---- Public API ----
 
 def send_welcome_email(user):
-    """Send a welcome email after registration."""
     body = f"""
     <p>Welcome aboard, <strong>{user.username}</strong>!</p>
     <p>Your Modo Gusto account is ready. Start by adding your first recipe or scanning a pantry item.</p>
@@ -95,7 +83,6 @@ def send_welcome_email(user):
 
 
 def send_friend_request_sent(sender, receiver):
-    """Confirmation to the sender that their friend request was sent."""
     body = f"""
     <p>You sent a friend request to <strong>{receiver.username}</strong>.</p>
     <p>We'll let you know when they respond. In the meantime, keep exploring recipes!</p>
@@ -105,7 +92,6 @@ def send_friend_request_sent(sender, receiver):
 
 
 def send_friend_request_received(sender, receiver):
-    """Notification to the receiver that they got a friend request."""
     body = f"""
     <p><strong>{sender.username}</strong> wants to be your friend on Modo Gusto!</p>
     <p style="text-align:center;margin:24px 0;">
@@ -117,7 +103,6 @@ def send_friend_request_received(sender, receiver):
 
 
 def send_maintenance_broadcast(subject, message, users):
-    """Send a maintenance/broadcast email to a list of users."""
     body = f"""
     <p>{message}</p>
     <p style="font-size:13px;color:#8a6b52;margin-top:24px;">This is an administrative announcement from Modo Gusto.</p>
@@ -128,7 +113,6 @@ def send_maintenance_broadcast(subject, message, users):
 
 
 def send_weekly_digest(user, stats):
-    """Send a weekly digest with stats, expiring pantry items, and upcoming meals."""
     expiring_html = ""
     if stats.get("expiring_items"):
         items = "".join(f"<li>{item}</li>" for item in stats["expiring_items"])
@@ -174,7 +158,6 @@ def send_weekly_digest(user, stats):
 
 
 def send_test_email(user):
-    """Send a test email so the user can verify email delivery is working."""
     body = f"""
     <p>Hi <strong>{user.username}</strong>,</p>
     <p>This is a test email from <strong>Modo Gusto</strong>. If you can read this, your email configuration is working correctly!</p>
@@ -188,7 +171,6 @@ def send_test_email(user):
 
 
 def send_password_reset_email(user, reset_url):
-    """Send a password reset email with a time-limited link."""
     body = f"""
     <p>Hi <strong>{user.username}</strong>,</p>
     <p>We received a request to reset your password. Click the button below to set a new password:</p>

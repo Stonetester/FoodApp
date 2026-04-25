@@ -42,7 +42,7 @@ opencv-python==4.8.1.78
 # requests is already listed above
 
 # Email
-sendgrid==6.11.0
+resend==2.10.0
 
 # Production Server (optional, for deployment)
 gunicorn==21.2.0
