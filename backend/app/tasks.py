@@ -135,11 +135,11 @@ def send_test_email_cmd(to_email):
       flask send-test-email you@gmail.com
     """
     import os
-    from app.email_service import _get_sg_client, _from_email, _base_template
+    from app.email_service import _from_email, _base_template
 
-    sg = _get_sg_client()
-    if not sg:
-        click.echo("ERROR: SENDGRID_API_KEY is not set or SendGrid package is missing.")
+    api_key = os.environ.get('RESEND_API_KEY')
+    if not api_key:
+        click.echo("ERROR: RESEND_API_KEY is not set.")
         return
 
     from_addr = _from_email()
@@ -148,8 +148,8 @@ def send_test_email_cmd(to_email):
         "Email Delivery Test",
         f"""
         <p>This is a test email sent from the Modo Gusto Flask server.</p>
-        <p>If you received this in your <strong>inbox</strong>, SendGrid delivery is working correctly.</p>
-        <p>If you received this in <strong>spam</strong>, your SendGrid domain authentication
+        <p>If you received this in your <strong>inbox</strong>, Resend delivery is working correctly.</p>
+        <p>If you received this in <strong>spam</strong>, your domain authentication
         (SPF / DKIM / DMARC) still needs to be fixed.</p>
         <p style="margin-top:1.5rem;font-size:0.85rem;color:#8a6b52;">
             Sent at: {datetime.utcnow().isoformat()} UTC<br>
@@ -160,18 +160,15 @@ def send_test_email_cmd(to_email):
     )
 
     try:
-        from sendgrid.helpers.mail import Mail
-        message = Mail(
-            from_email=from_addr,
-            to_emails=to_email,
-            subject=subject,
-            html_content=body_html,
-        )
-        response = sg.send(message)
-        click.echo(f"Test email sent to {to_email} — status {response.status_code}")
-        if response.status_code == 202:
-            click.echo("SendGrid accepted the message. Check inbox (and spam folder) to confirm delivery.")
-        else:
-            click.echo(f"Unexpected status. Response body: {response.body}")
+        import resend
+        resend.api_key = api_key
+        resend.Emails.send({
+            "from": from_addr,
+            "to": [to_email],
+            "subject": subject,
+            "html": body_html,
+        })
+        click.echo(f"Test email sent to {to_email}")
+        click.echo("Resend accepted the message. Check inbox (and spam folder) to confirm delivery.")
     except Exception as e:
         click.echo(f"ERROR sending test email: {e}")
