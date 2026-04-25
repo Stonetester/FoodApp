@@ -160,18 +160,27 @@ def send_weekly_digest(user, stats):
 def send_friend_recipe_digest(user, new_recipes):
     """Send a digest of new recipes added by friends since the last check.
 
-    new_recipes: list of dicts with keys: title, username, added_at (isoformat string)
+    new_recipes: list of dicts with keys: title, username, added_at, image_url (may be None)
     Only call this when len(new_recipes) > 0.
     """
-    rows = "".join(
-        f"""<tr>
-          <td style="padding:10px 8px;border-bottom:1px solid #e8ddd0;">
-            <strong style="color:#3b2416;">{r['title']}</strong><br>
-            <span style="font-size:12px;color:#8a6b52;">by {r['username']} &middot; {r['added_at']}</span>
+    base = _base_url()
+
+    def _row(r):
+        if r.get("image_url"):
+            img_src = r["image_url"] if r["image_url"].startswith("http") else f"{base}{r['image_url']}"
+            img_cell = f'<td style="width:72px;padding:8px 12px 8px 0;vertical-align:middle;"><img src="{img_src}" width="64" height="64" style="border-radius:8px;object-fit:cover;display:block;" alt=""></td>'
+        else:
+            img_cell = '<td style="width:72px;padding:8px 12px 8px 0;vertical-align:middle;"><div style="width:64px;height:64px;border-radius:8px;background:#D7ECE6;display:flex;align-items:center;justify-content:center;font-size:24px;">🍽️</div></td>'
+
+        return f"""<tr style="border-bottom:1px solid #e8ddd0;">
+          {img_cell}
+          <td style="padding:8px 0;vertical-align:middle;">
+            <strong style="color:#3b2416;font-size:15px;">{r['title']}</strong><br>
+            <span style="font-size:12px;color:#8a6b52;">added by <strong>{r['username']}</strong> &middot; {r['added_at']}</span>
           </td>
         </tr>"""
-        for r in new_recipes
-    )
+
+    rows = "".join(_row(r) for r in new_recipes)
     count = len(new_recipes)
     label = "recipe" if count == 1 else "recipes"
     body = f"""
@@ -180,7 +189,7 @@ def send_friend_recipe_digest(user, new_recipes):
       {rows}
     </table>
     <p style="text-align:center;margin:24px 0;">
-      <a href="{_base_url()}" style="display:inline-block;padding:12px 32px;background:#2BAF90;color:#F4FFFC;border-radius:8px;text-decoration:none;font-weight:bold;">See Friend Recipes</a>
+      <a href="{base}" style="display:inline-block;padding:12px 32px;background:#2BAF90;color:#F4FFFC;border-radius:8px;text-decoration:none;font-weight:bold;">See Friend Recipes</a>
     </p>
     """
     html = _base_template("New Recipes from Friends", body)

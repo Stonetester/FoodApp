@@ -113,6 +113,7 @@ def send_friend_digest_cmd():
                 "title": r.title,
                 "username": r.user.username,
                 "added_at": r.created_at.strftime("%b %d"),
+                "image_url": r.image_url or None,
             }
             for r in new_recipes
         ]
