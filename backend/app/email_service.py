@@ -113,6 +113,8 @@ def send_maintenance_broadcast(subject, message, users):
 
 
 def send_weekly_digest(user, stats):
+    base = _base_url()
+
     expiring_html = ""
     if stats.get("expiring_items"):
         items = "".join(f"<li>{item}</li>" for item in stats["expiring_items"])
@@ -127,6 +129,33 @@ def send_weekly_digest(user, stats):
         upcoming_html = f"""
         <h3 style="color:#2BAF90;margin:20px 0 8px;">Upcoming Meals</h3>
         <ul style="margin:0;padding-left:20px;">{meals}</ul>
+        """
+
+    recent_recipes_html = ""
+    recent = stats.get("recent_recipes", [])
+    if recent:
+        def _recipe_row(r, idx):
+            if r.get("image_url"):
+                img_src = r["image_url"] if r["image_url"].startswith("http") else f"{base}{r['image_url']}"
+                img_cell = f'<td style="width:72px;padding:8px 12px 8px 0;vertical-align:middle;"><img src="{img_src}" width="64" height="64" style="border-radius:8px;object-fit:cover;display:block;" alt=""></td>'
+            else:
+                img_cell = '<td style="width:72px;padding:8px 12px 8px 0;vertical-align:middle;"><div style="width:64px;height:64px;border-radius:8px;background:#D7ECE6;display:flex;align-items:center;justify-content:center;font-size:24px;">🍽️</div></td>'
+            return f"""<tr style="border-bottom:1px solid #e8ddd0;">
+              {img_cell}
+              <td style="padding:8px 0;vertical-align:middle;">
+                <strong style="color:#3b2416;font-size:15px;">{idx}. {r['title']}</strong><br>
+                <span style="font-size:12px;color:#8a6b52;">Added {r['added_at']}</span>
+              </td>
+            </tr>"""
+
+        rows = "".join(_recipe_row(r, i + 1) for i, r in enumerate(recent))
+        count = len(recent)
+        label = "recipe" if count == 1 else "recipes"
+        recent_recipes_html = f"""
+        <h3 style="color:#c0672d;margin:20px 0 8px;">Recipes Added This Week ({count} {label})</h3>
+        <table style="width:100%;border-collapse:collapse;margin:8px 0 16px;">
+          {rows}
+        </table>
         """
 
     body = f"""
@@ -147,10 +176,11 @@ def send_weekly_digest(user, stats):
         </td>
       </tr>
     </table>
+    {recent_recipes_html}
     {expiring_html}
     {upcoming_html}
     <p style="text-align:center;margin:24px 0;">
-      <a href="{_base_url()}" style="display:inline-block;padding:12px 32px;background:#c0672d;color:#F4FFFC;border-radius:8px;text-decoration:none;font-weight:bold;">Open Modo Gusto</a>
+      <a href="{base}" style="display:inline-block;padding:12px 32px;background:#c0672d;color:#F4FFFC;border-radius:8px;text-decoration:none;font-weight:bold;">Open Modo Gusto</a>
     </p>
     """
     html = _base_template("Your Weekly Digest", body)

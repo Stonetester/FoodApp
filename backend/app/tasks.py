@@ -60,12 +60,28 @@ def send_weekly_digest_cmd():
                 f"{plan.planned_date.isoformat()} — {plan.meal_type}: {title}"
             )
 
+        # Recipes added in the past 7 days
+        recent_recipes = Recipe.query.filter(
+            Recipe.user_id == user.id,
+            Recipe.created_at >= week_ago,
+        ).order_by(Recipe.created_at.desc()).all()
+        recent_recipes_data = [
+            {
+                "id": r.id,
+                "title": r.title,
+                "image_url": r.image_url or None,
+                "added_at": r.created_at.strftime("%b %d"),
+            }
+            for r in recent_recipes
+        ]
+
         stats = {
             "recipes_count": recipes_count,
             "pantry_count": pantry_count,
             "meals_logged": meals_logged,
             "expiring_items": expiring_items,
             "upcoming_meals": upcoming_meals,
+            "recent_recipes": recent_recipes_data,
         }
 
         send_weekly_digest(user, stats)
