@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request
 from flask_login import LoginManager
-from flask_cors import CORS
 from sqlalchemy import text, inspect as sa_inspect
 from app.models import db, User
 
@@ -80,7 +79,6 @@ def create_app(config_class=None):
 
     db.init_app(app)
     login_manager.init_app(app)
-    CORS(app, supports_credentials=True)
 
     # ── Blueprints ──────────────────────────────────────────────────────────
     from app.routes import main_bp, api_bp
