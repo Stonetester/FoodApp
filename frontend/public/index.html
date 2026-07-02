@@ -1399,6 +1399,18 @@
             </div>
         </div>
 
+        <!-- Similar Meals (AI) Modal -->
+        <div id="similarMealsModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="similarMealsClose">&times;</span>
+                <h2>✨ Meals Like This</h2>
+                <div id="similarModePicker" class="similar-mode-picker"></div>
+                <button class="btn btn-primary" id="similarGenerateBtn" type="button" style="width:100%">Generate Ideas</button>
+                <p class="similar-ai-note">AI-generated suggestions — review before saving.</p>
+                <div id="similarResults" class="similar-results"></div>
+            </div>
+        </div>
+
         <!-- Admin Page -->
         <div id="adminPage" class="page">
             <div class="page-header">
@@ -1419,6 +1431,7 @@
     <script src="/js/main.js"></script>
     <script src="/js/recipes.js"></script>
     <script src="/js/users.js"></script>
+    <script src="/js/similar.js"></script>
     <script src="/js/pantry.js"></script>
     <script src="/js/scanner.js"></script>
     <script src="/js/mealplan.js"></script>

@@ -346,6 +346,13 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/js/scanner.js | Continuous scan mode (camera stays live, 2.5s per-barcode cooldown, auto add/increment, undo, green check overlay); review mode kept behind `mg_scan_mode` | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
 | frontend/public/js/pantry.js | closePantryModal returns to scanner after manual add from scan flow | Unknown-barcode manual entry loops back to scanning | 2026-07-02 |
 | frontend/public/css/style.css | Scanner overlay/controls/recent-scans styles | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
+| backend/app/ai_service.py | NEW — provider-agnostic frontier-model client (FRONTIER_MODEL_* env), JSON extraction tolerant of think-blocks/fences, suggestion validation | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| backend/app/routes.py | `POST /api/recipes/<id>/similar` — 6 modes, constraint whitelist, 15s per-user cooldown, friendly disabled state, pantry names-only privacy | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/js/similar.js | NEW — Meals Like This modal: mode picker, skeletons, escaped AI output, Save / Save+Plan review-before-save | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/index.html | similarMealsModal + similar.js script tag | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/js/users.js | "✨ Meals Like This" button in recipe detail actions | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/js/api.js | getSimilarMeals client method | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/css/style.css | Similar-meals modal/card/skeleton styles (reduced-motion safe) | Similar-meals AI (plan Phase 4) | 2026-07-02 |
 
 ## Anti-Patterns
 | Pattern | Why rejected |

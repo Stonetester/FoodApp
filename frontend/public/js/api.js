@@ -274,6 +274,13 @@ class ApiService {
         });
     }
 
+    async getSimilarMeals(recipeId, mode, constraints = {}) {
+        return this.request(`/api/recipes/${recipeId}/similar`, {
+            method: 'POST',
+            body: JSON.stringify({ mode, constraints }),
+        });
+    }
+
     // Meal History
     async getMealHistory(startDate, endDate) {
         const params = new URLSearchParams();

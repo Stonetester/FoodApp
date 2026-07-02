@@ -936,6 +936,65 @@ def mark_meal_cooked(plan_id):
 
     return jsonify(entry.to_dict()), 201
 
+# ---- AI: similar meals ----
+
+_similar_last_call = {}  # user_id -> unix ts; simple per-user cooldown
+SIMILAR_COOLDOWN_SECONDS = 15
+
+
+@api_bp.route('/recipes/<int:recipe_id>/similar', methods=['POST'])
+@login_required
+def similar_recipes(recipe_id):
+    """Ask the configured frontier model for meals similar to this recipe."""
+    from app import ai_service
+    import time
+
+    recipe = Recipe.query.get(recipe_id)
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    if not ai_service.is_configured():
+        return jsonify({
+            'enabled': False,
+            'suggestions': [],
+            'message': 'AI suggestions are not set up yet. Add FRONTIER_MODEL_API_KEY and FRONTIER_MODEL_NAME to the server environment to enable them.',
+        }), 200
+
+    now = time.time()
+    last = _similar_last_call.get(current_user.id, 0)
+    if now - last < SIMILAR_COOLDOWN_SECONDS:
+        return jsonify({'error': f'Please wait a few seconds between AI requests.'}), 429
+    _similar_last_call[current_user.id] = now
+
+    data = request.get_json() or {}
+    mode = data.get('mode', 'similar_flavor')
+    if mode not in ai_service.SIMILAR_MODES:
+        return jsonify({'error': 'Invalid mode'}), 400
+
+    raw_constraints = data.get('constraints') or {}
+    # Whitelist constraint keys — nothing else is forwarded to the model
+    constraints = {k: raw_constraints[k] for k in ('max_time_minutes', 'dietary_tags', 'budget') if k in raw_constraints}
+
+    pantry_names = None
+    if raw_constraints.get('use_pantry') or mode == 'use_pantry':
+        pantry_names = [
+            i.item_name for i in PantryItem.query.filter_by(user_id=current_user.id).all()
+            if i.item_name
+        ]
+
+    try:
+        suggestions = ai_service.generate_similar_recipes(recipe.to_dict(), mode, constraints, pantry_names)
+    except ai_service.AIServiceError as e:
+        return jsonify({'error': str(e)}), 502
+
+    return jsonify({
+        'enabled': True,
+        'source_recipe_id': recipe.id,
+        'mode': mode,
+        'suggestions': suggestions,
+    }), 200
+
+
 # Meal history endpoints
 @api_bp.route('/history', methods=['GET'])
 @login_required

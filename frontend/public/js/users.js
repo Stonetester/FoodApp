@@ -519,6 +519,9 @@ function showRecipeDetailModal(recipe, isOtherUser) {
             ` : ''}
 
             <div class="recipe-actions">
+                <button class="btn btn-secondary" onclick="openSimilarMeals(${recipe.id})">
+                    ✨ Meals Like This
+                </button>
                 <button class="btn btn-secondary" onclick="shareRecipeLink(${recipe.id}, '${recipe.title.replace(/'/g, "\\'")}')">
                     📤 Share
                 </button>
