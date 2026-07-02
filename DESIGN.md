@@ -364,6 +364,10 @@ CSS custom property name → BrandDNA field mapping:
 | backend/app/utils.py | SSRF guard (safe_fetch_url, private-IP + redirect validation); Pillow byte validation for uploads; image_url sanitization | Security hardening | 2026-07-02 |
 | backend/app/routes.py | Exception strings no longer leaked to clients; /api/health; removed duplicate unvalidated image helpers | Security hardening | 2026-07-02 |
 | backend/.env.example | NEW — placeholder env documentation | Safe self-hosting | 2026-07-02 |
+| frontend/public/index.html | Settings: Comfort & accessibility card (text size, high contrast, reduce motion, larger buttons) + Pantry scanning mode card | Older-user accessibility (plan Phase 9) | 2026-07-02 |
+| frontend/public/js/settings.js | Device prefs in localStorage applied as body classes; first-run settings tip | Accessibility modes (plan Phase 9) | 2026-07-02 |
+| frontend/public/css/style.css | pref-text-large/extra-large, pref-high-contrast, pref-reduced-motion, pref-large-buttons | Accessibility modes (plan Phase 9) | 2026-07-02 |
+| frontend/public/js/main.js | showApp calls maybeShowFirstRunTip | First-run pointer | 2026-07-02 |
 
 ## Anti-Patterns
 | Pattern | Why rejected |

@@ -586,6 +586,7 @@ function showApp() {
     initTutorial();
     showTutorialIfNew();
     setupQuickAddFabs();
+    if (window.maybeShowFirstRunTip) window.maybeShowFirstRunTip();
     // Reveal admin link for admin users
     if (currentUser && currentUser.is_admin) {
         const adminLink = document.getElementById('adminSheetLink');

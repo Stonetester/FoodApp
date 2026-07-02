@@ -1,8 +1,55 @@
 // Settings page logic
 
+// ---- Device preferences (accessibility + scan mode) ----
+// Stored in localStorage; applied as <body> classes so CSS does the work.
+
+function applyDevicePrefs() {
+    const body = document.body;
+    const textSize = localStorage.getItem('mg_text_size');
+    body.classList.remove('pref-text-large', 'pref-text-extra-large');
+    if (textSize === 'large' || textSize === 'extra-large') {
+        body.classList.add(`pref-text-${textSize}`);
+    }
+    body.classList.toggle('pref-high-contrast', localStorage.getItem('mg_high_contrast') === '1');
+    body.classList.toggle('pref-reduced-motion', localStorage.getItem('mg_reduced_motion') === '1');
+    body.classList.toggle('pref-large-buttons', localStorage.getItem('mg_large_buttons') === '1');
+}
+
+function setupPrefControls() {
+    document.querySelectorAll('[data-pref]').forEach(el => {
+        const key = el.dataset.pref;
+        const saved = localStorage.getItem(key);
+        if (el.type === 'checkbox') {
+            el.checked = saved === '1';
+            el.addEventListener('change', () => {
+                localStorage.setItem(key, el.checked ? '1' : '0');
+                applyDevicePrefs();
+            });
+        } else {
+            if (saved) el.value = saved;
+            el.addEventListener('change', () => {
+                localStorage.setItem(key, el.value);
+                applyDevicePrefs();
+            });
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     setupSettingsListeners();
+    setupPrefControls();
+    applyDevicePrefs();
 });
+
+// First-run nudge: point new users at the comfort settings once.
+function maybeShowFirstRunTip() {
+    if (localStorage.getItem('mg_first_run_done')) return;
+    localStorage.setItem('mg_first_run_done', '1');
+    setTimeout(() => {
+        if (window.showToast) window.showToast('Tip: adjust text size, contrast, and scan mode in Settings ⚙️', 'info');
+    }, 1500);
+}
+window.maybeShowFirstRunTip = maybeShowFirstRunTip;
 
 function setupSettingsListeners() {
     const profileForm = document.getElementById('settingsProfileForm');

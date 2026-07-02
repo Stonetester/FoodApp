@@ -1042,6 +1042,43 @@
 
                 <div class="social-grid">
                     <div class="social-card">
+                        <h2>Comfort &amp; accessibility</h2>
+                        <p class="settings-hint">These apply right away on this device.</p>
+                        <div class="pref-row">
+                            <label for="prefTextSize">Text size</label>
+                            <select id="prefTextSize" data-pref="mg_text_size">
+                                <option value="standard">Standard</option>
+                                <option value="large">Large</option>
+                                <option value="extra-large">Extra large</option>
+                            </select>
+                        </div>
+                        <label class="pref-row pref-row--toggle">
+                            <span>High contrast</span>
+                            <input type="checkbox" id="prefHighContrast" data-pref="mg_high_contrast">
+                        </label>
+                        <label class="pref-row pref-row--toggle">
+                            <span>Reduce motion</span>
+                            <input type="checkbox" id="prefReducedMotion" data-pref="mg_reduced_motion">
+                        </label>
+                        <label class="pref-row pref-row--toggle">
+                            <span>Larger buttons</span>
+                            <input type="checkbox" id="prefLargeButtons" data-pref="mg_large_buttons">
+                        </label>
+                    </div>
+
+                    <div class="social-card">
+                        <h2>Pantry scanning</h2>
+                        <div class="pref-row">
+                            <label for="prefScanMode">Scan mode</label>
+                            <select id="prefScanMode" data-pref="mg_scan_mode">
+                                <option value="continuous">Fast continuous scan</option>
+                                <option value="review">Review each item</option>
+                            </select>
+                        </div>
+                        <p class="settings-hint">Continuous keeps the camera running and adds items automatically. Review pauses after each barcode so you can set quantity and expiry.</p>
+                    </div>
+
+                    <div class="social-card">
                         <h2>General profile</h2>
                         <form id="settingsProfileForm">
                             <div class="form-group">

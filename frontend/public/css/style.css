@@ -6205,3 +6205,77 @@ a.teal-link:hover, .teal-link:hover {
     background: var(--color-surface-alt);
     font-family: var(--font-body);
 }
+
+/* ==================== DEVICE PREFERENCES (settings) ==================== */
+.settings-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin: 0.25rem 0 0.75rem;
+}
+
+.pref-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 48px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.pref-row:last-child {
+    border-bottom: none;
+}
+
+.pref-row select {
+    min-height: 44px;
+    border: 2px solid var(--color-border);
+    border-radius: 0.5rem;
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    padding: 0.35rem 0.5rem;
+}
+
+.pref-row--toggle {
+    cursor: pointer;
+}
+
+.pref-row input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    accent-color: var(--color-primary);
+}
+
+/* Larger text mode — bump the base rem so everything scales */
+body.pref-text-large { font-size: 18px; }
+body.pref-text-extra-large { font-size: 20px; }
+body.pref-text-large .bottom-nav__label,
+body.pref-text-extra-large .bottom-nav__label { font-size: 12px; }
+
+/* High contrast — darken text, strengthen borders */
+body.pref-high-contrast {
+    --color-text: #1A0D04;
+    --color-text-muted: #3D2A18;
+    --color-border: #8A6F4D;
+}
+
+/* Reduced motion (manual toggle, mirrors prefers-reduced-motion) */
+body.pref-reduced-motion *,
+body.pref-reduced-motion *::before,
+body.pref-reduced-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+}
+
+/* Larger buttons */
+body.pref-large-buttons .btn {
+    min-height: 52px;
+    font-size: 1.05em;
+    padding: 0.75rem 1.25rem;
+}
+
+body.pref-large-buttons .btn-icon {
+    min-width: 52px;
+    min-height: 52px;
+}
