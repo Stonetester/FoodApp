@@ -227,6 +227,12 @@ function openPantryModal(item = null) {
 }
 
 function closePantryModal() {
+    // If the pantry form was opened from the scanner (unknown barcode / manual
+    // add), jump straight back into scan mode.
+    if (window._mgResumeScanAfterManual) {
+        window._mgResumeScanAfterManual = false;
+        setTimeout(() => openScanner(), 150);
+    }
     document.getElementById('pantryModal').classList.remove('active');
 }
 

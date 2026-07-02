@@ -88,7 +88,10 @@ def lookup_barcode(barcode):
     """Lookup product information from barcode using OpenFoodFacts API"""
     try:
         url = f"https://world.openfoodfacts.org/api/v0/product/{barcode}.json"
-        response = requests.get(url, timeout=5)
+        # OpenFoodFacts blocks the default python-requests User-Agent (403);
+        # their API policy requires an identifying UA string.
+        headers = {'User-Agent': 'ModoGusto/1.0 (self-hosted pantry app)'}
+        response = requests.get(url, timeout=5, headers=headers)
         
         if response.status_code == 200:
             data = response.json()

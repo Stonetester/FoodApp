@@ -5776,3 +5776,112 @@ a.teal-link:hover, .teal-link:hover {
     font-size: var(--text-sm);
     min-height: 44px;
 }
+
+/* ==================== CONTINUOUS SCANNER ==================== */
+.scanner-stage {
+    position: relative;
+}
+
+.scan-success-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(74, 157, 143, 0.85);
+    border-radius: 0.5rem;
+    opacity: 0;
+    transition: opacity 250ms ease;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.scan-success-overlay.visible {
+    opacity: 1;
+}
+
+.scan-success-check {
+    font-size: 3rem;
+    color: #F5EDD8;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.scan-success-name {
+    color: #F5EDD8;
+    font-family: var(--font-heading);
+    font-size: var(--text-lg);
+    margin-top: 0.5rem;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.scan-success-sub {
+    color: #F5EDD8;
+    font-size: var(--text-sm);
+    opacity: 0.9;
+}
+
+.scanner-controls {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+}
+
+.scanner-controls .btn {
+    flex: 1;
+    min-height: 44px;
+    padding: 0.5rem 0.25rem;
+    font-size: var(--text-sm);
+}
+
+.scanner-controls .btn.active {
+    background: var(--color-primary);
+    color: var(--color-surface-alt);
+}
+
+.scanner-hint {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    margin: 0.5rem 0;
+}
+
+.recent-scans {
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.recent-scan-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--color-sage-light);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    font-size: var(--text-sm);
+}
+
+.recent-scan-check {
+    color: var(--color-success);
+    font-weight: bold;
+}
+
+.recent-scan-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recent-scan-qty {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}

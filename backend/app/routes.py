@@ -545,11 +545,83 @@ def scan_barcode():
         return jsonify({'error': 'Barcode required'}), 400
     
     product_info = lookup_barcode(barcode)
-    
+
     if product_info:
         return jsonify(product_info), 200
     else:
         return jsonify({'error': 'Product not found'}), 404
+
+
+def _normalize_scanned_nutrition(product_info):
+    """Prefer per-serving nutrition, fall back to per-100g (mirrors old frontend logic)."""
+    per_serving = product_info.get('nutritional_info_per_serving') or {}
+    per_100g = product_info.get('nutritional_info') or {}
+    use_per_serving = any(v is not None for v in per_serving.values())
+    src = per_serving if use_per_serving else per_100g
+    keys = ['energy_kcal', 'proteins', 'carbohydrates', 'fat', 'saturated_fat', 'trans_fat',
+            'cholesterol', 'sodium', 'fiber', 'sugars', 'added_sugars', 'vitamin_d',
+            'calcium', 'iron', 'potassium', 'salt']
+    normalized = {k: (src.get(k) if src.get(k) is not None else 0) for k in keys}
+    normalized['serving_size'] = product_info.get('serving_size') or per_100g.get('serving_size')
+    normalized['servings_per_item'] = product_info.get('servings_per_container') or 1
+    normalized['_source'] = 'per_serving' if use_per_serving else 'per_100g'
+    return normalized
+
+
+@api_bp.route('/pantry/scan-add', methods=['POST'])
+@login_required
+def scan_add_barcode():
+    """Continuous-scan intake: look up a barcode and add it to the pantry in one step.
+
+    If the user already has an item with this barcode, increment its quantity
+    instead of creating a duplicate.
+    """
+    data = request.get_json() or {}
+    barcode = (data.get('barcode') or '').strip()
+
+    if not barcode:
+        return jsonify({'error': 'Barcode required'}), 400
+
+    existing = PantryItem.query.filter_by(user_id=current_user.id, barcode=barcode).first()
+    if existing:
+        previous_quantity = existing.quantity or 0
+        existing.quantity = previous_quantity + 1
+        db.session.commit()
+        return jsonify({
+            'action': 'incremented',
+            'previous_quantity': previous_quantity,
+            'item': existing.to_dict(),
+        }), 200
+
+    product_info = lookup_barcode(barcode)
+    if not product_info:
+        return jsonify({'error': 'Product not found', 'barcode': barcode}), 404
+
+    name = product_info.get('name') or 'Unknown item'
+    item = PantryItem(
+        user_id=current_user.id,
+        item_name=name,
+        barcode=barcode,
+        quantity=1,
+        unit='item',
+        nutritional_info=json.dumps(_normalize_scanned_nutrition(product_info)),
+        category=auto_assign_category(name, product_info.get('categories_tags')),
+        serving_size=product_info.get('serving_size'),
+        servings_per_container=float(product_info['servings_per_container']) if product_info.get('servings_per_container') else None,
+        container_type=product_info.get('container_type'),
+    )
+    db.session.add(item)
+    db.session.commit()
+
+    return jsonify({
+        'action': 'added',
+        'item': item.to_dict(),
+        'product': {
+            'name': name,
+            'brand': product_info.get('brand'),
+            'image_url': product_info.get('image_url'),
+        },
+    }), 201
 
 @api_bp.route('/pantry/scan-nutrition-label', methods=['POST'])
 @login_required

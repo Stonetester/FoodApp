@@ -340,6 +340,12 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/js/mealplan.js | Shopping view (grouped list, pantry badges, localStorage check-off), repeat/clear week, mark-as-cooked | Meal planning redesign (plan Phase 3) | 2026-07-02 |
 | frontend/public/js/api.js | getShoppingList/repeatWeek/clearWeek/markMealCooked client methods | New meal plan endpoints | 2026-07-02 |
 | frontend/public/css/style.css | Shopping list view styles + week-actions row | Meal planning redesign (plan Phase 3) | 2026-07-02 |
+| backend/app/routes.py | `POST /api/pantry/scan-add`: lookup + add/increment in one call | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
+| backend/app/utils.py | OpenFoodFacts request now sends identifying User-Agent | OFF 403-blocks default python-requests UA — barcode lookup was broken | 2026-07-02 |
+| frontend/public/index.html | Scanner modal: success overlay, controls bar (Pause/Undo/Manual/Torch/Finish), recent-scans stack | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
+| frontend/public/js/scanner.js | Continuous scan mode (camera stays live, 2.5s per-barcode cooldown, auto add/increment, undo, green check overlay); review mode kept behind `mg_scan_mode` | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
+| frontend/public/js/pantry.js | closePantryModal returns to scanner after manual add from scan flow | Unknown-barcode manual entry loops back to scanning | 2026-07-02 |
+| frontend/public/css/style.css | Scanner overlay/controls/recent-scans styles | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
 
 ## Anti-Patterns
 | Pattern | Why rejected |

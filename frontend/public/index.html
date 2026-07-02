@@ -689,11 +689,26 @@
 
         <!-- Barcode Scanner Modal -->
         <div id="scannerModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content scanner-sheet">
                 <span class="close">&times;</span>
-                <h2>Scan Barcode</h2>
-                <div id="scannerContainer"></div>
+                <h2>Scan Items</h2>
+                <div class="scanner-stage">
+                    <div id="scannerContainer"></div>
+                    <div id="scanSuccessOverlay" class="scan-success-overlay" hidden>
+                        <div class="scan-success-check">✓</div>
+                        <p class="scan-success-name" id="scanSuccessName"></p>
+                        <p class="scan-success-sub" id="scanSuccessSub"></p>
+                    </div>
+                </div>
                 <div id="scannerResult"></div>
+                <div class="scanner-controls" id="scannerControls">
+                    <button class="btn btn-secondary" id="scanPauseBtn" type="button">Pause</button>
+                    <button class="btn btn-secondary" id="scanUndoBtn" type="button" disabled>Undo</button>
+                    <button class="btn btn-secondary" id="scanManualBtn" type="button">Manual</button>
+                    <button class="btn btn-secondary" id="scanTorchBtn" type="button">💡</button>
+                    <button class="btn btn-primary" id="scanFinishBtn" type="button">Finish</button>
+                </div>
+                <div id="recentScans" class="recent-scans" aria-live="polite"></div>
             </div>
         </div>
 
