@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
 from app.account_profile import get_account_profile
 from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship, RecipeReview, UserStore, AisleOverride
-from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image, extract_text_from_images, auto_assign_category
+from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image, extract_text_from_images, auto_assign_category, normalize_image_url
 from app.nutrition import lookup_ingredient_nutrition, calculate_recipe_nutrition, parse_nutrition_label_text
 from datetime import datetime, date, timedelta
 from collections import Counter
@@ -73,27 +73,6 @@ def ensure_recipe_image_url(recipe):
     return True
 
 
-def normalize_image_url(image_url):
-    if not image_url:
-        return None
-    if isinstance(image_url, str) and image_url.startswith('data:image'):
-        return save_data_url_image(image_url)
-    return image_url
-
-def save_data_url_image(data_url):
-    match = re.match(r'^data:image/([a-zA-Z0-9.+-]+);base64,(.+)$', data_url)
-    if not match:
-        raise ValueError('Invalid image data')
-    extension = match.group(1).lower()
-    if extension == 'jpeg':
-        extension = 'jpg'
-    image_data = base64.b64decode(match.group(2))
-    filename = f"{uuid.uuid4().hex}.{extension}"
-    file_path = os.path.join(UPLOADS_DIR, filename)
-    with open(file_path, 'wb') as file_handle:
-        file_handle.write(image_data)
-    return f"/uploads/recipes/{filename}"
-
 # Catch-all route for frontend routing (SPA)
 @main_bp.route('/<path:path>')
 def serve_frontend(path):
@@ -102,6 +81,15 @@ def serve_frontend(path):
         return jsonify({'error': 'Not found'}), 404
     # For SPA routing, serve index.html
     return send_file(os.path.join(FRONTEND_DIR, 'index.html'))
+
+@api_bp.route('/health', methods=['GET'])
+def api_health():
+    """Unauthenticated health check for reverse proxies / monitors."""
+    try:
+        db.session.execute(db.text('SELECT 1'))
+        return jsonify({'status': 'ok'}), 200
+    except Exception:
+        return jsonify({'status': 'error', 'detail': 'database'}), 503
 
 # Recipe endpoints
 @api_bp.route('/recipes', methods=['GET'])
@@ -228,11 +216,12 @@ def create_recipe():
         return jsonify(recipe.to_dict()), 201
     except ValueError as e:
         db.session.rollback()
-        return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
+        print(f"Invalid data format: {e}")
+        return jsonify({'error': 'Invalid data format'}), 400
     except Exception as e:
         db.session.rollback()
         print(f"Error creating recipe: {e}")
-        return jsonify({'error': f'Failed to create recipe: {str(e)}'}), 500
+        return jsonify({'error': 'Failed to create recipe'}), 500
 
 @api_bp.route('/recipes/<int:recipe_id>', methods=['PUT'])
 @login_required
@@ -299,13 +288,14 @@ def update_recipe(recipe_id):
         return jsonify(recipe.to_dict()), 200
     except ValueError as e:
         db.session.rollback()
-        return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
+        print(f"Invalid data format: {e}")
+        return jsonify({'error': 'Invalid data format'}), 400
     except Exception as e:
         db.session.rollback()
         print(f"Error updating recipe: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Failed to update recipe: {str(e)}'}), 500
+        return jsonify({'error': 'Failed to update recipe'}), 500
 
 @api_bp.route('/recipes/<int:recipe_id>', methods=['DELETE'])
 @login_required
@@ -379,12 +369,13 @@ def import_recipe_from_url():
         return jsonify(recipe_data), 200
     except requests.exceptions.RequestException as e:
         print(f"Request exception: {e}")
-        return jsonify({'error': f'Failed to fetch URL: {str(e)}. The website may be blocking requests or the URL may be invalid.'}), 500
+        print(f"Error fetching recipe URL: {e}")
+        return jsonify({'error': 'Could not fetch that URL. The website may be blocking requests or the URL may be invalid.'}), 500
     except Exception as e:
         print(f"Error in import_recipe_from_url: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Error extracting recipe: {str(e)}'}), 500
+        return jsonify({'error': 'Could not extract a recipe from that page'}), 500
 
 @api_bp.route('/recipes/import-image', methods=['POST'])
 @login_required
@@ -443,7 +434,7 @@ def import_recipe_from_image():
             'prep_time': None,
             'cook_time': None,
             'servings': None,
-            '_error': f'Error processing image: {str(e)}'
+            '_error': 'Error processing image'
         }), 200  # Return 200 so frontend can show the error message
 
 # Pantry endpoints
@@ -685,7 +676,7 @@ def scan_nutrition_label():
         print(f"Error in scan_nutrition_label: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Error processing nutrition label: {str(e)}'}), 500
+        return jsonify({'error': 'Could not process the nutrition label'}), 500
 
 # Meal planning endpoints
 @api_bp.route('/mealplan', methods=['GET'])
@@ -1889,7 +1880,8 @@ def admin_broadcast():
         send_maintenance_broadcast(subject, message, users)
         return jsonify({'message': f'Broadcast sent to {len(users)} users'}), 200
     except Exception as e:
-        return jsonify({'error': f'Broadcast failed: {str(e)}'}), 500
+        print(f"Broadcast failed: {e}")
+        return jsonify({'error': 'Broadcast failed'}), 500
 
 
 @api_bp.route('/test-email', methods=['POST'])
@@ -1901,7 +1893,8 @@ def test_email():
         send_test_email(current_user)
         return jsonify({'message': f'Test email sent to {current_user.email}'}), 200
     except Exception as e:
-        return jsonify({'error': f'Failed to send test email: {str(e)}'}), 500
+        print(f"Test email failed: {e}")
+        return jsonify({'error': 'Failed to send test email'}), 500
 
 
 # ==================== ADMIN ====================
@@ -1960,7 +1953,8 @@ def admin_delete_user(user_id):
         return jsonify({'message': f'User {user.username} deleted'}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': f'Failed to delete user: {str(e)}'}), 500
+        print(f"Failed to delete user: {e}")
+        return jsonify({'error': 'Failed to delete user'}), 500
 
 @api_bp.route('/admin/users/<int:user_id>/toggle-admin', methods=['POST'])
 @login_required

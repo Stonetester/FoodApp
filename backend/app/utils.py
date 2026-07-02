@@ -465,13 +465,59 @@ def _estimate_nutrition_from_ingredients(ingredients):
     return totals
 
 
+def _url_targets_private_network(url):
+    """True if the URL's host resolves to a private/loopback/link-local/reserved IP.
+
+    SSRF guard: user-supplied import URLs must never let the server reach
+    LAN services (Proxmox, Home Assistant, localhost, cloud metadata, ...).
+    """
+    import ipaddress
+    import socket
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url)
+    if parsed.scheme not in ('http', 'https') or not parsed.hostname:
+        return True
+    try:
+        infos = socket.getaddrinfo(parsed.hostname, parsed.port or (443 if parsed.scheme == 'https' else 80))
+    except socket.gaierror:
+        return True
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            return True
+    return False
+
+
+def safe_fetch_url(url, headers=None, timeout=10, max_redirects=3):
+    """requests.get that validates every hop against private networks.
+
+    allow_redirects=False + manual following, so a public host can't 302 the
+    server into the LAN.
+    """
+    from urllib.parse import urljoin
+
+    for _ in range(max_redirects + 1):
+        if _url_targets_private_network(url):
+            raise ValueError('URL points to a private or unresolvable address')
+        response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=False)
+        if response.status_code in (301, 302, 303, 307, 308):
+            location = response.headers.get('Location')
+            if not location:
+                return response
+            url = urljoin(url, location)
+            continue
+        return response
+    raise ValueError('Too many redirects')
+
+
 def extract_recipe_from_url(url):
     """Extract recipe information from a URL with deep parsing."""
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get(url, headers=headers, timeout=10)
+        response = safe_fetch_url(url, headers=headers, timeout=10)
         response.raise_for_status()
 
         # Check if response is HTML
@@ -1502,15 +1548,32 @@ def auto_assign_category(item_name, off_categories_tags=None):
 
 
 def save_data_url_image(data_url):
-    """Save a base64 data URL image to uploads and return the path."""
+    """Save a base64 data URL image to uploads and return the path.
+
+    The bytes are validated with Pillow and the extension is derived from the
+    ACTUAL image format — the client-supplied data:image/<ext> label is not
+    trusted (it could claim image/png for arbitrary content).
+    """
+    import io
     import uuid
+    from PIL import Image
+
     match = re.match(r'^data:image/([a-zA-Z0-9.+-]+);base64,(.+)$', data_url)
     if not match:
         raise ValueError('Invalid image data')
-    extension = match.group(1).lower()
-    if extension == 'jpeg':
-        extension = 'jpg'
     image_data = base64.b64decode(match.group(2))
+
+    try:
+        probe = Image.open(io.BytesIO(image_data))
+        probe.verify()  # raises on corrupt/non-image bytes
+        detected_format = (probe.format or '').lower()
+    except Exception:
+        raise ValueError('Uploaded data is not a valid image')
+
+    format_ext = {'jpeg': 'jpg', 'png': 'png', 'gif': 'gif', 'webp': 'webp'}
+    extension = format_ext.get(detected_format)
+    if not extension:
+        raise ValueError(f'Unsupported image format')
     # Determine uploads dir
     backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     frontend_dir = os.path.join(os.path.dirname(backend_dir), 'frontend', 'public')
@@ -1524,9 +1587,24 @@ def save_data_url_image(data_url):
 
 
 def normalize_image_url(image_url):
-    """Normalize image URL - convert data URLs to saved files."""
+    """Normalize image URL: convert data URLs to saved files, reject unsafe values.
+
+    Stored values are rendered into <img src="..."> HTML strings on the
+    frontend, so quotes/angle brackets/control chars must never be stored
+    (attribute-breakout / stored XSS).
+    """
     if not image_url:
         return None
-    if isinstance(image_url, str) and image_url.startswith('data:image'):
+    if not isinstance(image_url, str):
+        return None
+    if image_url.startswith('data:image'):
         return save_data_url_image(image_url)
-    return image_url
+
+    url = image_url.strip()
+    if len(url) > 500:
+        return None
+    if any(c in url for c in '"\'<> ') or any(ord(c) < 33 for c in url):
+        return None
+    if url.startswith('/uploads/') or url.startswith('http://') or url.startswith('https://'):
+        return url
+    return None

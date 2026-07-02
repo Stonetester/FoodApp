@@ -358,6 +358,12 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/js/mealplan.js | Shopping view List/Route toggle; Store Route beta: store picker + add-store, numbered stops timeline in walk order, collapse-on-complete, source chips, inline Fix-aisle corrections | Beta store route (plan Phase 7) | 2026-07-02 |
 | frontend/public/js/api.js | getStores/addStore/locateItems/saveAisleCorrection | Grocery endpoints | 2026-07-02 |
 | frontend/public/css/style.css | Route stops timeline, aisle source chips, beta chip, add-store form styles | Beta store route (plan Phase 7) | 2026-07-02 |
+| backend/app/__init__.py | CORS credentialed-wildcard removed (opt-in via CORS_ORIGINS), security headers (CSP etc.), flask-limiter init, prod SECRET_KEY guard | Security hardening (plan Phase 8 + kanban audit) | 2026-07-02 |
+| backend/app/auth.py | Rate limits on login/register/forgot/reset; removed 'fallback-key' reset-token signer | Security hardening | 2026-07-02 |
+| backend/app/config.py | SESSION_COOKIE_SECURE defaults ON in production | Security hardening | 2026-07-02 |
+| backend/app/utils.py | SSRF guard (safe_fetch_url, private-IP + redirect validation); Pillow byte validation for uploads; image_url sanitization | Security hardening | 2026-07-02 |
+| backend/app/routes.py | Exception strings no longer leaked to clients; /api/health; removed duplicate unvalidated image helpers | Security hardening | 2026-07-02 |
+| backend/.env.example | NEW — placeholder env documentation | Safe self-hosting | 2026-07-02 |
 
 ## Anti-Patterns
 | Pattern | Why rejected |
