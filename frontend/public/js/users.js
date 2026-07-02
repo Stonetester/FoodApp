@@ -519,6 +519,9 @@ function showRecipeDetailModal(recipe, isOtherUser) {
             ` : ''}
 
             <div class="recipe-actions">
+                <button class="btn btn-primary" onclick="addRecipeToPlanFromDetail(${recipe.id})">
+                    📅 Add to Plan
+                </button>
                 <button class="btn btn-secondary" onclick="openSimilarMeals(${recipe.id})">
                     ✨ Meals Like This
                 </button>
@@ -717,7 +720,16 @@ async function loadReviews(recipeId) {
     }
 }
 
+async function addRecipeToPlanFromDetail(recipeId) {
+    document.getElementById('recipeDetailModal')?.classList.remove('active');
+    // Pre-filled meal plan modal: today + dinner; user adjusts and saves
+    await openMealPlanModal(null, new Date().toISOString().split('T')[0], 'dinner');
+    const select = document.getElementById('mealPlanRecipe');
+    if (select) select.value = recipeId;
+}
+
 // Export functions for global access
+window.addRecipeToPlanFromDetail = addRecipeToPlanFromDetail;
 window.searchUsers = searchUsers;
 window.viewUserRecipes = viewUserRecipes;
 window.viewRecipeDetail = viewRecipeDetail;

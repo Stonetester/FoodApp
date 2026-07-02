@@ -368,6 +368,11 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/js/settings.js | Device prefs in localStorage applied as body classes; first-run settings tip | Accessibility modes (plan Phase 9) | 2026-07-02 |
 | frontend/public/css/style.css | pref-text-large/extra-large, pref-high-contrast, pref-reduced-motion, pref-large-buttons | Accessibility modes (plan Phase 9) | 2026-07-02 |
 | frontend/public/js/main.js | showApp calls maybeShowFirstRunTip | First-run pointer | 2026-07-02 |
+| frontend/public/js/users.js | "📅 Add to Plan" button on recipe detail (pre-fills meal plan modal) | Quick action (plan Phase 2) | 2026-07-02 |
+| backend/tests/ | NEW — conftest + 14 focused tests: auth gating on all new endpoints, AI disabled/invalid-mode, pantry CRUD+scan-add increment, meal plan CRUD+range+dupe-safe repeat, ownership checks, aisle correction precedence | Plan Phase 10 QA | 2026-07-02 |
+| backend/app/__init__.py | CSP font-src allows `data:` (FullCalendar inline icon font was blocked) | Browser QA regression fix | 2026-07-02 |
+| frontend/public/css/style.css | `.route-fix-row[hidden]` display:none (flex rule was overriding `hidden`) | Browser QA: all Fix editors rendered expanded | 2026-07-02 |
+| frontend/public/js/settings.js | First-run tip suppressed while tutorial modal is open | Browser QA: tip stacked on welcome tutorial | 2026-07-02 |
 
 ## Anti-Patterns
 | Pattern | Why rejected |

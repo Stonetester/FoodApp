@@ -6312,3 +6312,8 @@ body.pref-large-buttons .btn-icon {
 .pantry-group--expiring .pantry-group-title {
     color: var(--color-error);
 }
+
+/* display:flex above beats the hidden attribute — restore it */
+.route-fix-row[hidden] {
+    display: none;
+}

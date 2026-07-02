@@ -46,6 +46,8 @@ function maybeShowFirstRunTip() {
     if (localStorage.getItem('mg_first_run_done')) return;
     localStorage.setItem('mg_first_run_done', '1');
     setTimeout(() => {
+        // Don't stack the tip on top of the welcome tutorial
+        if (document.getElementById('tutorialModal')?.classList.contains('active')) return;
         if (window.showToast) window.showToast('Tip: adjust text size, contrast, and scan mode in Settings ⚙️', 'info');
     }, 1500);
 }
