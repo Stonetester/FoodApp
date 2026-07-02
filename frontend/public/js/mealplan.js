@@ -67,6 +67,162 @@ function setupMealPlanListeners() {
         });
     }
 
+    document.getElementById('repeatWeekBtn')?.addEventListener('click', repeatLastWeek);
+    document.getElementById('clearWeekBtn')?.addEventListener('click', clearCurrentWeek);
+}
+
+function currentWeekRange() {
+    const dates = getWeekDates(sectionFocusDate);
+    return {
+        start: dates[0].toISOString().split('T')[0],
+        end: dates[6].toISOString().split('T')[0],
+    };
+}
+
+async function repeatLastWeek() {
+    const { start } = currentWeekRange();
+    const sourceStart = new Date(start + 'T00:00:00');
+    sourceStart.setDate(sourceStart.getDate() - 7);
+    try {
+        const result = await api.repeatWeek(sourceStart.toISOString().split('T')[0], start);
+        if (result.source_meals === 0) {
+            window.showToast('Last week has no meals to repeat', 'info');
+        } else {
+            window.showToast(`Copied ${result.created} meal${result.created !== 1 ? 's' : ''} from last week`);
+        }
+        await loadMealPlan();
+    } catch (error) {
+        window.showToast('Failed to repeat week: ' + error.message, 'error');
+    }
+}
+
+function clearCurrentWeek() {
+    const { start, end } = currentWeekRange();
+    window.showConfirm('Remove all meals planned this week?', async () => {
+        try {
+            const result = await api.clearWeek(start, end);
+            window.showToast(`Removed ${result.deleted} meal${result.deleted !== 1 ? 's' : ''}`);
+            await loadMealPlan();
+        } catch (error) {
+            window.showToast('Failed to clear week: ' + error.message, 'error');
+        }
+    }, 'Clear Week');
+}
+
+async function markMealCooked(planId) {
+    try {
+        await api.markMealCooked(planId);
+        window.showToast('Logged to meal history');
+        // Refresh day detail if open
+        const modal = document.getElementById('dayDetailModal');
+        if (modal && modal.classList.contains('active')) {
+            const dateStr = document.getElementById('dayMealSlots')?.dataset.date;
+            if (dateStr) showDayDetail(dateStr);
+        }
+    } catch (error) {
+        window.showToast('Failed to log meal: ' + error.message, 'error');
+    }
+}
+
+// ---- Shopping view ----
+
+function shoppingCheckKey(dateRange) {
+    return `mg_shopping_checked_${dateRange.start}`;
+}
+
+function getCheckedShoppingItems(dateRange) {
+    try {
+        return new Set(JSON.parse(localStorage.getItem(shoppingCheckKey(dateRange)) || '[]'));
+    } catch (_) {
+        return new Set();
+    }
+}
+
+function saveCheckedShoppingItems(dateRange, checked) {
+    try {
+        localStorage.setItem(shoppingCheckKey(dateRange), JSON.stringify([...checked]));
+    } catch (_) {}
+}
+
+async function renderShoppingView() {
+    const container = document.getElementById('shoppingListView');
+    if (!container) return;
+
+    const range = currentWeekRange();
+    const titleEl = document.getElementById('calendarMonthTitle');
+    if (titleEl) {
+        const fmt = (s) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        titleEl.textContent = `${fmt(range.start)} – ${fmt(range.end)}`;
+    }
+
+    container.style.display = 'block';
+    container.innerHTML = '<div class="shopping-loading">Building your shopping list…</div>';
+
+    let data;
+    try {
+        data = await api.getShoppingList(range.start, range.end);
+    } catch (error) {
+        container.innerHTML = '<p class="shopping-empty">Could not build the shopping list. Please try again.</p>';
+        return;
+    }
+
+    if (!data.items.length) {
+        container.innerHTML = `
+            <div class="shopping-empty">
+                <p>No meals planned this week yet.</p>
+                <p class="shopping-empty-hint">Add meals to your plan and the shopping list builds itself.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const checked = getCheckedShoppingItems(range);
+
+    // Group by category
+    const byCategory = {};
+    data.items.forEach(item => {
+        (byCategory[item.category] = byCategory[item.category] || []).push(item);
+    });
+
+    const needCount = data.items.filter(i => !i.in_pantry).length;
+    let html = `
+        <div class="shopping-summary">
+            <span><strong>${data.meal_count}</strong> meals planned</span>
+            <span><strong>${needCount}</strong> items to buy</span>
+            <span><strong>${data.items.length - needCount}</strong> already in pantry</span>
+        </div>
+    `;
+
+    Object.keys(byCategory).sort().forEach(category => {
+        html += `<div class="shopping-category"><h3>${category}</h3>`;
+        byCategory[category].forEach(item => {
+            const qty = item.quantity
+                ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}${item.has_unknown_quantity ? ' +' : ''}`
+                : '';
+            const id = `shop_${item.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+            const isChecked = checked.has(item.name.toLowerCase());
+            html += `
+                <label class="shopping-item${isChecked ? ' shopping-item--checked' : ''}${item.in_pantry ? ' shopping-item--have' : ''}" for="${id}">
+                    <input type="checkbox" id="${id}" data-name="${item.name.toLowerCase()}" ${isChecked ? 'checked' : ''}>
+                    <span class="shopping-item-name">${item.name}</span>
+                    ${qty ? `<span class="shopping-item-qty">${qty}</span>` : ''}
+                    ${item.in_pantry ? '<span class="shopping-item-badge">In pantry</span>' : ''}
+                </label>
+            `;
+        });
+        html += '</div>';
+    });
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('input[type="checkbox"]').forEach(box => {
+        box.addEventListener('change', () => {
+            const name = box.dataset.name;
+            if (box.checked) checked.add(name); else checked.delete(name);
+            saveCheckedShoppingItems(range, checked);
+            box.closest('.shopping-item').classList.toggle('shopping-item--checked', box.checked);
+        });
+    });
 }
 
 
@@ -422,6 +578,7 @@ async function showDayDetail(dateStr) {
                                     ${buildMealServingMeta(meal.recipe)}
                                 </div>
                                 <div class="day-detail-meal-actions">
+                                    <button class="btn-icon" onclick="markMealCooked(${meal.id})" title="Mark as cooked">✅</button>
                                     <button class="btn-icon" onclick="editMealPlanFromDay(${meal.id})" title="Edit">✏️</button>
                                     <button class="btn-icon" onclick="deleteMealPlanFromDay(${meal.id})" title="Delete">🗑️</button>
                                 </div>
@@ -496,14 +653,25 @@ window.quickAddRecipe = quickAddRecipe;
 window.editMealPlanFromDay = editMealPlanFromDay;
 window.deleteMealPlanFromDay = deleteMealPlanFromDay;
 window.showDayDetail = showDayDetail;
+window.markMealCooked = markMealCooked;
 
 function handleViewChange(viewName) {
     currentCalendarView = viewName;
     const sectionsEl = document.getElementById('mealPlanSections');
     const calendarEl = document.getElementById('mealPlanCalendar');
     const monthTitleEl = document.getElementById('calendarMonthTitle');
+    const shoppingEl = document.getElementById('shoppingListView');
+    const weekActionsEl = document.getElementById('weekActions');
 
-    if (viewName === 'dayGridMonth') {
+    if (shoppingEl && viewName !== 'shopping') shoppingEl.style.display = 'none';
+    if (weekActionsEl) weekActionsEl.style.display = viewName === 'mealWeek' ? '' : 'none';
+
+    if (viewName === 'shopping') {
+        if (sectionsEl) sectionsEl.style.display = 'none';
+        if (calendarEl) { calendarEl.style.display = 'none'; calendarEl.innerHTML = ''; }
+        if (monthTitleEl) monthTitleEl.style.display = '';
+        renderShoppingView();
+    } else if (viewName === 'dayGridMonth') {
         if (sectionsEl) sectionsEl.style.display = 'none';
         if (monthTitleEl) monthTitleEl.style.display = '';
         renderMonthView();
@@ -524,6 +692,9 @@ function handleToday() {
     if (currentCalendarView === 'dayGridMonth') {
         monthViewDate = new Date();
         renderMonthView();
+    } else if (currentCalendarView === 'shopping') {
+        sectionFocusDate = new Date();
+        renderShoppingView();
     } else {
         sectionFocusDate = new Date();
         renderMealSections(currentCalendarView);
@@ -534,6 +705,9 @@ function handlePrev() {
     if (currentCalendarView === 'dayGridMonth') {
         monthViewDate = new Date(monthViewDate.getFullYear(), monthViewDate.getMonth() - 1, 1);
         renderMonthView();
+    } else if (currentCalendarView === 'shopping') {
+        sectionFocusDate.setDate(sectionFocusDate.getDate() - 7);
+        renderShoppingView();
     } else if (currentCalendarView === 'mealWeek') {
         sectionFocusDate.setDate(sectionFocusDate.getDate() - 7);
         renderMealSections(currentCalendarView);
@@ -547,6 +721,9 @@ function handleNext() {
     if (currentCalendarView === 'dayGridMonth') {
         monthViewDate = new Date(monthViewDate.getFullYear(), monthViewDate.getMonth() + 1, 1);
         renderMonthView();
+    } else if (currentCalendarView === 'shopping') {
+        sectionFocusDate.setDate(sectionFocusDate.getDate() + 7);
+        renderShoppingView();
     } else if (currentCalendarView === 'mealWeek') {
         sectionFocusDate.setDate(sectionFocusDate.getDate() + 7);
         renderMealSections(currentCalendarView);

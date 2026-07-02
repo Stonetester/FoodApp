@@ -335,6 +335,11 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/js/users.js | All `alert`/`confirm` (share, copy recipe, reviews) → `showToast`/`showConfirm` | No raw browser dialogs | 2026-07-02 |
 | frontend/public/js/pantry.js, mealplan.js, recipes.js, social.js | Removed raw-`confirm()` fallback branches | main.js always loads first; fallback was dead + violated acceptance bar | 2026-07-02 |
 | frontend/public/js/main.js | `showConfirm`: Escape-to-close + initial focus on Cancel | Keyboard accessibility for dialogs | 2026-07-02 |
+| backend/app/routes.py | Added `/mealplan/shopping-list`, `/repeat-week`, `/clear-week`, `/<id>/cooked` endpoints | Meal planning redesign (plan Phase 3) | 2026-07-02 |
+| frontend/public/index.html | Meal plan view switcher: Week/Month/Day/Shopping + week actions row + shopping container | Shopping Prep view + Repeat/Clear week | 2026-07-02 |
+| frontend/public/js/mealplan.js | Shopping view (grouped list, pantry badges, localStorage check-off), repeat/clear week, mark-as-cooked | Meal planning redesign (plan Phase 3) | 2026-07-02 |
+| frontend/public/js/api.js | getShoppingList/repeatWeek/clearWeek/markMealCooked client methods | New meal plan endpoints | 2026-07-02 |
+| frontend/public/css/style.css | Shopping list view styles + week-actions row | Meal planning redesign (plan Phase 3) | 2026-07-02 |
 
 ## Anti-Patterns
 | Pattern | Why rejected |

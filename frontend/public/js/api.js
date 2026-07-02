@@ -247,6 +247,33 @@ class ApiService {
         });
     }
 
+    async getShoppingList(startDate, endDate) {
+        return this.request('/api/mealplan/shopping-list', {
+            method: 'POST',
+            body: JSON.stringify({ start_date: startDate, end_date: endDate }),
+        });
+    }
+
+    async repeatWeek(sourceStart, targetStart) {
+        return this.request('/api/mealplan/repeat-week', {
+            method: 'POST',
+            body: JSON.stringify({ source_start: sourceStart, target_start: targetStart }),
+        });
+    }
+
+    async clearWeek(startDate, endDate) {
+        return this.request('/api/mealplan/clear-week', {
+            method: 'POST',
+            body: JSON.stringify({ start_date: startDate, end_date: endDate }),
+        });
+    }
+
+    async markMealCooked(id) {
+        return this.request(`/api/mealplan/${id}/cooked`, {
+            method: 'POST',
+        });
+    }
+
     // Meal History
     async getMealHistory(startDate, endDate) {
         const params = new URLSearchParams();

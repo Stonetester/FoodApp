@@ -726,20 +726,26 @@
                 </div>
                 <div class="calendar-controls">
                     <div class="view-switcher" id="calendarViewSwitcher">
-                        <button class="view-btn" data-view="dayGridMonth">Month</button>
                         <button class="view-btn" data-view="mealWeek">Week</button>
+                        <button class="view-btn" data-view="dayGridMonth">Month</button>
                         <button class="view-btn" data-view="mealDay">Day</button>
+                        <button class="view-btn" data-view="shopping">Shopping</button>
                     </div>
                     <div class="calendar-nav">
-                        <button class="btn btn-outline" id="calendarPrevBtn"><i data-lucide="chevron-left"></i></button>
+                        <button class="btn btn-outline" id="calendarPrevBtn" aria-label="Previous"><i data-lucide="chevron-left"></i></button>
                         <span id="calendarMonthTitle" class="calendar-month-title"></span>
                         <button class="btn btn-outline" id="calendarTodayBtn">Today</button>
-                        <button class="btn btn-outline" id="calendarNextBtn"><i data-lucide="chevron-right"></i></button>
+                        <button class="btn btn-outline" id="calendarNextBtn" aria-label="Next"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                    <div class="week-actions" id="weekActions">
+                        <button class="btn btn-outline" id="repeatWeekBtn">Repeat Last Week</button>
+                        <button class="btn btn-outline" id="clearWeekBtn">Clear Week</button>
                     </div>
                 </div>
             </div>
             <div id="mealPlanCalendar"></div>
             <div id="mealPlanSections" class="meal-plan-sections" aria-live="polite"></div>
+            <div id="shoppingListView" class="shopping-list-view" aria-live="polite" style="display:none"></div>
         </div>
 
         <!-- Meal Plan Modal -->

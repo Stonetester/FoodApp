@@ -6,7 +6,7 @@ from app.account_profile import get_account_profile
 from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship, RecipeReview
 from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image, extract_text_from_images, auto_assign_category
 from app.nutrition import lookup_ingredient_nutrition, calculate_recipe_nutrition, parse_nutrition_label_text
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from collections import Counter
 import json
 import os
@@ -695,8 +695,174 @@ def delete_meal_plan(plan_id):
     
     db.session.delete(plan)
     db.session.commit()
-    
+
     return jsonify({'message': 'Meal plan deleted'}), 200
+
+
+def _parse_iso_date(value, field):
+    try:
+        return datetime.strptime(value, '%Y-%m-%d').date()
+    except (TypeError, ValueError):
+        raise ValueError(f'{field} must be a YYYY-MM-DD date')
+
+
+@api_bp.route('/mealplan/shopping-list', methods=['POST'])
+@login_required
+def meal_plan_shopping_list():
+    """Aggregate ingredients for all planned meals in a date range, grouped by category."""
+    data = request.get_json() or {}
+    try:
+        start = _parse_iso_date(data.get('start_date'), 'start_date')
+        end = _parse_iso_date(data.get('end_date'), 'end_date')
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+    plans = MealPlan.query.filter(
+        MealPlan.user_id == current_user.id,
+        MealPlan.planned_date >= start,
+        MealPlan.planned_date <= end
+    ).all()
+
+    # Pantry index: lowercase name -> item (also singular form for loose plural match)
+    pantry = {}
+    for item in PantryItem.query.filter_by(user_id=current_user.id).all():
+        key = (item.item_name or '').strip().lower()
+        if key:
+            pantry[key] = item
+            if key.endswith('s'):
+                pantry.setdefault(key[:-1], item)
+
+    aggregated = {}
+    meal_count = 0
+    for plan in plans:
+        if not plan.recipe:
+            continue
+        meal_count += 1
+        for ing in plan.recipe.ingredients:
+            name = (ing.ingredient_name or '').strip()
+            if not name or name == '__nutrition__':
+                continue
+            key = (name.lower(), (ing.unit or '').strip().lower())
+            entry = aggregated.setdefault(key, {
+                'name': name,
+                'unit': ing.unit,
+                'quantity': 0,
+                'has_unknown_quantity': False,
+                'meals': 0,
+                'category': auto_assign_category(name),
+            })
+            entry['meals'] += 1
+            if ing.quantity is not None:
+                entry['quantity'] += ing.quantity
+            else:
+                entry['has_unknown_quantity'] = True
+
+    items = []
+    for (name_key, _unit), entry in aggregated.items():
+        pantry_item = pantry.get(name_key) or (pantry.get(name_key[:-1]) if name_key.endswith('s') else None)
+        items.append({
+            'name': entry['name'],
+            'quantity': round(entry['quantity'], 2) if entry['quantity'] else None,
+            'unit': entry['unit'],
+            'has_unknown_quantity': entry['has_unknown_quantity'],
+            'meals': entry['meals'],
+            'category': entry['category'],
+            'in_pantry': pantry_item is not None,
+            'pantry_quantity': pantry_item.quantity if pantry_item else None,
+            'pantry_unit': pantry_item.unit if pantry_item else None,
+        })
+    items.sort(key=lambda i: (i['category'], i['name'].lower()))
+
+    return jsonify({
+        'start_date': start.isoformat(),
+        'end_date': end.isoformat(),
+        'meal_count': meal_count,
+        'items': items,
+    }), 200
+
+
+@api_bp.route('/mealplan/repeat-week', methods=['POST'])
+@login_required
+def repeat_meal_plan_week():
+    """Copy all meals from the week starting at source_start to the week starting at target_start."""
+    data = request.get_json() or {}
+    try:
+        source_start = _parse_iso_date(data.get('source_start'), 'source_start')
+        target_start = _parse_iso_date(data.get('target_start'), 'target_start')
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+    offset = target_start - source_start
+    source_plans = MealPlan.query.filter(
+        MealPlan.user_id == current_user.id,
+        MealPlan.planned_date >= source_start,
+        MealPlan.planned_date <= source_start + timedelta(days=6)
+    ).all()
+
+    created = 0
+    for plan in source_plans:
+        new_date = plan.planned_date + offset
+        exists = MealPlan.query.filter_by(
+            user_id=current_user.id,
+            recipe_id=plan.recipe_id,
+            planned_date=new_date,
+            meal_type=plan.meal_type
+        ).first()
+        if exists:
+            continue
+        db.session.add(MealPlan(
+            user_id=current_user.id,
+            recipe_id=plan.recipe_id,
+            planned_date=new_date,
+            meal_type=plan.meal_type,
+            notes=plan.notes
+        ))
+        created += 1
+    db.session.commit()
+
+    return jsonify({'created': created, 'source_meals': len(source_plans)}), 200
+
+
+@api_bp.route('/mealplan/clear-week', methods=['POST'])
+@login_required
+def clear_meal_plan_week():
+    """Delete all meals in a date range."""
+    data = request.get_json() or {}
+    try:
+        start = _parse_iso_date(data.get('start_date'), 'start_date')
+        end = _parse_iso_date(data.get('end_date'), 'end_date')
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+    deleted = MealPlan.query.filter(
+        MealPlan.user_id == current_user.id,
+        MealPlan.planned_date >= start,
+        MealPlan.planned_date <= end
+    ).delete(synchronize_session=False)
+    db.session.commit()
+
+    return jsonify({'deleted': deleted}), 200
+
+
+@api_bp.route('/mealplan/<int:plan_id>/cooked', methods=['POST'])
+@login_required
+def mark_meal_cooked(plan_id):
+    """Log a planned meal to meal history (mark as cooked)."""
+    plan = MealPlan.query.filter_by(id=plan_id, user_id=current_user.id).first()
+    if not plan:
+        return jsonify({'error': 'Meal plan not found'}), 404
+
+    entry = MealHistory(
+        user_id=current_user.id,
+        recipe_id=plan.recipe_id,
+        consumed_date=plan.planned_date,
+        meal_type=plan.meal_type,
+        notes=plan.notes
+    )
+    db.session.add(entry)
+    db.session.commit()
+
+    return jsonify(entry.to_dict()), 201
 
 # Meal history endpoints
 @api_bp.route('/history', methods=['GET'])
