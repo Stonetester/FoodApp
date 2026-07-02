@@ -130,11 +130,16 @@ function updateTagFilters() {
 }
 
 async function loadRecipes() {
+    const container = document.getElementById('recipesList');
+    if (container && !container.children.length) {
+        container.innerHTML = '<div class="card-skeleton"></div><div class="card-skeleton"></div><div class="card-skeleton"></div>';
+    }
     try {
         recipes = await api.getRecipes(currentFilters);
         displayRecipes();
     } catch (error) {
         console.error('Error loading recipes:', error);
+        if (container) container.innerHTML = '';
         if (window.showToast) window.showToast('Failed to load recipes', 'error');
     }
 }
