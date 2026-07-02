@@ -144,6 +144,11 @@ function saveCheckedShoppingItems(dateRange, checked) {
     } catch (_) {}
 }
 
+let shoppingSubView = 'list';   // 'list' | 'route'
+let lastShoppingData = null;
+let routeStoreId = null;
+let routeAddingStore = false;
+
 async function renderShoppingView() {
     const container = document.getElementById('shoppingListView');
     if (!container) return;
@@ -165,6 +170,7 @@ async function renderShoppingView() {
         container.innerHTML = '<p class="shopping-empty">Could not build the shopping list. Please try again.</p>';
         return;
     }
+    lastShoppingData = data;
 
     if (!data.items.length) {
         container.innerHTML = `
@@ -173,6 +179,11 @@ async function renderShoppingView() {
                 <p class="shopping-empty-hint">Add meals to your plan and the shopping list builds itself.</p>
             </div>
         `;
+        return;
+    }
+
+    if (shoppingSubView === 'route') {
+        renderRouteView(container, range);
         return;
     }
 
@@ -185,7 +196,8 @@ async function renderShoppingView() {
     });
 
     const needCount = data.items.filter(i => !i.in_pantry).length;
-    let html = `
+    let html = buildShoppingSubToggle();
+    html += `
         <div class="shopping-summary">
             <span><strong>${data.meal_count}</strong> meals planned</span>
             <span><strong>${needCount}</strong> items to buy</span>
@@ -221,6 +233,193 @@ async function renderShoppingView() {
             if (box.checked) checked.add(name); else checked.delete(name);
             saveCheckedShoppingItems(range, checked);
             box.closest('.shopping-item').classList.toggle('shopping-item--checked', box.checked);
+        });
+    });
+
+    wireShoppingSubToggle(container);
+}
+
+// ---- Store route view (beta) ----
+
+function buildShoppingSubToggle() {
+    return `
+        <div class="shopping-sub-toggle">
+            <button type="button" class="view-btn${shoppingSubView === 'list' ? ' active' : ''}" data-subview="list">List</button>
+            <button type="button" class="view-btn${shoppingSubView === 'route' ? ' active' : ''}" data-subview="route">Store Route <span class="beta-chip">Beta</span></button>
+        </div>
+    `;
+}
+
+function wireShoppingSubToggle(container) {
+    container.querySelectorAll('[data-subview]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            shoppingSubView = btn.dataset.subview;
+            renderShoppingView();
+        });
+    });
+}
+
+function sourceChip(source, confidence) {
+    if (source === 'user') return '<span class="aisle-chip aisle-chip--user" title="You confirmed this">✔ yours</span>';
+    if (source === 'inferred') return `<span class="aisle-chip aisle-chip--guess" title="Guessed from item category (confidence ${Math.round((confidence || 0) * 100)}%)">~ guess</span>`;
+    return '<span class="aisle-chip aisle-chip--unknown" title="No aisle data for this item">? unknown</span>';
+}
+
+async function renderRouteView(container, range) {
+    container.innerHTML = buildShoppingSubToggle() + '<div class="shopping-loading">Loading stores…</div>';
+    wireShoppingSubToggle(container);
+    const body = container.querySelector('.shopping-loading');
+
+    let stores = [];
+    try {
+        stores = await api.getStores();
+    } catch (_) {}
+
+    if (!routeStoreId && stores.length) {
+        routeStoreId = (stores.find(s => s.is_default) || stores[0]).id;
+    }
+
+    const storePicker = `
+        <div class="route-store-row">
+            <select id="routeStoreSelect" aria-label="Choose store">
+                ${stores.map(s => `<option value="${s.id}"${s.id === routeStoreId ? ' selected' : ''}>${s.name}${s.chain ? ` (${s.chain})` : ''}</option>`).join('')}
+                <option value="__add__">+ Add a store…</option>
+            </select>
+        </div>
+        <p class="route-beta-note">Beta: route order depends on store data availability. Tap "Fix" to correct an aisle — corrections are remembered for this store.</p>
+    `;
+
+    if (!stores.length || routeAddingStore) {
+        body.outerHTML = `
+            <div class="shopping-empty">
+                <p>${stores.length ? 'Add another store.' : 'Add the store you shop at to build a walk-through route.'}</p>
+                <div class="route-add-store">
+                    <input type="text" id="newStoreName" placeholder="Store name (e.g. Giant on Main St)" maxlength="120">
+                    <select id="newStoreChain">
+                        <option value="">Chain (optional)</option>
+                        <option>Giant</option><option>Safeway</option><option>Wegmans</option>
+                        <option>Walmart</option><option>Target</option><option>Other</option>
+                    </select>
+                    <button class="btn btn-primary" id="addStoreBtn" type="button">Save Store</button>
+                    ${stores.length ? '<button class="btn btn-secondary" id="cancelAddStoreBtn" type="button">Cancel</button>' : ''}
+                </div>
+            </div>
+        `;
+        container.querySelector('#addStoreBtn')?.addEventListener('click', async () => {
+            const name = container.querySelector('#newStoreName').value.trim();
+            if (!name) { window.showToast('Give the store a name', 'info'); return; }
+            try {
+                const store = await api.addStore({ name, chain: container.querySelector('#newStoreChain').value || null, is_default: !stores.length });
+                routeStoreId = store.id;
+                routeAddingStore = false;
+                renderShoppingView();
+            } catch (err) {
+                window.showToast('Failed to save store: ' + err.message, 'error');
+            }
+        });
+        container.querySelector('#cancelAddStoreBtn')?.addEventListener('click', () => {
+            routeAddingStore = false;
+            renderShoppingView();
+        });
+        return;
+    }
+
+    let route;
+    try {
+        route = await api.locateItems(routeStoreId, lastShoppingData.items.map(i => ({ name: i.name, category: i.category })));
+    } catch (err) {
+        body.outerHTML = '<p class="shopping-empty">Could not build the route. Please try again.</p>';
+        return;
+    }
+
+    const checked = getCheckedShoppingItems(range);
+
+    // Group into stops, preserving backend walk order
+    const stops = [];
+    route.items.forEach(item => {
+        const label = item.aisle || 'Unknown location';
+        let stop = stops[stops.length - 1];
+        if (!stop || stop.label !== label) {
+            stop = { label, items: [] };
+            stops.push(stop);
+        }
+        stop.items.push(item);
+    });
+
+    let html = storePicker;
+    stops.forEach((stop, si) => {
+        const allDone = stop.items.every(i => checked.has(i.name.toLowerCase()));
+        html += `
+            <details class="route-stop${allDone ? ' route-stop--done' : ''}"${allDone ? '' : ' open'}>
+                <summary><span class="route-stop-num">${si + 1}</span> ${stop.label} <span class="route-stop-count">${stop.items.length}</span></summary>
+                ${stop.items.map(item => {
+                    const isChecked = checked.has(item.name.toLowerCase());
+                    return `
+                        <div class="route-item${isChecked ? ' route-item--checked' : ''}" data-item="${item.name.toLowerCase()}">
+                            <label class="route-item-main">
+                                <input type="checkbox" data-name="${item.name.toLowerCase()}" ${isChecked ? 'checked' : ''}>
+                                <span class="route-item-name">${item.name}</span>
+                            </label>
+                            ${sourceChip(item.source, item.confidence)}
+                            <button type="button" class="btn-link route-fix-btn" data-fix="${item.name}">Fix</button>
+                        </div>
+                        <div class="route-fix-row" data-fix-row="${item.name}" hidden>
+                            <input type="text" placeholder="Aisle (e.g. Aisle 7, Dairy)" maxlength="80">
+                            <button type="button" class="btn btn-primary" data-fix-save="${item.name}">Save</button>
+                        </div>
+                    `;
+                }).join('')}
+            </details>
+        `;
+    });
+    html += '<div class="route-stop route-stop--checkout"><span class="route-stop-num">🏁</span> Checkout</div>';
+
+    body.outerHTML = html;
+
+    // Store switcher
+    container.querySelector('#routeStoreSelect')?.addEventListener('change', (e) => {
+        if (e.target.value === '__add__') {
+            routeAddingStore = true;
+        } else {
+            routeStoreId = parseInt(e.target.value, 10);
+        }
+        renderShoppingView();
+    });
+
+    // Check-off (shared state with list view)
+    container.querySelectorAll('.route-item input[type="checkbox"]').forEach(box => {
+        box.addEventListener('change', () => {
+            const name = box.dataset.name;
+            if (box.checked) checked.add(name); else checked.delete(name);
+            saveCheckedShoppingItems(range, checked);
+            box.closest('.route-item').classList.toggle('route-item--checked', box.checked);
+            const stop = box.closest('.route-stop');
+            const done = [...stop.querySelectorAll('input[type="checkbox"]')].every(b => b.checked);
+            stop.classList.toggle('route-stop--done', done);
+            if (done) stop.removeAttribute('open');
+        });
+    });
+
+    // Fix-aisle corrections
+    container.querySelectorAll('.route-fix-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const row = container.querySelector(`[data-fix-row="${CSS.escape(btn.dataset.fix)}"]`);
+            if (row) row.hidden = !row.hidden;
+        });
+    });
+    container.querySelectorAll('[data-fix-save]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const itemName = btn.dataset.fixSave;
+            const input = btn.closest('.route-fix-row').querySelector('input');
+            const aisle = input.value.trim();
+            if (!aisle) return;
+            try {
+                await api.saveAisleCorrection(routeStoreId, itemName, aisle);
+                window.showToast(`Saved: ${itemName} → ${aisle}`);
+                renderShoppingView();
+            } catch (err) {
+                window.showToast('Failed to save correction: ' + err.message, 'error');
+            }
         });
     });
 }

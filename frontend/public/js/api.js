@@ -281,6 +281,32 @@ class ApiService {
         });
     }
 
+    // Grocery stores + aisles (beta)
+    async getStores() {
+        return this.request('/api/stores');
+    }
+
+    async addStore(store) {
+        return this.request('/api/stores', {
+            method: 'POST',
+            body: JSON.stringify(store),
+        });
+    }
+
+    async locateItems(storeId, items) {
+        return this.request('/api/grocery/locate-items', {
+            method: 'POST',
+            body: JSON.stringify({ store_id: storeId, items }),
+        });
+    }
+
+    async saveAisleCorrection(storeId, itemName, aisleLabel) {
+        return this.request('/api/grocery/aisle-correction', {
+            method: 'POST',
+            body: JSON.stringify({ store_id: storeId, item_name: itemName, aisle_label: aisleLabel }),
+        });
+    }
+
     // Meal History
     async getMealHistory(startDate, endDate) {
         const params = new URLSearchParams();

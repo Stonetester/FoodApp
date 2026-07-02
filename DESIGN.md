@@ -353,6 +353,11 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/js/users.js | "✨ Meals Like This" button in recipe detail actions | Similar-meals AI (plan Phase 4) | 2026-07-02 |
 | frontend/public/js/api.js | getSimilarMeals client method | Similar-meals AI (plan Phase 4) | 2026-07-02 |
 | frontend/public/css/style.css | Similar-meals modal/card/skeleton styles (reduced-motion safe) | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| backend/app/models.py | NEW UserStore + AisleOverride models (auto-created by db.create_all) | Grocery stores + aisle corrections (plan Phases 6-7) | 2026-07-02 |
+| backend/app/routes.py | `/api/stores` CRUD, `/api/grocery/locate-items` (source: user/inferred/unknown + confidence), `/api/grocery/aisle-correction` upsert | Honest-confidence aisle intelligence (plan Phase 6) | 2026-07-02 |
+| frontend/public/js/mealplan.js | Shopping view List/Route toggle; Store Route beta: store picker + add-store, numbered stops timeline in walk order, collapse-on-complete, source chips, inline Fix-aisle corrections | Beta store route (plan Phase 7) | 2026-07-02 |
+| frontend/public/js/api.js | getStores/addStore/locateItems/saveAisleCorrection | Grocery endpoints | 2026-07-02 |
+| frontend/public/css/style.css | Route stops timeline, aisle source chips, beta chip, add-store form styles | Beta store route (plan Phase 7) | 2026-07-02 |
 
 ## Anti-Patterns
 | Pattern | Why rejected |

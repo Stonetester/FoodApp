@@ -3,7 +3,7 @@ import requests
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
 from app.account_profile import get_account_profile
-from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship, RecipeReview
+from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship, RecipeReview, UserStore, AisleOverride
 from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image, extract_text_from_images, auto_assign_category
 from app.nutrition import lookup_ingredient_nutrition, calculate_recipe_nutrition, parse_nutrition_label_text
 from datetime import datetime, date, timedelta
@@ -935,6 +935,148 @@ def mark_meal_cooked(plan_id):
     db.session.commit()
 
     return jsonify(entry.to_dict()), 201
+
+# ---- Grocery stores + aisle intelligence (beta) ----
+
+# Typical walk order through a US grocery store, used to sequence route stops.
+DEPARTMENT_WALK_ORDER = [
+    'Produce', 'Grains & Bread', 'Meat & Poultry', 'Seafood', 'Dairy & Eggs',
+    'Frozen', 'Canned Goods', 'Condiments & Sauces', 'Baking',
+    'Spices & Seasonings', 'Snacks', 'Beverages', 'Other',
+]
+
+
+@api_bp.route('/stores', methods=['GET'])
+@login_required
+def get_stores():
+    stores = UserStore.query.filter_by(user_id=current_user.id).order_by(UserStore.is_default.desc(), UserStore.name).all()
+    return jsonify([s.to_dict() for s in stores]), 200
+
+
+@api_bp.route('/stores', methods=['POST'])
+@login_required
+def add_store():
+    data = request.get_json() or {}
+    name = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({'error': 'Store name required'}), 400
+
+    make_default = bool(data.get('is_default'))
+    if make_default:
+        UserStore.query.filter_by(user_id=current_user.id, is_default=True).update({'is_default': False})
+
+    store = UserStore(
+        user_id=current_user.id,
+        name=name[:120],
+        chain=(data.get('chain') or '').strip()[:60] or None,
+        is_default=make_default or UserStore.query.filter_by(user_id=current_user.id).count() == 0,
+    )
+    db.session.add(store)
+    db.session.commit()
+    return jsonify(store.to_dict()), 201
+
+
+@api_bp.route('/stores/<int:store_id>', methods=['DELETE'])
+@login_required
+def delete_store(store_id):
+    store = UserStore.query.filter_by(id=store_id, user_id=current_user.id).first()
+    if not store:
+        return jsonify({'error': 'Store not found'}), 404
+    AisleOverride.query.filter_by(user_id=current_user.id, store_id=store.id).delete()
+    db.session.delete(store)
+    db.session.commit()
+    return jsonify({'message': 'Store deleted'}), 200
+
+
+@api_bp.route('/grocery/locate-items', methods=['POST'])
+@login_required
+def grocery_locate_items():
+    """Best-effort aisle/department placement for shopping list items.
+
+    Honest-confidence design: every result carries a source label —
+    'user' (a correction the shopper saved), 'inferred' (category keyword
+    mapping), or 'unknown'. No fake certainty; no store-site scraping.
+    """
+    data = request.get_json() or {}
+    items = data.get('items') or []
+    if not isinstance(items, list) or len(items) > 200:
+        return jsonify({'error': 'items must be a list of at most 200 entries'}), 400
+
+    store_id = data.get('store_id')
+    store = None
+    overrides = {}
+    if store_id:
+        store = UserStore.query.filter_by(id=store_id, user_id=current_user.id).first()
+        if not store:
+            return jsonify({'error': 'Store not found'}), 404
+        overrides = {
+            o.item_key: o.aisle_label
+            for o in AisleOverride.query.filter_by(user_id=current_user.id, store_id=store.id).all()
+        }
+
+    results = []
+    for raw in items:
+        name = str((raw or {}).get('name') or '').strip()
+        if not name:
+            continue
+        key = name.lower()
+        category = (raw or {}).get('category') or auto_assign_category(name)
+        if key in overrides:
+            aisle, source, confidence = overrides[key], 'user', 1.0
+        elif category and category != 'Other':
+            aisle, source, confidence = category, 'inferred', 0.5
+        else:
+            aisle, source, confidence = None, 'unknown', 0.0
+        results.append({
+            'name': name,
+            'category': category,
+            'aisle': aisle,
+            'source': source,
+            'confidence': confidence,
+        })
+
+    # Sequence into walk-order stops for the route view
+    order_index = {dep: i for i, dep in enumerate(DEPARTMENT_WALK_ORDER)}
+    results.sort(key=lambda r: (order_index.get(r['aisle'] or r['category'], len(order_index)), r['name'].lower()))
+
+    return jsonify({
+        'store': store.to_dict() if store else None,
+        'walk_order': DEPARTMENT_WALK_ORDER,
+        'items': results,
+    }), 200
+
+
+@api_bp.route('/grocery/aisle-correction', methods=['POST'])
+@login_required
+def grocery_aisle_correction():
+    """Save the shopper's correction for where an item actually is."""
+    data = request.get_json() or {}
+    store_id = data.get('store_id')
+    item_name = str(data.get('item_name') or '').strip()
+    aisle_label = str(data.get('aisle_label') or '').strip()
+
+    if not (store_id and item_name and aisle_label):
+        return jsonify({'error': 'store_id, item_name and aisle_label are required'}), 400
+
+    store = UserStore.query.filter_by(id=store_id, user_id=current_user.id).first()
+    if not store:
+        return jsonify({'error': 'Store not found'}), 404
+
+    key = item_name.lower()[:200]
+    override = AisleOverride.query.filter_by(user_id=current_user.id, store_id=store.id, item_key=key).first()
+    if override:
+        override.aisle_label = aisle_label[:80]
+    else:
+        override = AisleOverride(
+            user_id=current_user.id,
+            store_id=store.id,
+            item_key=key,
+            aisle_label=aisle_label[:80],
+        )
+        db.session.add(override)
+    db.session.commit()
+    return jsonify(override.to_dict()), 200
+
 
 # ---- AI: similar meals ----
 
