@@ -689,11 +689,26 @@
 
         <!-- Barcode Scanner Modal -->
         <div id="scannerModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content scanner-sheet">
                 <span class="close">&times;</span>
-                <h2>Scan Barcode</h2>
-                <div id="scannerContainer"></div>
+                <h2>Scan Items</h2>
+                <div class="scanner-stage">
+                    <div id="scannerContainer"></div>
+                    <div id="scanSuccessOverlay" class="scan-success-overlay" hidden>
+                        <div class="scan-success-check">✓</div>
+                        <p class="scan-success-name" id="scanSuccessName"></p>
+                        <p class="scan-success-sub" id="scanSuccessSub"></p>
+                    </div>
+                </div>
                 <div id="scannerResult"></div>
+                <div class="scanner-controls" id="scannerControls">
+                    <button class="btn btn-secondary" id="scanPauseBtn" type="button">Pause</button>
+                    <button class="btn btn-secondary" id="scanUndoBtn" type="button" disabled>Undo</button>
+                    <button class="btn btn-secondary" id="scanManualBtn" type="button">Manual</button>
+                    <button class="btn btn-secondary" id="scanTorchBtn" type="button">💡</button>
+                    <button class="btn btn-primary" id="scanFinishBtn" type="button">Finish</button>
+                </div>
+                <div id="recentScans" class="recent-scans" aria-live="polite"></div>
             </div>
         </div>
 
@@ -726,20 +741,26 @@
                 </div>
                 <div class="calendar-controls">
                     <div class="view-switcher" id="calendarViewSwitcher">
-                        <button class="view-btn" data-view="dayGridMonth">Month</button>
                         <button class="view-btn" data-view="mealWeek">Week</button>
+                        <button class="view-btn" data-view="dayGridMonth">Month</button>
                         <button class="view-btn" data-view="mealDay">Day</button>
+                        <button class="view-btn" data-view="shopping">Shopping</button>
                     </div>
                     <div class="calendar-nav">
-                        <button class="btn btn-outline" id="calendarPrevBtn"><i data-lucide="chevron-left"></i></button>
+                        <button class="btn btn-outline" id="calendarPrevBtn" aria-label="Previous"><i data-lucide="chevron-left"></i></button>
                         <span id="calendarMonthTitle" class="calendar-month-title"></span>
                         <button class="btn btn-outline" id="calendarTodayBtn">Today</button>
-                        <button class="btn btn-outline" id="calendarNextBtn"><i data-lucide="chevron-right"></i></button>
+                        <button class="btn btn-outline" id="calendarNextBtn" aria-label="Next"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                    <div class="week-actions" id="weekActions">
+                        <button class="btn btn-outline" id="repeatWeekBtn">Repeat Last Week</button>
+                        <button class="btn btn-outline" id="clearWeekBtn">Clear Week</button>
                     </div>
                 </div>
             </div>
             <div id="mealPlanCalendar"></div>
             <div id="mealPlanSections" class="meal-plan-sections" aria-live="polite"></div>
+            <div id="shoppingListView" class="shopping-list-view" aria-live="polite" style="display:none"></div>
         </div>
 
         <!-- Meal Plan Modal -->
@@ -1020,6 +1041,43 @@
                 </div>
 
                 <div class="social-grid">
+                    <div class="social-card">
+                        <h2>Comfort &amp; accessibility</h2>
+                        <p class="settings-hint">These apply right away on this device.</p>
+                        <div class="pref-row">
+                            <label for="prefTextSize">Text size</label>
+                            <select id="prefTextSize" data-pref="mg_text_size">
+                                <option value="standard">Standard</option>
+                                <option value="large">Large</option>
+                                <option value="extra-large">Extra large</option>
+                            </select>
+                        </div>
+                        <label class="pref-row pref-row--toggle">
+                            <span>High contrast</span>
+                            <input type="checkbox" id="prefHighContrast" data-pref="mg_high_contrast">
+                        </label>
+                        <label class="pref-row pref-row--toggle">
+                            <span>Reduce motion</span>
+                            <input type="checkbox" id="prefReducedMotion" data-pref="mg_reduced_motion">
+                        </label>
+                        <label class="pref-row pref-row--toggle">
+                            <span>Larger buttons</span>
+                            <input type="checkbox" id="prefLargeButtons" data-pref="mg_large_buttons">
+                        </label>
+                    </div>
+
+                    <div class="social-card">
+                        <h2>Pantry scanning</h2>
+                        <div class="pref-row">
+                            <label for="prefScanMode">Scan mode</label>
+                            <select id="prefScanMode" data-pref="mg_scan_mode">
+                                <option value="continuous">Fast continuous scan</option>
+                                <option value="review">Review each item</option>
+                            </select>
+                        </div>
+                        <p class="settings-hint">Continuous keeps the camera running and adds items automatically. Review pauses after each barcode so you can set quantity and expiry.</p>
+                    </div>
+
                     <div class="social-card">
                         <h2>General profile</h2>
                         <form id="settingsProfileForm">
@@ -1378,6 +1436,18 @@
             </div>
         </div>
 
+        <!-- Similar Meals (AI) Modal -->
+        <div id="similarMealsModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="similarMealsClose">&times;</span>
+                <h2>✨ Meals Like This</h2>
+                <div id="similarModePicker" class="similar-mode-picker"></div>
+                <button class="btn btn-primary" id="similarGenerateBtn" type="button" style="width:100%">Generate Ideas</button>
+                <p class="similar-ai-note">AI-generated suggestions — review before saving.</p>
+                <div id="similarResults" class="similar-results"></div>
+            </div>
+        </div>
+
         <!-- Admin Page -->
         <div id="adminPage" class="page">
             <div class="page-header">
@@ -1398,6 +1468,7 @@
     <script src="/js/main.js"></script>
     <script src="/js/recipes.js"></script>
     <script src="/js/users.js"></script>
+    <script src="/js/similar.js"></script>
     <script src="/js/pantry.js"></script>
     <script src="/js/scanner.js"></script>
     <script src="/js/mealplan.js"></script>

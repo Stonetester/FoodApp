@@ -42,7 +42,9 @@ class ProductionConfig(Config):
         'pool_size': int(os.environ.get('DB_POOL_SIZE', '10')),
         'max_overflow': int(os.environ.get('DB_MAX_OVERFLOW', '20')),
     }
-    SESSION_COOKIE_SECURE = (os.getenv('SESSION_COOKIE_SECURE', '0') == '1')
+    # Secure by default in production — the app is served over HTTPS
+    # (Waitress runs with url_scheme='https'). Opt OUT with '0' if needed.
+    SESSION_COOKIE_SECURE = (os.getenv('SESSION_COOKIE_SECURE', '1') == '1')
     SESSION_COOKIE_SAMESITE = os.getenv('SESSION_COOKIE_SAMESITE', 'Lax')
 
 
@@ -50,3 +52,4 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
+    RATELIMIT_ENABLED = False

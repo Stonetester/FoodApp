@@ -1,11 +1,19 @@
+import os
+
 from flask import Flask, jsonify, request
 from flask_login import LoginManager
+from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from sqlalchemy import text, inspect as sa_inspect
 from app.models import db, User
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Please log in to access this page.'
+
+# Rate limiter — no global default; applied per-route (auth endpoints)
+limiter = Limiter(key_func=get_remote_address, storage_uri='memory://')
 
 
 @login_manager.unauthorized_handler
@@ -77,8 +85,43 @@ def create_app(config_class=None):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # Refuse to run outside debug/testing with the known dev SECRET_KEY —
+    # it signs sessions AND password-reset tokens (account takeover if forged).
+    if not app.config.get('DEBUG') and not app.config.get('TESTING'):
+        if app.config.get('SECRET_KEY') in (None, '', 'dev-secret-key-local-only'):
+            raise RuntimeError('SECRET_KEY must be set to a strong random value in production')
+
     db.init_app(app)
     login_manager.init_app(app)
+    limiter.init_app(app)
+
+    # CORS: the frontend is served same-origin by this app, so cross-origin
+    # access is opt-in only. The old CORS(app, supports_credentials=True)
+    # reflected ANY origin with credentials — CSRF/data-theft primitive.
+    cors_origins = os.environ.get('CORS_ORIGINS')
+    if cors_origins:
+        CORS(app, origins=[o.strip() for o in cors_origins.split(',') if o.strip()],
+             supports_credentials=True)
+
+    @app.after_request
+    def set_security_headers(response):
+        response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+        response.headers.setdefault('X-Frame-Options', 'DENY')
+        response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+        response.headers.setdefault('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()')
+        response.headers.setdefault(
+            'Content-Security-Policy',
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+            "font-src 'self' data: https://fonts.gstatic.com; "
+            "img-src 'self' data: blob: https:; "
+            "connect-src 'self'; "
+            "worker-src 'self' blob:; "
+            "media-src 'self' blob:; "
+            "object-src 'none'; base-uri 'self'"
+        )
+        return response
 
     # ── Blueprints ──────────────────────────────────────────────────────────
     from app.routes import main_bp, api_bp

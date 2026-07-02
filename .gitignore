@@ -17,3 +17,8 @@ build/
 .DS_Store
 Thumbs.db
 
+
+# User uploads + local dev DB
+frontend/public/uploads/
+backend/instance/
+nul

@@ -280,6 +280,54 @@ class MealHistory(db.Model):
     def __repr__(self):
         return f'<MealHistory {self.consumed_date}>'
 
+class UserStore(db.Model):
+    """A grocery store the user shops at (entered manually)."""
+    __tablename__ = 'user_stores'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    name = db.Column(db.String(120), nullable=False)
+    chain = db.Column(db.String(60))  # Giant, Safeway, Wegmans, Walmart, Target, Other
+    is_default = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'chain': self.chain,
+            'is_default': self.is_default,
+        }
+
+
+class AisleOverride(db.Model):
+    """User-confirmed aisle/department for an item at a specific store.
+
+    This is the highest-confidence aisle source — real shoppers correcting
+    the app's category-based guesses.
+    """
+    __tablename__ = 'aisle_overrides'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    store_id = db.Column(db.Integer, db.ForeignKey('user_stores.id'), nullable=False, index=True)
+    item_key = db.Column(db.String(200), nullable=False)  # lowercased item name
+    aisle_label = db.Column(db.String(80), nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'store_id', 'item_key', name='unique_user_store_item'),
+    )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'store_id': self.store_id,
+            'item_key': self.item_key,
+            'aisle_label': self.aisle_label,
+        }
+
+
 class RecipeReview(db.Model):
     __tablename__ = 'recipe_reviews'
 

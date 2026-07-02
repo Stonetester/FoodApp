@@ -130,11 +130,16 @@ function updateTagFilters() {
 }
 
 async function loadRecipes() {
+    const container = document.getElementById('recipesList');
+    if (container && !container.children.length) {
+        container.innerHTML = '<div class="card-skeleton"></div><div class="card-skeleton"></div><div class="card-skeleton"></div>';
+    }
     try {
         recipes = await api.getRecipes(currentFilters);
         displayRecipes();
     } catch (error) {
         console.error('Error loading recipes:', error);
+        if (container) container.innerHTML = '';
         if (window.showToast) window.showToast('Failed to load recipes', 'error');
     }
 }
@@ -805,11 +810,7 @@ function deleteRecipe(id) {
             if (window.showToast) window.showToast('Failed to delete recipe', 'error');
         }
     };
-    if (window.showConfirm) {
-        window.showConfirm('Delete this recipe permanently?', doDelete);
-    } else {
-        if (confirm('Are you sure you want to delete this recipe?')) doDelete();
-    }
+    window.showConfirm('Delete this recipe permanently?', doDelete);
 }
 
 async function shareRecipeQR(id) {

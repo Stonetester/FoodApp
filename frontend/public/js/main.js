@@ -586,6 +586,7 @@ function showApp() {
     initTutorial();
     showTutorialIfNew();
     setupQuickAddFabs();
+    if (window.maybeShowFirstRunTip) window.maybeShowFirstRunTip();
     // Reveal admin link for admin users
     if (currentUser && currentUser.is_admin) {
         const adminLink = document.getElementById('adminSheetLink');
@@ -959,7 +960,15 @@ function showConfirm(message, onConfirm, confirmLabel = 'Delete', danger = true)
     `;
     document.body.appendChild(backdrop);
 
-    const close = () => backdrop.remove();
+    const close = () => {
+        backdrop.remove();
+        document.removeEventListener('keydown', onKeydown);
+    };
+    const onKeydown = (e) => {
+        if (e.key === 'Escape') close();
+    };
+    document.addEventListener('keydown', onKeydown);
+    backdrop.querySelector('#mgConfirmCancel').focus();
     backdrop.querySelector('#mgConfirmCancel').addEventListener('click', () => {
         close();
         if (typeof onConfirm !== 'function') return; // promise mode

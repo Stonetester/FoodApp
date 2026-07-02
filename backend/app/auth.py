@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from app import limiter
 from app.models import db, User, Friendship, FriendRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
@@ -14,7 +13,11 @@ auth_bp = Blueprint('auth', __name__)
 
 
 def _get_reset_serializer():
-    secret = current_app.config.get('SECRET_KEY', 'fallback-key')
+    secret = current_app.config.get('SECRET_KEY')
+    if not secret:
+        # Never sign reset tokens with a guessable fallback — forged tokens
+        # would mean account takeover. Fail loudly instead.
+        raise RuntimeError('SECRET_KEY is not configured')
     return URLSafeTimedSerializer(secret, salt='password-reset')
 
 # Email validation regex
@@ -45,6 +48,7 @@ def validate_username(username):
     return True, "Username is valid"
 
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit('5 per minute')
 def register():
     """Register a new user with validation"""
     data = request.get_json()
@@ -107,6 +111,7 @@ def register():
         return jsonify({'error': 'Failed to create user'}), 500
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit('10 per minute')
 def login():
     """Login user with rate limiting"""
     data = request.get_json()
@@ -334,6 +339,7 @@ def check_auth():
 
 
 @auth_bp.route('/forgot-password', methods=['POST'])
+@limiter.limit('3 per minute')
 def forgot_password():
     """Request a password reset email. Always returns success to prevent user enumeration."""
     data = request.get_json() or {}
@@ -360,6 +366,7 @@ def forgot_password():
 
 
 @auth_bp.route('/reset-password', methods=['POST'])
+@limiter.limit('5 per minute')
 def reset_password():
     """Reset password using a valid token from the forgot-password email."""
     data = request.get_json() or {}

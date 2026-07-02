@@ -50,11 +50,16 @@ function setupPantryListeners() {
 }
 
 async function loadPantry() {
+    const container = document.getElementById('pantryList');
+    if (container && !container.children.length) {
+        container.innerHTML = '<div class="card-skeleton"></div><div class="card-skeleton"></div><div class="card-skeleton"></div>';
+    }
     try {
         pantryItems = await api.getPantryItems();
         displayPantry();
     } catch (error) {
         console.error('Error loading pantry:', error);
+        if (container) container.innerHTML = '';
         if (window.showToast) window.showToast('Failed to load pantry items', 'error');
     }
 }
@@ -80,8 +85,32 @@ function displayPantry() {
         return;
     }
 
+    // "Expiring soon" strip first (within 5 days, incl. already expired)
+    const now = new Date();
+    const soonCutoff = new Date(now.getTime() + 5 * 24 * 3600 * 1000);
+    const expiringSoon = pantryItems.filter(i => i.expiry_date && new Date(i.expiry_date) <= soonCutoff)
+        .sort((a, b) => new Date(a.expiry_date) - new Date(b.expiry_date));
+
+    if (expiringSoon.length) {
+        const strip = document.createElement('div');
+        strip.className = 'pantry-group pantry-group--expiring';
+        strip.innerHTML = '<h3 class="pantry-group-title">⏰ Expiring soon</h3>';
+        expiringSoon.forEach(item => strip.appendChild(createPantryCard(item)));
+        container.appendChild(strip);
+    }
+
+    // Then group everything by category (expiring items also appear in their group)
+    const byCategory = {};
     pantryItems.forEach(item => {
-        container.appendChild(createPantryCard(item));
+        const cat = item.category || 'Other';
+        (byCategory[cat] = byCategory[cat] || []).push(item);
+    });
+    Object.keys(byCategory).sort((a, b) => (a === 'Other') - (b === 'Other') || a.localeCompare(b)).forEach(cat => {
+        const group = document.createElement('div');
+        group.className = 'pantry-group';
+        group.innerHTML = `<h3 class="pantry-group-title">${cat} <span class="pantry-group-count">${byCategory[cat].length}</span></h3>`;
+        byCategory[cat].forEach(item => group.appendChild(createPantryCard(item)));
+        container.appendChild(group);
     });
 }
 
@@ -227,6 +256,12 @@ function openPantryModal(item = null) {
 }
 
 function closePantryModal() {
+    // If the pantry form was opened from the scanner (unknown barcode / manual
+    // add), jump straight back into scan mode.
+    if (window._mgResumeScanAfterManual) {
+        window._mgResumeScanAfterManual = false;
+        setTimeout(() => openScanner(), 150);
+    }
     document.getElementById('pantryModal').classList.remove('active');
 }
 
@@ -376,11 +411,7 @@ function deletePantryItem(id) {
             if (window.showToast) window.showToast('Failed to delete pantry item', 'error');
         }
     };
-    if (window.showConfirm) {
-        window.showConfirm('Remove this item from your pantry?', doDelete);
-    } else {
-        if (confirm('Are you sure you want to delete this pantry item?')) doDelete();
-    }
+    window.showConfirm('Remove this item from your pantry?', doDelete, 'Remove');
 }
 
 function openScanner() {

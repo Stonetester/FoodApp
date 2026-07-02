@@ -4,6 +4,19 @@ let html5QrCode = null;
 let scannerActive = false;
 let lastScannedProduct = null;
 
+// ---- Continuous scan state ----
+const SCAN_COOLDOWN_MS = 2500;
+let scanPaused = false;
+let scanProcessing = false;
+let torchOn = false;
+let lastScanTimes = {};          // barcode -> timestamp (per-barcode cooldown)
+let sessionScans = [];           // [{itemId, name, action, previousQuantity, quantity}]
+
+function isContinuousMode() {
+    // Phase 9 setting: 'review' = old one-at-a-time flow with quantity form
+    return (localStorage.getItem('mg_scan_mode') || 'continuous') !== 'review';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     setupScannerListeners();
 });
@@ -15,17 +28,178 @@ function setupScannerListeners() {
         const closeBtn = scannerModal.querySelector('.close');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
-                stopScanner();
-                scannerModal.classList.remove('active');
+                finishScanSession();
             });
         }
 
         scannerModal.addEventListener('click', (e) => {
             if (e.target === scannerModal) {
-                stopScanner();
-                scannerModal.classList.remove('active');
+                finishScanSession();
             }
         });
+    }
+
+    document.getElementById('scanPauseBtn')?.addEventListener('click', toggleScanPause);
+    document.getElementById('scanUndoBtn')?.addEventListener('click', undoLastScan);
+    document.getElementById('scanManualBtn')?.addEventListener('click', manualAddFromScanner);
+    document.getElementById('scanTorchBtn')?.addEventListener('click', toggleTorch);
+    document.getElementById('scanFinishBtn')?.addEventListener('click', finishScanSession);
+}
+
+function finishScanSession() {
+    stopScanner();
+    const modal = document.getElementById('scannerModal');
+    if (modal) modal.classList.remove('active');
+    if (sessionScans.length && typeof loadPantry === 'function') {
+        loadPantry();
+        if (window.loadDashboard) window.loadDashboard();
+    }
+    sessionScans = [];
+    lastScanTimes = {};
+    scanPaused = false;
+    torchOn = false;
+    renderRecentScans();
+}
+
+function toggleScanPause() {
+    scanPaused = !scanPaused;
+    const btn = document.getElementById('scanPauseBtn');
+    if (btn) btn.textContent = scanPaused ? 'Resume' : 'Pause';
+    const resultDiv = document.getElementById('scannerResult');
+    if (resultDiv) {
+        resultDiv.innerHTML = scanPaused
+            ? '<p class="scanner-hint">Paused — tap Resume to keep scanning.</p>'
+            : '<p class="scanner-hint">📷 Point camera at a barcode…</p>';
+    }
+}
+
+async function toggleTorch() {
+    if (!html5QrCode || !scannerActive) return;
+    try {
+        torchOn = !torchOn;
+        await html5QrCode.applyVideoConstraints({ advanced: [{ torch: torchOn }] });
+        document.getElementById('scanTorchBtn')?.classList.toggle('active', torchOn);
+    } catch (err) {
+        torchOn = false;
+        window.showToast('Flashlight not supported on this device', 'info');
+    }
+}
+
+function manualAddFromScanner(barcode = null) {
+    // Close the scanner, open the pantry form; reopen the scanner after it closes.
+    window._mgResumeScanAfterManual = true;
+    finishSessionKeepList();
+    if (window.openPantryModal) {
+        window.openPantryModal();
+        if (barcode && typeof barcode === 'string') {
+            const bcField = document.getElementById('pantryBarcode');
+            if (bcField) bcField.value = barcode;
+        }
+    }
+}
+
+function finishSessionKeepList() {
+    // Stop the camera + hide the modal without clearing the session list
+    stopScanner();
+    const modal = document.getElementById('scannerModal');
+    if (modal) modal.classList.remove('active');
+}
+
+async function undoLastScan() {
+    const last = sessionScans[sessionScans.length - 1];
+    if (!last) return;
+    try {
+        if (last.action === 'added') {
+            await api.deletePantryItem(last.itemId);
+        } else {
+            await api.updatePantryItem(last.itemId, { quantity: last.previousQuantity });
+        }
+        sessionScans.pop();
+        delete lastScanTimes[last.barcode];
+        renderRecentScans();
+        window.showToast(`Undone: ${last.name}`, 'info');
+    } catch (err) {
+        window.showToast('Failed to undo: ' + (err.message || err), 'error');
+    }
+}
+
+function renderRecentScans() {
+    const list = document.getElementById('recentScans');
+    const undoBtn = document.getElementById('scanUndoBtn');
+    if (undoBtn) undoBtn.disabled = sessionScans.length === 0;
+    if (!list) return;
+    const recent = sessionScans.slice(-5).reverse();
+    list.innerHTML = recent.map(s => `
+        <div class="recent-scan-row">
+            <span class="recent-scan-check">✓</span>
+            <span class="recent-scan-name">${s.name}</span>
+            <span class="recent-scan-qty">${s.action === 'incremented' ? '×' + s.quantity : 'added'}</span>
+        </div>
+    `).join('');
+}
+
+function flashScanSuccess(name, subtitle) {
+    const overlay = document.getElementById('scanSuccessOverlay');
+    if (!overlay) return;
+    document.getElementById('scanSuccessName').textContent = name;
+    document.getElementById('scanSuccessSub').textContent = subtitle;
+    overlay.hidden = false;
+    overlay.classList.add('visible');
+    setTimeout(() => {
+        overlay.classList.remove('visible');
+        setTimeout(() => { overlay.hidden = true; }, 300);
+    }, 1000);
+}
+
+async function handleContinuousScan(barcode) {
+    const now = Date.now();
+    if (scanPaused || scanProcessing) return;
+    if (lastScanTimes[barcode] && now - lastScanTimes[barcode] < SCAN_COOLDOWN_MS) return;
+    lastScanTimes[barcode] = now;
+    scanProcessing = true;
+
+    const resultDiv = document.getElementById('scannerResult');
+    if (resultDiv) resultDiv.innerHTML = '<p class="scanner-hint">Looking up product…</p>';
+
+    try {
+        const response = await fetch('/api/pantry/scan-add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ barcode })
+        });
+        const data = await response.json();
+
+        if (response.status === 404) {
+            // Unknown product — compact manual entry, then back to scanning
+            if (resultDiv) resultDiv.innerHTML = '';
+            window.showToast('Product not found — add it manually', 'info');
+            manualAddFromScanner(barcode);
+            return;
+        }
+        if (!response.ok) throw new Error(data.error || 'Scan failed');
+
+        const item = data.item;
+        sessionScans.push({
+            itemId: item.id,
+            barcode,
+            name: item.item_name,
+            action: data.action,
+            previousQuantity: data.previous_quantity,
+            quantity: item.quantity,
+        });
+        renderRecentScans();
+        flashScanSuccess(
+            item.item_name,
+            data.action === 'incremented' ? `Quantity updated — now ${item.quantity}` : 'Added to pantry'
+        );
+        if (resultDiv) resultDiv.innerHTML = '<p class="scanner-hint">📷 Point camera at the next barcode…</p>';
+    } catch (error) {
+        console.error('Continuous scan error:', error);
+        window.showToast('Scan failed: ' + (error.message || error), 'error');
+        if (resultDiv) resultDiv.innerHTML = '<p class="scanner-hint">📷 Point camera at a barcode…</p>';
+    } finally {
+        scanProcessing = false;
     }
 }
 
@@ -41,6 +215,16 @@ function initScanner() {
     // Clear previous scanner state
     container.innerHTML = '';
     resultDiv.innerHTML = '<p style="text-align: center; color: var(--primary);">Initializing camera...</p>';
+
+    // Continuous-mode UI state
+    const controls = document.getElementById('scannerControls');
+    if (controls) controls.style.display = isContinuousMode() ? '' : 'none';
+    scanPaused = false;
+    scanProcessing = false;
+    torchOn = false;
+    const pauseBtn = document.getElementById('scanPauseBtn');
+    if (pauseBtn) pauseBtn.textContent = 'Pause';
+    renderRecentScans();
 
     // Stop any existing scanner
     if (html5QrCode && scannerActive) {
@@ -132,9 +316,13 @@ function startScanner() {
 }
 
 function onScanSuccess(decodedText, decodedResult) {
-    console.log(`Barcode scanned: ${decodedText}`, decodedResult);
-    
-    // Show success message
+    if (isContinuousMode()) {
+        // Camera stays live; dedupe/cooldown handled inside
+        handleContinuousScan(decodedText);
+        return;
+    }
+
+    // Review mode: stop after each scan and show the quantity form
     const resultDiv = document.getElementById('scannerResult');
     resultDiv.innerHTML = `
         <div style="text-align: center; color: var(--success);">
@@ -143,11 +331,8 @@ function onScanSuccess(decodedText, decodedResult) {
             <p style="color: var(--text); margin-top: 1rem;">Looking up product information...</p>
         </div>
     `;
-    
-    // Stop scanner after successful scan
+
     stopScanner();
-    
-    // Lookup barcode and add to pantry
     lookupAndAddProduct(decodedText);
 }
 

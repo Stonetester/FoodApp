@@ -3,10 +3,10 @@ import requests
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
 from app.account_profile import get_account_profile
-from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship, RecipeReview
-from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image, extract_text_from_images, auto_assign_category
+from app.models import db, Recipe, RecipeIngredient, RecipeTag, PantryItem, MealPlan, MealHistory, User, FriendRequest, Friendship, RecipeReview, UserStore, AisleOverride
+from app.utils import generate_qr_code, lookup_barcode, extract_recipe_from_url, extract_text_from_image, extract_text_from_images, auto_assign_category, normalize_image_url
 from app.nutrition import lookup_ingredient_nutrition, calculate_recipe_nutrition, parse_nutrition_label_text
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from collections import Counter
 import json
 import os
@@ -73,27 +73,6 @@ def ensure_recipe_image_url(recipe):
     return True
 
 
-def normalize_image_url(image_url):
-    if not image_url:
-        return None
-    if isinstance(image_url, str) and image_url.startswith('data:image'):
-        return save_data_url_image(image_url)
-    return image_url
-
-def save_data_url_image(data_url):
-    match = re.match(r'^data:image/([a-zA-Z0-9.+-]+);base64,(.+)$', data_url)
-    if not match:
-        raise ValueError('Invalid image data')
-    extension = match.group(1).lower()
-    if extension == 'jpeg':
-        extension = 'jpg'
-    image_data = base64.b64decode(match.group(2))
-    filename = f"{uuid.uuid4().hex}.{extension}"
-    file_path = os.path.join(UPLOADS_DIR, filename)
-    with open(file_path, 'wb') as file_handle:
-        file_handle.write(image_data)
-    return f"/uploads/recipes/{filename}"
-
 # Catch-all route for frontend routing (SPA)
 @main_bp.route('/<path:path>')
 def serve_frontend(path):
@@ -102,6 +81,15 @@ def serve_frontend(path):
         return jsonify({'error': 'Not found'}), 404
     # For SPA routing, serve index.html
     return send_file(os.path.join(FRONTEND_DIR, 'index.html'))
+
+@api_bp.route('/health', methods=['GET'])
+def api_health():
+    """Unauthenticated health check for reverse proxies / monitors."""
+    try:
+        db.session.execute(db.text('SELECT 1'))
+        return jsonify({'status': 'ok'}), 200
+    except Exception:
+        return jsonify({'status': 'error', 'detail': 'database'}), 503
 
 # Recipe endpoints
 @api_bp.route('/recipes', methods=['GET'])
@@ -228,11 +216,12 @@ def create_recipe():
         return jsonify(recipe.to_dict()), 201
     except ValueError as e:
         db.session.rollback()
-        return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
+        print(f"Invalid data format: {e}")
+        return jsonify({'error': 'Invalid data format'}), 400
     except Exception as e:
         db.session.rollback()
         print(f"Error creating recipe: {e}")
-        return jsonify({'error': f'Failed to create recipe: {str(e)}'}), 500
+        return jsonify({'error': 'Failed to create recipe'}), 500
 
 @api_bp.route('/recipes/<int:recipe_id>', methods=['PUT'])
 @login_required
@@ -299,13 +288,14 @@ def update_recipe(recipe_id):
         return jsonify(recipe.to_dict()), 200
     except ValueError as e:
         db.session.rollback()
-        return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
+        print(f"Invalid data format: {e}")
+        return jsonify({'error': 'Invalid data format'}), 400
     except Exception as e:
         db.session.rollback()
         print(f"Error updating recipe: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Failed to update recipe: {str(e)}'}), 500
+        return jsonify({'error': 'Failed to update recipe'}), 500
 
 @api_bp.route('/recipes/<int:recipe_id>', methods=['DELETE'])
 @login_required
@@ -379,12 +369,13 @@ def import_recipe_from_url():
         return jsonify(recipe_data), 200
     except requests.exceptions.RequestException as e:
         print(f"Request exception: {e}")
-        return jsonify({'error': f'Failed to fetch URL: {str(e)}. The website may be blocking requests or the URL may be invalid.'}), 500
+        print(f"Error fetching recipe URL: {e}")
+        return jsonify({'error': 'Could not fetch that URL. The website may be blocking requests or the URL may be invalid.'}), 500
     except Exception as e:
         print(f"Error in import_recipe_from_url: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Error extracting recipe: {str(e)}'}), 500
+        return jsonify({'error': 'Could not extract a recipe from that page'}), 500
 
 @api_bp.route('/recipes/import-image', methods=['POST'])
 @login_required
@@ -443,7 +434,7 @@ def import_recipe_from_image():
             'prep_time': None,
             'cook_time': None,
             'servings': None,
-            '_error': f'Error processing image: {str(e)}'
+            '_error': 'Error processing image'
         }), 200  # Return 200 so frontend can show the error message
 
 # Pantry endpoints
@@ -545,11 +536,83 @@ def scan_barcode():
         return jsonify({'error': 'Barcode required'}), 400
     
     product_info = lookup_barcode(barcode)
-    
+
     if product_info:
         return jsonify(product_info), 200
     else:
         return jsonify({'error': 'Product not found'}), 404
+
+
+def _normalize_scanned_nutrition(product_info):
+    """Prefer per-serving nutrition, fall back to per-100g (mirrors old frontend logic)."""
+    per_serving = product_info.get('nutritional_info_per_serving') or {}
+    per_100g = product_info.get('nutritional_info') or {}
+    use_per_serving = any(v is not None for v in per_serving.values())
+    src = per_serving if use_per_serving else per_100g
+    keys = ['energy_kcal', 'proteins', 'carbohydrates', 'fat', 'saturated_fat', 'trans_fat',
+            'cholesterol', 'sodium', 'fiber', 'sugars', 'added_sugars', 'vitamin_d',
+            'calcium', 'iron', 'potassium', 'salt']
+    normalized = {k: (src.get(k) if src.get(k) is not None else 0) for k in keys}
+    normalized['serving_size'] = product_info.get('serving_size') or per_100g.get('serving_size')
+    normalized['servings_per_item'] = product_info.get('servings_per_container') or 1
+    normalized['_source'] = 'per_serving' if use_per_serving else 'per_100g'
+    return normalized
+
+
+@api_bp.route('/pantry/scan-add', methods=['POST'])
+@login_required
+def scan_add_barcode():
+    """Continuous-scan intake: look up a barcode and add it to the pantry in one step.
+
+    If the user already has an item with this barcode, increment its quantity
+    instead of creating a duplicate.
+    """
+    data = request.get_json() or {}
+    barcode = (data.get('barcode') or '').strip()
+
+    if not barcode:
+        return jsonify({'error': 'Barcode required'}), 400
+
+    existing = PantryItem.query.filter_by(user_id=current_user.id, barcode=barcode).first()
+    if existing:
+        previous_quantity = existing.quantity or 0
+        existing.quantity = previous_quantity + 1
+        db.session.commit()
+        return jsonify({
+            'action': 'incremented',
+            'previous_quantity': previous_quantity,
+            'item': existing.to_dict(),
+        }), 200
+
+    product_info = lookup_barcode(barcode)
+    if not product_info:
+        return jsonify({'error': 'Product not found', 'barcode': barcode}), 404
+
+    name = product_info.get('name') or 'Unknown item'
+    item = PantryItem(
+        user_id=current_user.id,
+        item_name=name,
+        barcode=barcode,
+        quantity=1,
+        unit='item',
+        nutritional_info=json.dumps(_normalize_scanned_nutrition(product_info)),
+        category=auto_assign_category(name, product_info.get('categories_tags')),
+        serving_size=product_info.get('serving_size'),
+        servings_per_container=float(product_info['servings_per_container']) if product_info.get('servings_per_container') else None,
+        container_type=product_info.get('container_type'),
+    )
+    db.session.add(item)
+    db.session.commit()
+
+    return jsonify({
+        'action': 'added',
+        'item': item.to_dict(),
+        'product': {
+            'name': name,
+            'brand': product_info.get('brand'),
+            'image_url': product_info.get('image_url'),
+        },
+    }), 201
 
 @api_bp.route('/pantry/scan-nutrition-label', methods=['POST'])
 @login_required
@@ -613,7 +676,7 @@ def scan_nutrition_label():
         print(f"Error in scan_nutrition_label: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Error processing nutrition label: {str(e)}'}), 500
+        return jsonify({'error': 'Could not process the nutrition label'}), 500
 
 # Meal planning endpoints
 @api_bp.route('/mealplan', methods=['GET'])
@@ -695,8 +758,375 @@ def delete_meal_plan(plan_id):
     
     db.session.delete(plan)
     db.session.commit()
-    
+
     return jsonify({'message': 'Meal plan deleted'}), 200
+
+
+def _parse_iso_date(value, field):
+    try:
+        return datetime.strptime(value, '%Y-%m-%d').date()
+    except (TypeError, ValueError):
+        raise ValueError(f'{field} must be a YYYY-MM-DD date')
+
+
+@api_bp.route('/mealplan/shopping-list', methods=['POST'])
+@login_required
+def meal_plan_shopping_list():
+    """Aggregate ingredients for all planned meals in a date range, grouped by category."""
+    data = request.get_json() or {}
+    try:
+        start = _parse_iso_date(data.get('start_date'), 'start_date')
+        end = _parse_iso_date(data.get('end_date'), 'end_date')
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+    plans = MealPlan.query.filter(
+        MealPlan.user_id == current_user.id,
+        MealPlan.planned_date >= start,
+        MealPlan.planned_date <= end
+    ).all()
+
+    # Pantry index: lowercase name -> item (also singular form for loose plural match)
+    pantry = {}
+    for item in PantryItem.query.filter_by(user_id=current_user.id).all():
+        key = (item.item_name or '').strip().lower()
+        if key:
+            pantry[key] = item
+            if key.endswith('s'):
+                pantry.setdefault(key[:-1], item)
+
+    aggregated = {}
+    meal_count = 0
+    for plan in plans:
+        if not plan.recipe:
+            continue
+        meal_count += 1
+        for ing in plan.recipe.ingredients:
+            name = (ing.ingredient_name or '').strip()
+            if not name or name == '__nutrition__':
+                continue
+            key = (name.lower(), (ing.unit or '').strip().lower())
+            entry = aggregated.setdefault(key, {
+                'name': name,
+                'unit': ing.unit,
+                'quantity': 0,
+                'has_unknown_quantity': False,
+                'meals': 0,
+                'category': auto_assign_category(name),
+            })
+            entry['meals'] += 1
+            if ing.quantity is not None:
+                entry['quantity'] += ing.quantity
+            else:
+                entry['has_unknown_quantity'] = True
+
+    items = []
+    for (name_key, _unit), entry in aggregated.items():
+        pantry_item = pantry.get(name_key) or (pantry.get(name_key[:-1]) if name_key.endswith('s') else None)
+        items.append({
+            'name': entry['name'],
+            'quantity': round(entry['quantity'], 2) if entry['quantity'] else None,
+            'unit': entry['unit'],
+            'has_unknown_quantity': entry['has_unknown_quantity'],
+            'meals': entry['meals'],
+            'category': entry['category'],
+            'in_pantry': pantry_item is not None,
+            'pantry_quantity': pantry_item.quantity if pantry_item else None,
+            'pantry_unit': pantry_item.unit if pantry_item else None,
+        })
+    items.sort(key=lambda i: (i['category'], i['name'].lower()))
+
+    return jsonify({
+        'start_date': start.isoformat(),
+        'end_date': end.isoformat(),
+        'meal_count': meal_count,
+        'items': items,
+    }), 200
+
+
+@api_bp.route('/mealplan/repeat-week', methods=['POST'])
+@login_required
+def repeat_meal_plan_week():
+    """Copy all meals from the week starting at source_start to the week starting at target_start."""
+    data = request.get_json() or {}
+    try:
+        source_start = _parse_iso_date(data.get('source_start'), 'source_start')
+        target_start = _parse_iso_date(data.get('target_start'), 'target_start')
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+    offset = target_start - source_start
+    source_plans = MealPlan.query.filter(
+        MealPlan.user_id == current_user.id,
+        MealPlan.planned_date >= source_start,
+        MealPlan.planned_date <= source_start + timedelta(days=6)
+    ).all()
+
+    created = 0
+    for plan in source_plans:
+        new_date = plan.planned_date + offset
+        exists = MealPlan.query.filter_by(
+            user_id=current_user.id,
+            recipe_id=plan.recipe_id,
+            planned_date=new_date,
+            meal_type=plan.meal_type
+        ).first()
+        if exists:
+            continue
+        db.session.add(MealPlan(
+            user_id=current_user.id,
+            recipe_id=plan.recipe_id,
+            planned_date=new_date,
+            meal_type=plan.meal_type,
+            notes=plan.notes
+        ))
+        created += 1
+    db.session.commit()
+
+    return jsonify({'created': created, 'source_meals': len(source_plans)}), 200
+
+
+@api_bp.route('/mealplan/clear-week', methods=['POST'])
+@login_required
+def clear_meal_plan_week():
+    """Delete all meals in a date range."""
+    data = request.get_json() or {}
+    try:
+        start = _parse_iso_date(data.get('start_date'), 'start_date')
+        end = _parse_iso_date(data.get('end_date'), 'end_date')
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+
+    deleted = MealPlan.query.filter(
+        MealPlan.user_id == current_user.id,
+        MealPlan.planned_date >= start,
+        MealPlan.planned_date <= end
+    ).delete(synchronize_session=False)
+    db.session.commit()
+
+    return jsonify({'deleted': deleted}), 200
+
+
+@api_bp.route('/mealplan/<int:plan_id>/cooked', methods=['POST'])
+@login_required
+def mark_meal_cooked(plan_id):
+    """Log a planned meal to meal history (mark as cooked)."""
+    plan = MealPlan.query.filter_by(id=plan_id, user_id=current_user.id).first()
+    if not plan:
+        return jsonify({'error': 'Meal plan not found'}), 404
+
+    entry = MealHistory(
+        user_id=current_user.id,
+        recipe_id=plan.recipe_id,
+        consumed_date=plan.planned_date,
+        meal_type=plan.meal_type,
+        notes=plan.notes
+    )
+    db.session.add(entry)
+    db.session.commit()
+
+    return jsonify(entry.to_dict()), 201
+
+# ---- Grocery stores + aisle intelligence (beta) ----
+
+# Typical walk order through a US grocery store, used to sequence route stops.
+DEPARTMENT_WALK_ORDER = [
+    'Produce', 'Grains & Bread', 'Meat & Poultry', 'Seafood', 'Dairy & Eggs',
+    'Frozen', 'Canned Goods', 'Condiments & Sauces', 'Baking',
+    'Spices & Seasonings', 'Snacks', 'Beverages', 'Other',
+]
+
+
+@api_bp.route('/stores', methods=['GET'])
+@login_required
+def get_stores():
+    stores = UserStore.query.filter_by(user_id=current_user.id).order_by(UserStore.is_default.desc(), UserStore.name).all()
+    return jsonify([s.to_dict() for s in stores]), 200
+
+
+@api_bp.route('/stores', methods=['POST'])
+@login_required
+def add_store():
+    data = request.get_json() or {}
+    name = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({'error': 'Store name required'}), 400
+
+    make_default = bool(data.get('is_default'))
+    if make_default:
+        UserStore.query.filter_by(user_id=current_user.id, is_default=True).update({'is_default': False})
+
+    store = UserStore(
+        user_id=current_user.id,
+        name=name[:120],
+        chain=(data.get('chain') or '').strip()[:60] or None,
+        is_default=make_default or UserStore.query.filter_by(user_id=current_user.id).count() == 0,
+    )
+    db.session.add(store)
+    db.session.commit()
+    return jsonify(store.to_dict()), 201
+
+
+@api_bp.route('/stores/<int:store_id>', methods=['DELETE'])
+@login_required
+def delete_store(store_id):
+    store = UserStore.query.filter_by(id=store_id, user_id=current_user.id).first()
+    if not store:
+        return jsonify({'error': 'Store not found'}), 404
+    AisleOverride.query.filter_by(user_id=current_user.id, store_id=store.id).delete()
+    db.session.delete(store)
+    db.session.commit()
+    return jsonify({'message': 'Store deleted'}), 200
+
+
+@api_bp.route('/grocery/locate-items', methods=['POST'])
+@login_required
+def grocery_locate_items():
+    """Best-effort aisle/department placement for shopping list items.
+
+    Honest-confidence design: every result carries a source label —
+    'user' (a correction the shopper saved), 'inferred' (category keyword
+    mapping), or 'unknown'. No fake certainty; no store-site scraping.
+    """
+    data = request.get_json() or {}
+    items = data.get('items') or []
+    if not isinstance(items, list) or len(items) > 200:
+        return jsonify({'error': 'items must be a list of at most 200 entries'}), 400
+
+    store_id = data.get('store_id')
+    store = None
+    overrides = {}
+    if store_id:
+        store = UserStore.query.filter_by(id=store_id, user_id=current_user.id).first()
+        if not store:
+            return jsonify({'error': 'Store not found'}), 404
+        overrides = {
+            o.item_key: o.aisle_label
+            for o in AisleOverride.query.filter_by(user_id=current_user.id, store_id=store.id).all()
+        }
+
+    results = []
+    for raw in items:
+        name = str((raw or {}).get('name') or '').strip()
+        if not name:
+            continue
+        key = name.lower()
+        category = (raw or {}).get('category') or auto_assign_category(name)
+        if key in overrides:
+            aisle, source, confidence = overrides[key], 'user', 1.0
+        elif category and category != 'Other':
+            aisle, source, confidence = category, 'inferred', 0.5
+        else:
+            aisle, source, confidence = None, 'unknown', 0.0
+        results.append({
+            'name': name,
+            'category': category,
+            'aisle': aisle,
+            'source': source,
+            'confidence': confidence,
+        })
+
+    # Sequence into walk-order stops for the route view
+    order_index = {dep: i for i, dep in enumerate(DEPARTMENT_WALK_ORDER)}
+    results.sort(key=lambda r: (order_index.get(r['aisle'] or r['category'], len(order_index)), r['name'].lower()))
+
+    return jsonify({
+        'store': store.to_dict() if store else None,
+        'walk_order': DEPARTMENT_WALK_ORDER,
+        'items': results,
+    }), 200
+
+
+@api_bp.route('/grocery/aisle-correction', methods=['POST'])
+@login_required
+def grocery_aisle_correction():
+    """Save the shopper's correction for where an item actually is."""
+    data = request.get_json() or {}
+    store_id = data.get('store_id')
+    item_name = str(data.get('item_name') or '').strip()
+    aisle_label = str(data.get('aisle_label') or '').strip()
+
+    if not (store_id and item_name and aisle_label):
+        return jsonify({'error': 'store_id, item_name and aisle_label are required'}), 400
+
+    store = UserStore.query.filter_by(id=store_id, user_id=current_user.id).first()
+    if not store:
+        return jsonify({'error': 'Store not found'}), 404
+
+    key = item_name.lower()[:200]
+    override = AisleOverride.query.filter_by(user_id=current_user.id, store_id=store.id, item_key=key).first()
+    if override:
+        override.aisle_label = aisle_label[:80]
+    else:
+        override = AisleOverride(
+            user_id=current_user.id,
+            store_id=store.id,
+            item_key=key,
+            aisle_label=aisle_label[:80],
+        )
+        db.session.add(override)
+    db.session.commit()
+    return jsonify(override.to_dict()), 200
+
+
+# ---- AI: similar meals ----
+
+_similar_last_call = {}  # user_id -> unix ts; simple per-user cooldown
+SIMILAR_COOLDOWN_SECONDS = 15
+
+
+@api_bp.route('/recipes/<int:recipe_id>/similar', methods=['POST'])
+@login_required
+def similar_recipes(recipe_id):
+    """Ask the configured frontier model for meals similar to this recipe."""
+    from app import ai_service
+    import time
+
+    recipe = Recipe.query.get(recipe_id)
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    if not ai_service.is_configured():
+        return jsonify({
+            'enabled': False,
+            'suggestions': [],
+            'message': 'AI suggestions are not set up yet. Add FRONTIER_MODEL_API_KEY and FRONTIER_MODEL_NAME to the server environment to enable them.',
+        }), 200
+
+    now = time.time()
+    last = _similar_last_call.get(current_user.id, 0)
+    if now - last < SIMILAR_COOLDOWN_SECONDS:
+        return jsonify({'error': f'Please wait a few seconds between AI requests.'}), 429
+    _similar_last_call[current_user.id] = now
+
+    data = request.get_json() or {}
+    mode = data.get('mode', 'similar_flavor')
+    if mode not in ai_service.SIMILAR_MODES:
+        return jsonify({'error': 'Invalid mode'}), 400
+
+    raw_constraints = data.get('constraints') or {}
+    # Whitelist constraint keys — nothing else is forwarded to the model
+    constraints = {k: raw_constraints[k] for k in ('max_time_minutes', 'dietary_tags', 'budget') if k in raw_constraints}
+
+    pantry_names = None
+    if raw_constraints.get('use_pantry') or mode == 'use_pantry':
+        pantry_names = [
+            i.item_name for i in PantryItem.query.filter_by(user_id=current_user.id).all()
+            if i.item_name
+        ]
+
+    try:
+        suggestions = ai_service.generate_similar_recipes(recipe.to_dict(), mode, constraints, pantry_names)
+    except ai_service.AIServiceError as e:
+        return jsonify({'error': str(e)}), 502
+
+    return jsonify({
+        'enabled': True,
+        'source_recipe_id': recipe.id,
+        'mode': mode,
+        'suggestions': suggestions,
+    }), 200
+
 
 # Meal history endpoints
 @api_bp.route('/history', methods=['GET'])
@@ -1450,7 +1880,8 @@ def admin_broadcast():
         send_maintenance_broadcast(subject, message, users)
         return jsonify({'message': f'Broadcast sent to {len(users)} users'}), 200
     except Exception as e:
-        return jsonify({'error': f'Broadcast failed: {str(e)}'}), 500
+        print(f"Broadcast failed: {e}")
+        return jsonify({'error': 'Broadcast failed'}), 500
 
 
 @api_bp.route('/test-email', methods=['POST'])
@@ -1462,7 +1893,8 @@ def test_email():
         send_test_email(current_user)
         return jsonify({'message': f'Test email sent to {current_user.email}'}), 200
     except Exception as e:
-        return jsonify({'error': f'Failed to send test email: {str(e)}'}), 500
+        print(f"Test email failed: {e}")
+        return jsonify({'error': 'Failed to send test email'}), 500
 
 
 # ==================== ADMIN ====================
@@ -1521,7 +1953,8 @@ def admin_delete_user(user_id):
         return jsonify({'message': f'User {user.username} deleted'}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': f'Failed to delete user: {str(e)}'}), 500
+        print(f"Failed to delete user: {e}")
+        return jsonify({'error': 'Failed to delete user'}), 500
 
 @api_bp.route('/admin/users/<int:user_id>/toggle-admin', methods=['POST'])
 @login_required

@@ -327,6 +327,53 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/css/style.css | Replaced `.mobile-fab-container` / `.mobile-fab` / `.fab-popover` CSS with `.quick-add-fab` + `.quick-add-fab-menu` | New single-FAB pattern | 2026-04-17 |
 | backend/app/tasks.py | Added `list-users`, `delete-user`, `send-test-email` CLI commands | Admin ops without exposing a UI panel | 2026-04-17 |
 
+### File Manifest (Polish + Planning + Scanning + AI Pass — 2026-07-02)
+| File | What changed | Why | Date |
+|------|-------------|-----|------|
+| frontend/public/js/history.js | 3 raw `alert()` → `showToast` | No raw browser alerts (plan acceptance bar) | 2026-07-02 |
+| frontend/public/js/settings.js | `window.confirm` on account delete → `showConfirm` sheet | Styled destructive confirmation | 2026-07-02 |
+| frontend/public/js/users.js | All `alert`/`confirm` (share, copy recipe, reviews) → `showToast`/`showConfirm` | No raw browser dialogs | 2026-07-02 |
+| frontend/public/js/pantry.js, mealplan.js, recipes.js, social.js | Removed raw-`confirm()` fallback branches | main.js always loads first; fallback was dead + violated acceptance bar | 2026-07-02 |
+| frontend/public/js/main.js | `showConfirm`: Escape-to-close + initial focus on Cancel | Keyboard accessibility for dialogs | 2026-07-02 |
+| backend/app/routes.py | Added `/mealplan/shopping-list`, `/repeat-week`, `/clear-week`, `/<id>/cooked` endpoints | Meal planning redesign (plan Phase 3) | 2026-07-02 |
+| frontend/public/index.html | Meal plan view switcher: Week/Month/Day/Shopping + week actions row + shopping container | Shopping Prep view + Repeat/Clear week | 2026-07-02 |
+| frontend/public/js/mealplan.js | Shopping view (grouped list, pantry badges, localStorage check-off), repeat/clear week, mark-as-cooked | Meal planning redesign (plan Phase 3) | 2026-07-02 |
+| frontend/public/js/api.js | getShoppingList/repeatWeek/clearWeek/markMealCooked client methods | New meal plan endpoints | 2026-07-02 |
+| frontend/public/css/style.css | Shopping list view styles + week-actions row | Meal planning redesign (plan Phase 3) | 2026-07-02 |
+| backend/app/routes.py | `POST /api/pantry/scan-add`: lookup + add/increment in one call | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
+| backend/app/utils.py | OpenFoodFacts request now sends identifying User-Agent | OFF 403-blocks default python-requests UA — barcode lookup was broken | 2026-07-02 |
+| frontend/public/index.html | Scanner modal: success overlay, controls bar (Pause/Undo/Manual/Torch/Finish), recent-scans stack | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
+| frontend/public/js/scanner.js | Continuous scan mode (camera stays live, 2.5s per-barcode cooldown, auto add/increment, undo, green check overlay); review mode kept behind `mg_scan_mode` | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
+| frontend/public/js/pantry.js | closePantryModal returns to scanner after manual add from scan flow | Unknown-barcode manual entry loops back to scanning | 2026-07-02 |
+| frontend/public/css/style.css | Scanner overlay/controls/recent-scans styles | Continuous mass scanning (plan Phase 5) | 2026-07-02 |
+| backend/app/ai_service.py | NEW — provider-agnostic frontier-model client (FRONTIER_MODEL_* env), JSON extraction tolerant of think-blocks/fences, suggestion validation | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| backend/app/routes.py | `POST /api/recipes/<id>/similar` — 6 modes, constraint whitelist, 15s per-user cooldown, friendly disabled state, pantry names-only privacy | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/js/similar.js | NEW — Meals Like This modal: mode picker, skeletons, escaped AI output, Save / Save+Plan review-before-save | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/index.html | similarMealsModal + similar.js script tag | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/js/users.js | "✨ Meals Like This" button in recipe detail actions | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/js/api.js | getSimilarMeals client method | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| frontend/public/css/style.css | Similar-meals modal/card/skeleton styles (reduced-motion safe) | Similar-meals AI (plan Phase 4) | 2026-07-02 |
+| backend/app/models.py | NEW UserStore + AisleOverride models (auto-created by db.create_all) | Grocery stores + aisle corrections (plan Phases 6-7) | 2026-07-02 |
+| backend/app/routes.py | `/api/stores` CRUD, `/api/grocery/locate-items` (source: user/inferred/unknown + confidence), `/api/grocery/aisle-correction` upsert | Honest-confidence aisle intelligence (plan Phase 6) | 2026-07-02 |
+| frontend/public/js/mealplan.js | Shopping view List/Route toggle; Store Route beta: store picker + add-store, numbered stops timeline in walk order, collapse-on-complete, source chips, inline Fix-aisle corrections | Beta store route (plan Phase 7) | 2026-07-02 |
+| frontend/public/js/api.js | getStores/addStore/locateItems/saveAisleCorrection | Grocery endpoints | 2026-07-02 |
+| frontend/public/css/style.css | Route stops timeline, aisle source chips, beta chip, add-store form styles | Beta store route (plan Phase 7) | 2026-07-02 |
+| backend/app/__init__.py | CORS credentialed-wildcard removed (opt-in via CORS_ORIGINS), security headers (CSP etc.), flask-limiter init, prod SECRET_KEY guard | Security hardening (plan Phase 8 + kanban audit) | 2026-07-02 |
+| backend/app/auth.py | Rate limits on login/register/forgot/reset; removed 'fallback-key' reset-token signer | Security hardening | 2026-07-02 |
+| backend/app/config.py | SESSION_COOKIE_SECURE defaults ON in production | Security hardening | 2026-07-02 |
+| backend/app/utils.py | SSRF guard (safe_fetch_url, private-IP + redirect validation); Pillow byte validation for uploads; image_url sanitization | Security hardening | 2026-07-02 |
+| backend/app/routes.py | Exception strings no longer leaked to clients; /api/health; removed duplicate unvalidated image helpers | Security hardening | 2026-07-02 |
+| backend/.env.example | NEW — placeholder env documentation | Safe self-hosting | 2026-07-02 |
+| frontend/public/index.html | Settings: Comfort & accessibility card (text size, high contrast, reduce motion, larger buttons) + Pantry scanning mode card | Older-user accessibility (plan Phase 9) | 2026-07-02 |
+| frontend/public/js/settings.js | Device prefs in localStorage applied as body classes; first-run settings tip | Accessibility modes (plan Phase 9) | 2026-07-02 |
+| frontend/public/css/style.css | pref-text-large/extra-large, pref-high-contrast, pref-reduced-motion, pref-large-buttons | Accessibility modes (plan Phase 9) | 2026-07-02 |
+| frontend/public/js/main.js | showApp calls maybeShowFirstRunTip | First-run pointer | 2026-07-02 |
+| frontend/public/js/users.js | "📅 Add to Plan" button on recipe detail (pre-fills meal plan modal) | Quick action (plan Phase 2) | 2026-07-02 |
+| backend/tests/ | NEW — conftest + 14 focused tests: auth gating on all new endpoints, AI disabled/invalid-mode, pantry CRUD+scan-add increment, meal plan CRUD+range+dupe-safe repeat, ownership checks, aisle correction precedence | Plan Phase 10 QA | 2026-07-02 |
+| backend/app/__init__.py | CSP font-src allows `data:` (FullCalendar inline icon font was blocked) | Browser QA regression fix | 2026-07-02 |
+| frontend/public/css/style.css | `.route-fix-row[hidden]` display:none (flex rule was overriding `hidden`) | Browser QA: all Fix editors rendered expanded | 2026-07-02 |
+| frontend/public/js/settings.js | First-run tip suppressed while tutorial modal is open | Browser QA: tip stacked on welcome tutorial | 2026-07-02 |
+
 ## Anti-Patterns
 | Pattern | Why rejected |
 |---------|-------------|
