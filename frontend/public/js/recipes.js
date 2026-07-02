@@ -805,11 +805,7 @@ function deleteRecipe(id) {
             if (window.showToast) window.showToast('Failed to delete recipe', 'error');
         }
     };
-    if (window.showConfirm) {
-        window.showConfirm('Delete this recipe permanently?', doDelete);
-    } else {
-        if (confirm('Are you sure you want to delete this recipe?')) doDelete();
-    }
+    window.showConfirm('Delete this recipe permanently?', doDelete);
 }
 
 async function shareRecipeQR(id) {

@@ -86,17 +86,14 @@ async function handleDeleteAccount() {
         return;
     }
 
-    const sure = window.confirm('This will permanently delete your account and all associated data. Continue?');
-    if (!sure) {
-        return;
-    }
-
-    try {
-        await api.deleteAccount(password);
-        window.location.reload();
-    } catch (error) {
-        showSettingsStatus(error.message || 'Failed to delete account.', true);
-    }
+    window.showConfirm('This will permanently delete your account and all associated data. Continue?', async () => {
+        try {
+            await api.deleteAccount(password);
+            window.location.reload();
+        } catch (error) {
+            showSettingsStatus(error.message || 'Failed to delete account.', true);
+        }
+    }, 'Delete Account');
 }
 
 window.loadSettingsPage = hydrateSettingsProfile;

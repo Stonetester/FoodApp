@@ -487,11 +487,7 @@ function deleteMealPlanFromDay(planId) {
             if (window.showToast) window.showToast('Failed to delete meal', 'error');
         }
     };
-    if (window.showConfirm) {
-        window.showConfirm('Remove this meal from your plan?', doDelete);
-    } else {
-        if (confirm('Are you sure you want to delete this meal?')) doDelete();
-    }
+    window.showConfirm('Remove this meal from your plan?', doDelete, 'Remove');
 }
 
 // Export functions

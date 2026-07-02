@@ -152,7 +152,7 @@ async function viewDiscoverRecipeDetail(recipeId) {
         showRecipeDetailModal(recipe, isOtherUser);
     } catch (error) {
         console.error('Error loading discover recipe details:', error);
-        alert('Failed to load recipe details');
+        window.showToast('Failed to load recipe details', 'error');
     }
 }
 
@@ -363,7 +363,7 @@ async function viewRecipeDetail(recipeId, isOtherUser = false) {
         showRecipeDetailModal(recipe, otherUser);
     } catch (error) {
         console.error('Error loading recipe details:', error);
-        alert('Failed to load recipe details');
+        window.showToast('Failed to load recipe details', 'error');
     }
 }
 
@@ -572,45 +572,41 @@ async function shareRecipeLink(recipeId, title) {
     
     try {
         await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-        alert('Recipe link copied to clipboard!');
+        window.showToast('Recipe link copied to clipboard!');
     } catch (error) {
-        alert('Could not copy the share link. Please copy it manually from the address bar.');
+        window.showToast('Could not copy the link — copy it from the address bar.', 'error');
     }
 }
 
 async function copyRecipeToMyCollection(recipeId) {
-    if (!confirm('Copy this recipe to your collection?')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/recipes/${recipeId}/copy`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to copy recipe');
-        }
-        
-        const result = await response.json();
-        alert('✅ Recipe copied successfully!');
-        
-        // Optionally navigate to recipes page
-        if (confirm('Would you like to view your recipes now?')) {
-            document.getElementById('userRecipesModal').classList.remove('active');
-            if (window.navigateToPage) {
-                window.navigateToPage('recipes');
+    window.showConfirm('Copy this recipe to your collection?', async () => {
+        try {
+            const response = await fetch(`/api/recipes/${recipeId}/copy`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to copy recipe');
             }
+
+            await response.json();
+            window.showToast('Recipe saved to your collection');
+            window.showConfirm('View your recipes now?', () => {
+                document.getElementById('userRecipesModal').classList.remove('active');
+                if (window.navigateToPage) {
+                    window.navigateToPage('recipes');
+                }
+            }, 'View Recipes', false);
+        } catch (error) {
+            console.error('Error copying recipe:', error);
+            window.showToast('Failed to copy recipe: ' + error.message, 'error');
         }
-    } catch (error) {
-        console.error('Error copying recipe:', error);
-        alert('❌ Failed to copy recipe: ' + error.message);
-    }
+    }, 'Copy', false);
 }
 
 async function copyRecipeFromDetail(recipeId) {
@@ -647,15 +643,16 @@ async function initReviewSection(recipeId) {
     if (submitBtn) {
         submitBtn.addEventListener('click', async () => {
             if (selectedRating < 1) {
-                alert('Please select a star rating.');
+                window.showToast('Please select a star rating.', 'info');
                 return;
             }
             try {
                 const reviewText = section.querySelector('#reviewText')?.value || '';
                 await api.createRecipeReview(recipeId, { rating: selectedRating, review_text: reviewText });
+                window.showToast('Review saved');
                 loadReviews(recipeId);
             } catch (err) {
-                alert('Failed to submit review: ' + err.message);
+                window.showToast('Failed to submit review: ' + err.message, 'error');
             }
         });
     }
@@ -701,14 +698,15 @@ async function loadReviews(recipeId) {
 
         // Wire up delete buttons
         container.querySelectorAll('.review-delete').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                if (!confirm('Delete your review?')) return;
-                try {
-                    await api.deleteRecipeReview(btn.dataset.recipeId, btn.dataset.reviewId);
-                    loadReviews(recipeId);
-                } catch (err) {
-                    alert('Failed to delete review: ' + err.message);
-                }
+            btn.addEventListener('click', () => {
+                window.showConfirm('Delete your review?', async () => {
+                    try {
+                        await api.deleteRecipeReview(btn.dataset.recipeId, btn.dataset.reviewId);
+                        loadReviews(recipeId);
+                    } catch (err) {
+                        window.showToast('Failed to delete review: ' + err.message, 'error');
+                    }
+                });
             });
         });
     } catch (err) {

@@ -38,7 +38,7 @@ async function loadHistory() {
         displayHistory();
     } catch (error) {
         console.error('Error loading meal history:', error);
-        alert('Failed to load meal history');
+        window.showToast('Failed to load meal history', 'error');
     }
 }
 
@@ -122,7 +122,7 @@ async function openLogMealModal() {
         document.getElementById('logMealDate').value = new Date().toISOString().split('T')[0];
     } catch (error) {
         console.error('Error loading recipes:', error);
-        alert('Failed to load recipes');
+        window.showToast('Failed to load recipes', 'error');
         return;
     }
 
@@ -150,7 +150,7 @@ async function saveLoggedMeal() {
         loadHistory();
     } catch (error) {
         console.error('Error logging meal:', error);
-        alert('Failed to log meal: ' + error.message);
+        window.showToast('Failed to log meal: ' + error.message, 'error');
     }
 }
 

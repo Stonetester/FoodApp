@@ -376,11 +376,7 @@ function deletePantryItem(id) {
             if (window.showToast) window.showToast('Failed to delete pantry item', 'error');
         }
     };
-    if (window.showConfirm) {
-        window.showConfirm('Remove this item from your pantry?', doDelete);
-    } else {
-        if (confirm('Are you sure you want to delete this pantry item?')) doDelete();
-    }
+    window.showConfirm('Remove this item from your pantry?', doDelete, 'Remove');
 }
 
 function openScanner() {

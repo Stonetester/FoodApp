@@ -264,24 +264,14 @@ async function respondToRequest(requestId, action) {
 }
 
 async function removeFriend(friendId) {
-    if (window.showConfirm) {
-        window.showConfirm('Remove this friend?', async () => {
-            try {
-                await api.removeFriend(friendId);
-                await loadSocialData();
-            } catch (error) {
-                if (window.showToast) window.showToast(error.message || 'Failed to remove friend.', 'error');
-            }
-        }, 'Remove', true);
-    } else {
-        if (!confirm('Remove this friend?')) return;
+    window.showConfirm('Remove this friend?', async () => {
         try {
             await api.removeFriend(friendId);
             await loadSocialData();
         } catch (error) {
             if (window.showToast) window.showToast(error.message || 'Failed to remove friend.', 'error');
         }
-    }
+    }, 'Remove', true);
 }
 
 window.loadSocialData = loadSocialData;

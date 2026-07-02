@@ -327,6 +327,15 @@ CSS custom property name → BrandDNA field mapping:
 | frontend/public/css/style.css | Replaced `.mobile-fab-container` / `.mobile-fab` / `.fab-popover` CSS with `.quick-add-fab` + `.quick-add-fab-menu` | New single-FAB pattern | 2026-04-17 |
 | backend/app/tasks.py | Added `list-users`, `delete-user`, `send-test-email` CLI commands | Admin ops without exposing a UI panel | 2026-04-17 |
 
+### File Manifest (Polish + Planning + Scanning + AI Pass — 2026-07-02)
+| File | What changed | Why | Date |
+|------|-------------|-----|------|
+| frontend/public/js/history.js | 3 raw `alert()` → `showToast` | No raw browser alerts (plan acceptance bar) | 2026-07-02 |
+| frontend/public/js/settings.js | `window.confirm` on account delete → `showConfirm` sheet | Styled destructive confirmation | 2026-07-02 |
+| frontend/public/js/users.js | All `alert`/`confirm` (share, copy recipe, reviews) → `showToast`/`showConfirm` | No raw browser dialogs | 2026-07-02 |
+| frontend/public/js/pantry.js, mealplan.js, recipes.js, social.js | Removed raw-`confirm()` fallback branches | main.js always loads first; fallback was dead + violated acceptance bar | 2026-07-02 |
+| frontend/public/js/main.js | `showConfirm`: Escape-to-close + initial focus on Cancel | Keyboard accessibility for dialogs | 2026-07-02 |
+
 ## Anti-Patterns
 | Pattern | Why rejected |
 |---------|-------------|
