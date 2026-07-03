@@ -1,7 +1,8 @@
 # Deploy Notes — 2026-07-02 UI/UX Overhaul
 
 **Branch:** `feature/modogusto-polish-planning-scanning-ai` (11 commits off `main`)
-**Status:** Complete, tested, NOT merged, NOT deployed.
+**Status:** DEPLOYED 2026-07-03 to CT 100 as merge `a6efeb5a` (includes the Fresh Ink retheme, `16b4d495`).
+**Rollback:** clean revert = `git revert -m 1 a6efeb5a` + push + pull/restart on CT 100. Pre-merge main is tagged `pre-freshink-2026-07-03` (= `4fe3a98`); emergency CT-side: `git reset --hard 4fe3a98 && systemctl restart modogusto`. No destructive migrations — new tables/columns only.
 Full per-file log: `DESIGN.md` → "File Manifest (Polish + Planning + Scanning + AI Pass — 2026-07-02)".
 
 ## What changed
