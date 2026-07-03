@@ -4,26 +4,28 @@
 
 ```json
 {
-  "aesthetic_refs": ["Cottagecore", "1970s Retro", "Cabin Core", "Wes Anderson"],
-  "vibe_summary": "A cozy cabin meets retro 50s homestead aesthetic blended with Wes Anderson's whimsical film palettes. The design embraces warm earth tones from the 1970s era—burnt orange, avocado green, rust, and sage—paired with cream surfaces and dusty rose accents. The overall feeling is grown-up, tactile, and hand-crafted without being childish, creating a cartoon-like warmth that feels lived-in and trustworthy. Colors are muted and easy on the eyes, providing strong contrast where needed for usability while maintaining the cozy, nostalgic atmosphere of a well-loved kitchen.",
+  "aesthetic_refs": ["Editorial Print", "Risograph Zine", "Modern Food Magazine"],
+  "vibe_summary": "Fresh Ink (2026-07-03 retheme): a modern food-zine editorial identity. Ink-on-paper foundations — warm paper grounds, near-black ink text, ink-line borders, and hard offset sticker shadows — carry flat spot colors: chili red for CTAs and headlines, basil green for actives and success, marigold as the highlight color (badges, active nav pill, ratings), wine red for errors. Fraunces gives headlines an ink-trap editorial voice; Inter keeps UI text crisp at phone sizes; Space Mono stamps data (macros, counts, dates) with print-catalog energy. Confident, tactile, high-contrast, and food-forward — a magazine you'd pin to the fridge, not a nostalgic pastel kitchen. Every color pairing is WCAG AA verified (16.7:1 ink/paper down to 5.05:1 worst case).",
   "palette": {
-    "primary": "#BF5700",
-    "secondary": "#568203",
-    "accent": "#D67236",
-    "surface": "#F1E6D3",
-    "surface_alt": "#E8DCC6",
-    "text": "#2C1810",
-    "text_muted": "#5D4F3A",
-    "border": "#C4B5A0",
-    "error": "#B7410E",
-    "success": "#6B7A42",
-    "warning": "#CC7722"
+    "primary": "#BE3315",
+    "secondary": "#2F6B33",
+    "accent": "#9E2508",
+    "surface": "#FAF6EE",
+    "surface_alt": "#FFFDF7",
+    "text": "#191613",
+    "text_muted": "#5B5348",
+    "border": "#2A241D",
+    "border_soft": "#E3DCCB",
+    "error": "#9E1B32",
+    "success": "#2F6B33",
+    "warning": "#925F00",
+    "gold": "#F5A80C"
   },
   "typography": {
-    "display": "Playfair Display",
-    "heading": "Lora",
-    "body": "Source Serif 4",
-    "mono": "DM Mono",
+    "display": "Fraunces",
+    "heading": "Fraunces",
+    "body": "Inter",
+    "mono": "Space Mono",
     "scale": {
       "xs": "0.75",
       "sm": "0.875",
@@ -42,66 +44,58 @@
     "density": "comfortable"
   },
   "motion": {
-    "speed": "medium",
-    "easing": "cubic-bezier(0.4,0,0.2,1)",
-    "style": "fade"
+    "speed": "snappy",
+    "easing": "cubic-bezier(0.2, 0.8, 0.3, 1)",
+    "style": "print-flip: quick fades, physical press (buttons translate into their shadow)"
   },
   "radius": {
     "sm": "4px",
     "md": "8px",
-    "lg": "16px",
+    "lg": "14px",
     "full": "9999px"
   },
   "shadows": {
-    "sm": "0 1px 3px rgba(44, 24, 16, 0.12), 0 1px 2px rgba(44, 24, 16, 0.24)",
-    "md": "0 4px 6px rgba(44, 24, 16, 0.15), 0 2px 4px rgba(44, 24, 16, 0.12)",
-    "lg": "0 10px 15px rgba(44, 24, 16, 0.1), 0 4px 6px rgba(44, 24, 16, 0.1)"
+    "sm": "2px 2px 0 rgba(25, 22, 19, 0.9)",
+    "md": "4px 4px 0 rgba(25, 22, 19, 0.9)",
+    "lg": "6px 6px 0 rgba(25, 22, 19, 0.9)"
   },
   "motifs": [
-    "hand-drawn recipe card borders",
-    "subtle wood grain textures",
-    "vintage label and badge shapes",
-    "soft rounded corners on containers",
-    "grid patterns reminiscent of recipe notebooks",
-    "illustration-style icons with organic shapes"
+    "hard offset sticker shadows on cards and solid buttons",
+    "2px ink outlines on interactive elements",
+    "marigold pill behind the active bottom-nav icon",
+    "flat spot-color tints (basil, marigold, blush) for card categories",
+    "ink hairline rules as section dividers",
+    "mono-stamped data (macros, counts, dates) in Space Mono caps"
   ],
   "textures": [
-    "canvas or linen background texture",
-    "subtle paper grain for recipe cards",
-    "wood grain for navigation elements",
-    "soft fabric texture for buttons"
+    "flat warm paper grounds — no gradients, no grain overlays",
+    "solid spot-color fills, risograph-style"
   ],
   "mood_keywords": [
-    "cozy",
-    "warm",
-    "nostalgic",
-    "handcrafted",
-    "lived-in",
-    "trustworthy",
-    "organic",
-    "earthy",
-    "tactile",
-    "wholesome",
+    "confident",
     "editorial",
-    "vintage"
+    "tactile",
+    "fresh",
+    "punchy",
+    "print-inspired",
+    "food-forward",
+    "trustworthy",
+    "high-contrast"
   ],
   "do_not": [
-    "bright yellow or neon colors",
-    "pure white backgrounds",
+    "gradients or glassy blur effects",
+    "soft blurry drop shadows (hard offset only)",
     "cold blue tones",
-    "sharp geometric modern tech aesthetic",
+    "muted murky pastels as text colors",
     "childish cartoon style",
-    "dark mode treatments",
-    "bright saturated colors that hurt readability",
-    "Inter, Roboto, or Arial fonts as display",
-    "overly glossy or plastic-looking elements",
-    "harsh drop shadows or stark contrasts"
+    "marigold as a text color (highlight fills only)",
+    "Inter as the display font (body/UI only — display stays Fraunces)",
+    "overly glossy or plastic-looking elements"
   ],
   "reference_urls": [],
   "wiki_urls": [
-    "https://aesthetics.fandom.com/wiki/Cottagecore",
-    "https://aesthetics.fandom.com/wiki/1970s",
-    "https://aesthetics.fandom.com/wiki/Cabin_Core"
+    "https://aesthetics.fandom.com/wiki/Risograph",
+    "https://aesthetics.fandom.com/wiki/Editorial"
   ]
 }
 ```
@@ -117,23 +111,25 @@
 CSS custom property name → BrandDNA field mapping:
 
 ### Colors
-- `--color-primary` → `palette.primary` (#BF5700)
-- `--color-secondary` → `palette.secondary` (#568203)
-- `--color-accent` → `palette.accent` (#D67236)
-- `--color-surface` → `palette.surface` (#F1E6D3)
-- `--color-surface-alt` → `palette.surface_alt` (#E8DCC6)
-- `--color-text` → `palette.text` (#2C1810)
-- `--color-text-muted` → `palette.text_muted` (#5D4F3A)
-- `--color-border` → `palette.border` (#C4B5A0)
-- `--color-error` → `palette.error` (#B7410E)
-- `--color-success` → `palette.success` (#6B7A42)
-- `--color-warning` → `palette.warning` (#CC7722)
+- `--color-primary` → `palette.primary` (#BE3315 chili)
+- `--color-secondary` → `palette.secondary` (#2F6B33 basil)
+- `--color-accent` → `palette.accent` (#9E2508 deep chili, hover)
+- `--color-surface` → `palette.surface` (#FAF6EE warm paper)
+- `--color-surface-alt` → `palette.surface_alt` (#FFFDF7 bright paper)
+- `--color-text` → `palette.text` (#191613 ink)
+- `--color-text-muted` → `palette.text_muted` (#5B5348 faded ink)
+- `--color-border` → `palette.border` (#2A241D ink line)
+- `--color-border-soft` → `palette.border_soft` (#E3DCCB pencil line)
+- `--color-error` → `palette.error` (#9E1B32 wine)
+- `--color-success` → `palette.success` (#2F6B33 basil)
+- `--color-warning` → `palette.warning` (#925F00 toasted amber)
+- `--color-gold` → `palette.gold` (#F5A80C marigold — highlight fills only, never text)
 
 ### Typography
-- `--font-display` → `typography.display` (Playfair Display)
-- `--font-heading` → `typography.heading` (Lora)
-- `--font-body` → `typography.body` (Source Serif 4)
-- `--font-mono` → `typography.mono` (DM Mono)
+- `--font-display` → `typography.display` (Fraunces)
+- `--font-heading` → `typography.heading` (Fraunces)
+- `--font-body` → `typography.body` (Inter)
+- `--font-mono` → `typography.mono` (Space Mono)
 - `--text-xs` through `--text-6xl` → `typography.scale.*`
 
 ### Layout
@@ -373,6 +369,9 @@ CSS custom property name → BrandDNA field mapping:
 | backend/app/__init__.py | CSP font-src allows `data:` (FullCalendar inline icon font was blocked) | Browser QA regression fix | 2026-07-02 |
 | frontend/public/css/style.css | `.route-fix-row[hidden]` display:none (flex rule was overriding `hidden`) | Browser QA: all Fix editors rendered expanded | 2026-07-02 |
 | frontend/public/js/settings.js | First-run tip suppressed while tutorial modal is open | Browser QA: tip stacked on welcome tutorial | 2026-07-02 |
+| frontend/public/css/style.css | FRESH INK retheme: 249 hardcoded old-palette hex/rgba/font values tokenized to var() refs, :root rewritten (chili/basil/marigold on ink+paper, Fraunces/Inter/Space Mono, hard offset shadows, snappy motion), high-contrast prefs re-inked, signature layer appended (sticker buttons, marigold nav pill) | Full theme reimagining — supersedes cottagecore/Wes Anderson identity | 2026-07-03 |
+| frontend/public/index.html | Google Fonts swap (Fraunces+Inter+Space Mono), theme-color #BE3315, styleguide swatches → Fresh Ink palette | Fresh Ink retheme | 2026-07-03 |
+| CLAUDE.md + DESIGN.md | Brand DNA, color/typography rules, and job template rewritten for Fresh Ink; old VibeForge locked palette void per Keaton 2026-07-03 | Fresh Ink retheme | 2026-07-03 |
 
 ## Anti-Patterns
 | Pattern | Why rejected |

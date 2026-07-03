@@ -199,10 +199,10 @@ APPEND to Review History and File Manifest — never overwrite existing entries.
 - Display font must be justified by the aesthetic reference — cite it
 - Body font must be readable at 16px with line-height 1.5 minimum
 
-Aesthetic-appropriate font pairings for this project (cozy/retro/Wes Anderson):
-- Display: Playfair Display or Lora (warm serif, editorial character)
-- Body: Lato or Source Serif 4 (readable, warm, not cold-tech)
-- Mono/Data: DM Mono (for nutritional values, quantities, dates)
+Aesthetic-appropriate font pairings for this project (Fresh Ink food-zine editorial):
+- Display/Headings: Fraunces (soft-serif ink-trap character — the editorial voice)
+- Body/UI: Inter (crisp UI clarity at small sizes; allowed as BODY, display stays Fraunces)
+- Mono/Data: Space Mono (nutritional values, quantities, dates — print-catalog energy)
 
 ---
 
@@ -214,8 +214,9 @@ Aesthetic-appropriate font pairings for this project (cozy/retro/Wes Anderson):
 - Every foreground/background pair must pass 4.5:1 WCAG AA contrast
 - Accent used ONLY for CTAs, key data points, and critical interactions
 - Color is NEVER the only way to communicate meaning — always pair with icon or label
-- NO YELLOW. NO BRIGHT SATURATED COLOURS. Warm earth tones only.
-- Base palette: burnt orange, avocado green, rust, warm cream, deep brown, dusty rose, sage
+- Spot colors stay flat and confident — no gradients, no glassy translucency
+- Base palette (Fresh Ink, 2026-07-03): ink #191613, warm paper #FAF6EE, chili red #BE3315,
+  basil green #2F6B33, marigold #F5A80C, wine #9E1B32 — marigold is a highlight, never a text color
 
 ---
 
@@ -278,13 +279,12 @@ VibeForge, run a full branding pass on this project:
 
 REPO: C:\Users\keato\FoodApp
 
-VIBE: Cozy cabin / retro 50s homestead / 70s earth-tone stripe palette mixed with
-Wes Anderson film aesthetics. Burnt orange, avocado green, rust, warm cream, deep
-brown, dusty rose, sage green. Cartoon-like warmth without being childish or cutesy.
-No yellow. No bright colours that hurt text readability. Easy on the eyes with
-strong contrast on important elements.
+VIBE: Fresh Ink — modern food-zine editorial. Ink-on-paper: warm paper grounds,
+near-black ink lines and hard offset "sticker" shadows, chili red CTAs, basil green
+actives, flat marigold highlights. Confident, tactile, print-inspired — a food
+magazine you'd pin to the fridge. High contrast, zero murk.
 
-AESTHETICS: Cottagecore, 1970s Retro, Cabin Core, Wes Anderson
+AESTHETICS: Editorial print, risograph zine, modern food magazine (Fraunces + Inter)
 
 APP TYPE: Mobile food and meal planning app (vanilla JS + Flask, no framework)
 
@@ -292,8 +292,8 @@ FRAMEWORK: Vanilla JS — single CSS file at frontend/public/css/style.css
 
 PIPELINE: FULL
 
-DO NOT: No yellow. No white backgrounds. No cold blue tones. No sharp modern tech
-aesthetic. No childish cartoon style. No dark mode. No bright saturated colours.
+DO NOT: No gradients or glassy blur effects. No cold blue tones. No muted/murky
+pastels as text. No soft blurry shadows (hard offset only). No childish cartoon style.
 
 USER CONTEXT: Users open this app in the kitchen or at the grocery store on their
 phone. The most common actions are: scan a barcode to add a pantry item, browse
