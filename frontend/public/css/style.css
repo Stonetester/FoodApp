@@ -5699,6 +5699,15 @@ a.teal-link:hover, .teal-link:hover {
     color: var(--color-text);
 }
 
+.shopping-pantry-action {
+    margin: 0.75rem 0;
+}
+
+.shopping-pantry-action .btn {
+    width: 100%;
+    min-height: 44px;
+}
+
 .shopping-category h3 {
     font-size: var(--text-sm);
     color: var(--color-primary);

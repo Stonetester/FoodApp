@@ -191,6 +191,13 @@ class ApiService {
         });
     }
 
+    async addPurchasedPantryItems(items) {
+        return this.request('/api/pantry/purchased-items', {
+            method: 'POST',
+            body: JSON.stringify({ items }),
+        });
+    }
+
     async updatePantryItem(id, item) {
         return this.request(`/api/pantry/${id}`, {
             method: 'PUT',

@@ -40,6 +40,7 @@ def test_new_endpoints_require_login(client):
         ('post', '/api/mealplan/clear-week'),
         ('post', '/api/mealplan/1/cooked'),
         ('post', '/api/pantry/scan-add'),
+        ('post', '/api/pantry/purchased-items'),
         ('post', '/api/recipes/1/similar'),
         ('get', '/api/stores'),
         ('post', '/api/stores'),
@@ -117,6 +118,34 @@ def test_scan_add_unknown_barcode_404(alice, monkeypatch):
     monkeypatch.setattr(routes, 'lookup_barcode', lambda b: None)
     resp = alice.post('/api/pantry/scan-add', json={'barcode': '000000000000'})
     assert resp.status_code == 404
+
+
+def test_checked_shopping_items_transfer_to_pantry(alice):
+    existing = alice.post('/api/pantry', json={
+        'item_name': 'Whole milk', 'quantity': 1, 'unit': 'cup',
+    }).get_json()
+
+    resp = alice.post('/api/pantry/purchased-items', json={'items': [
+        {'name': 'whole milk', 'quantity': 2, 'unit': 'cup'},
+        {'name': 'Penne pasta', 'quantity': 200, 'unit': 'g'},
+        {'name': 'Mystery item', 'unit': None},
+    ]})
+    assert resp.status_code == 201
+    assert resp.get_json() == {'created': 2, 'updated': 1, 'transferred': 3}
+
+    pantry = alice.get('/api/pantry').get_json()
+    by_name = {item['item_name'].lower(): item for item in pantry}
+    assert by_name['whole milk']['id'] == existing['id']
+    assert by_name['whole milk']['quantity'] == 3
+    assert by_name['penne pasta']['category'] == 'Grains & Bread'
+    assert by_name['mystery item']['quantity'] is None
+
+
+def test_checked_shopping_transfer_rejects_invalid_payload(alice):
+    assert alice.post('/api/pantry/purchased-items', json={'items': []}).status_code == 400
+    assert alice.post('/api/pantry/purchased-items', json={'items': [
+        {'name': 'Milk', 'quantity': -1},
+    ]}).status_code == 400
 
 
 # ---- meal plan CRUD + range endpoints ----

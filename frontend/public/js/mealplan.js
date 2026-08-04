@@ -144,6 +144,54 @@ function saveCheckedShoppingItems(dateRange, checked) {
     } catch (_) {}
 }
 
+function checkedShoppingItems(items, checked) {
+    return items.filter(item => checked.has(item.name.toLowerCase()));
+}
+
+function buildShoppingTransferAction(items, checked) {
+    const selected = checkedShoppingItems(items, checked);
+    const label = selected.length
+        ? `Add ${selected.length} checked item${selected.length === 1 ? '' : 's'} to pantry`
+        : 'Add checked items to pantry';
+    return `
+        <div class="shopping-pantry-action">
+            <button type="button" class="btn btn-primary" id="addCheckedToPantryBtn"${selected.length ? '' : ' disabled'}>
+                ${label}
+            </button>
+        </div>
+    `;
+}
+
+function wireShoppingTransferAction(container, range, items, checked) {
+    container.querySelector('#addCheckedToPantryBtn')?.addEventListener('click', () => {
+        const selected = checkedShoppingItems(items, checked);
+        if (!selected.length) return;
+        window.showConfirm(
+            `Add ${selected.length} checked item${selected.length === 1 ? '' : 's'} to your pantry?`,
+            async () => {
+                try {
+                    const result = await api.addPurchasedPantryItems(selected.map(item => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        unit: item.unit,
+                    })));
+                    selected.forEach(item => checked.delete(item.name.toLowerCase()));
+                    saveCheckedShoppingItems(range, checked);
+                    const changes = [
+                        result.created ? `${result.created} added` : '',
+                        result.updated ? `${result.updated} quantity updated` : '',
+                    ].filter(Boolean).join(', ');
+                    window.showToast(`Pantry updated: ${changes}`);
+                    renderShoppingView();
+                } catch (error) {
+                    window.showToast('Failed to add items to pantry: ' + error.message, 'error');
+                }
+            },
+            'Add to Pantry'
+        );
+    });
+}
+
 let shoppingSubView = 'list';   // 'list' | 'route'
 let lastShoppingData = null;
 let routeStoreId = null;
@@ -197,6 +245,7 @@ async function renderShoppingView() {
 
     const needCount = data.items.filter(i => !i.in_pantry).length;
     let html = buildShoppingSubToggle();
+    html += buildShoppingTransferAction(data.items, checked);
     html += `
         <div class="shopping-summary">
             <span><strong>${data.meal_count}</strong> meals planned</span>
@@ -237,6 +286,7 @@ async function renderShoppingView() {
     });
 
     wireShoppingSubToggle(container);
+    wireShoppingTransferAction(container, range, data.items, checked);
 }
 
 // ---- Store route view (beta) ----
@@ -346,7 +396,7 @@ async function renderRouteView(container, range) {
         stop.items.push(item);
     });
 
-    let html = storePicker;
+    let html = buildShoppingTransferAction(lastShoppingData.items, checked) + storePicker;
     stops.forEach((stop, si) => {
         const allDone = stop.items.every(i => checked.has(i.name.toLowerCase()));
         html += `
@@ -385,6 +435,8 @@ async function renderRouteView(container, range) {
         }
         renderShoppingView();
     });
+
+    wireShoppingTransferAction(container, range, lastShoppingData.items, checked);
 
     // Check-off (shared state with list view)
     container.querySelectorAll('.route-item input[type="checkbox"]').forEach(box => {

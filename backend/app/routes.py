@@ -525,6 +525,76 @@ def delete_pantry_item(item_id):
     
     return jsonify({'message': 'Pantry item deleted'}), 200
 
+
+@api_bp.route('/pantry/purchased-items', methods=['POST'])
+@login_required
+def add_purchased_pantry_items():
+    """Add checked shopping-list items to the user's pantry in one transaction."""
+    data = request.get_json() or {}
+    items = data.get('items')
+    if not isinstance(items, list) or not items:
+        return jsonify({'error': 'At least one purchased item is required'}), 400
+    if len(items) > 200:
+        return jsonify({'error': 'Too many purchased items'}), 400
+
+    normalized_items = []
+    for raw in items:
+        if not isinstance(raw, dict):
+            return jsonify({'error': 'Each purchased item must be an object'}), 400
+        name = (raw.get('name') or '').strip()
+        if not name or len(name) > 200:
+            return jsonify({'error': 'Each purchased item needs a valid name'}), 400
+        unit = (raw.get('unit') or '').strip() or None
+        if unit and len(unit) > 50:
+            return jsonify({'error': 'A purchased item unit is too long'}), 400
+        quantity = raw.get('quantity')
+        if quantity is not None:
+            if isinstance(quantity, bool):
+                return jsonify({'error': 'Purchased item quantities must be numbers'}), 400
+            try:
+                quantity = float(quantity)
+            except (TypeError, ValueError):
+                return jsonify({'error': 'Purchased item quantities must be numbers'}), 400
+            if quantity < 0:
+                return jsonify({'error': 'Purchased item quantities cannot be negative'}), 400
+        normalized_items.append({
+            'name': name,
+            'name_key': name.lower(),
+            'quantity': quantity,
+            'unit': unit,
+            'unit_key': (unit or '').lower(),
+            'category': auto_assign_category(name),
+        })
+
+    pantry_items = PantryItem.query.filter_by(user_id=current_user.id).all()
+    pantry_by_name_unit = {
+        ((item.item_name or '').strip().lower(), (item.unit or '').strip().lower()): item
+        for item in pantry_items
+    }
+    created = 0
+    updated = 0
+    for purchase in normalized_items:
+        key = (purchase['name_key'], purchase['unit_key'])
+        existing = pantry_by_name_unit.get(key)
+        if existing and purchase['quantity'] is not None and existing.quantity is not None:
+            existing.quantity += purchase['quantity']
+            updated += 1
+        else:
+            item = PantryItem(
+                user_id=current_user.id,
+                item_name=purchase['name'],
+                quantity=purchase['quantity'],
+                unit=purchase['unit'],
+                category=purchase['category'],
+            )
+            db.session.add(item)
+            pantry_by_name_unit[key] = item
+            created += 1
+
+    db.session.commit()
+    return jsonify({'created': created, 'updated': updated, 'transferred': len(normalized_items)}), 201
+
+
 @api_bp.route('/pantry/scan', methods=['POST'])
 @login_required
 def scan_barcode():
